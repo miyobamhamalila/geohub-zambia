@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GeoHub Zambia – Analytics</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/zambia-data.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --g1:#040e07;--g2:#0a2e1a;--g3:#1a6b35;--g4:#2d9e5f;--g5:#4CAF50;--g6:#81c784;
+      --white:#fff;--bg:#f1f5f1;--text:#111827;--muted:#6b7280;
+      --border:#e5e7eb;--card:#fff;
+      --sh:0 1px 3px rgba(0,0,0,.06),0 2px 8px rgba(0,0,0,.04);
+      --sh2:0 4px 20px rgba(0,0,0,.09);--r:14px;--nb:62px;
+    }
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+    .nb{position:fixed;top:0;left:0;right:0;height:var(--nb);background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;z-index:200;box-shadow:var(--sh);}
+    .nb-brand{display:flex;align-items:center;gap:10px;text-decoration:none;}
+    .nb-brand .ico{width:36px;height:36px;background:linear-gradient(135deg,var(--g3),var(--g4));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 2px 8px rgba(26,107,53,.3);}
+    .nb-brand h1{font-size:1.15rem;font-weight:900;color:var(--text);}
+    .nb-brand h1 em{font-style:normal;color:var(--g3);}
+    .nb-links{display:flex;align-items:center;gap:1px;margin-left:28px;flex:1;}
+    .nb-lnk{padding:6px 11px;border-radius:7px;font-size:.83rem;font-weight:500;color:var(--muted);text-decoration:none;display:flex;align-items:center;gap:5px;transition:background .15s,color .15s;}
+    .nb-lnk:hover{background:#f3f4f6;color:var(--text);}
+    .nb-lnk.on{background:#f0fdf4;color:var(--g3);font-weight:700;position:relative;}
+    .nb-lnk.on::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:2.5px;background:var(--g5);border-radius:2px 2px 0 0;}
+    .nb-right{display:flex;align-items:center;gap:8px;margin-left:auto;}
+    .nb-av{width:30px;height:30px;background:linear-gradient(135deg,var(--g3),var(--g4));border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:.72rem;}
+    .nb-uname{font-size:.82rem;font-weight:600;color:var(--text);}
+    .btn-out{padding:6px 12px;background:none;border:1.5px solid var(--border);border-radius:7px;font-family:'Inter',sans-serif;font-size:.78rem;font-weight:600;color:var(--muted);cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s;}
+    .btn-out:hover{background:#fef2f2;border-color:#fca5a5;color:#dc2626;}
+    .btn-sm{padding:8px 14px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;border:1.5px solid transparent;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:6px;transition:all .15s;}
+    .btn-primary{background:var(--g3);color:#fff;border-color:var(--g3);}
+    .btn-primary:hover{background:var(--g2);}
+    .btn-outline{background:#fff;color:var(--text);border-color:var(--border);}
+    .btn-outline:hover{background:#f9fafb;}
+
+    .main{margin-top:var(--nb);padding:24px 28px 60px;max-width:1420px;margin-left:auto;margin-right:auto;}
+
+    .pg-hd{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:12px;}
+    .pg-hd-l h2{font-size:1.45rem;font-weight:900;}
+    .pg-hd-l p{font-size:.83rem;color:var(--muted);margin-top:3px;}
+    .pg-hd-r{display:flex;gap:8px;flex-wrap:wrap;}
+
+    /* Controls bar */
+    .ctrl-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:22px;}
+    .ctrl-bar label{font-size:.78rem;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.3px;}
+    .ctrl-sel{padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:'Inter',sans-serif;font-size:.82rem;color:var(--text);background:#fff;outline:none;cursor:pointer;}
+    .ctrl-sel:focus{border-color:var(--g3);}
+    .ctrl-divider{width:1px;height:24px;background:var(--border);}
+
+    /* Stats row */
+    .stats4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
+    .stat-c{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;box-shadow:var(--sh);display:flex;align-items:flex-start;gap:14px;}
+    .stat-ico{width:44px;height:44px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;}
+    .stat-v{font-size:1.65rem;font-weight:900;line-height:1;}
+    .stat-l{font-size:.74rem;color:var(--muted);margin-top:2px;}
+    .stat-delta{font-size:.7rem;font-weight:600;margin-top:5px;display:flex;align-items:center;gap:3px;}
+    .up{color:#16a34a;}.dn{color:#dc2626;}
+
+    /* Chart grids */
+    .charts2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;}
+    .charts3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin-bottom:18px;}
+    .chart-card{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:20px 22px;box-shadow:var(--sh);transition:box-shadow .2s;}
+    .chart-card:hover{box-shadow:var(--sh2);}
+    .chart-hd{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;}
+    .chart-hd h3{font-size:.94rem;font-weight:800;}
+    .chart-hd p{font-size:.73rem;color:var(--muted);margin-top:2px;}
+    .chart-tag{font-size:.68rem;font-weight:700;padding:3px 9px;border-radius:20px;}
+    .tag-g{background:#f0fdf4;color:var(--g3);border:1px solid #bbf7d0;}
+    .tag-b{background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;}
+    .tag-a{background:#fffbeb;color:#d97706;border:1px solid #fde68a;}
+    .tag-p{background:#faf5ff;color:#7c3aed;border:1px solid #e9d5ff;}
+    .tag-r{background:#fef2f2;color:#dc2626;border:1px solid #fecaca;}
+    .chart-wrap{position:relative;height:240px;}
+    .chart-wrap-sm{position:relative;height:200px;}
+    .chart-wrap-lg{position:relative;height:300px;}
+
+    /* Province comparison table */
+    .prov-table{width:100%;border-collapse:collapse;font-size:.82rem;}
+    .prov-table th{padding:9px 12px;background:#f9fafb;border-bottom:2px solid var(--border);font-size:.75rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;text-align:left;cursor:pointer;}
+    .prov-table th:hover{background:#f3f4f6;}
+    .prov-table td{padding:9px 12px;border-bottom:1px solid #f3f4f6;vertical-align:middle;}
+    .prov-table tr:hover td{background:#f9fafb;}
+    .prov-table tr:last-child td{border-bottom:none;}
+    .prov-dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:6px;}
+    .bar-cell{display:flex;align-items:center;gap:8px;}
+    .bar-bg{flex:1;height:6px;background:#f3f4f6;border-radius:3px;}
+    .bar-fill{height:6px;border-radius:3px;}
+
+    /* Mining table */
+    .mine-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:4px;}
+    .mine-card{background:linear-gradient(135deg,#fff7ed,#fef3c7);border:1px solid #fed7aa;border-radius:11px;padding:14px;transition:all .2s;}
+    .mine-card:hover{box-shadow:var(--sh2);transform:translateY(-2px);}
+    .mine-card h4{font-size:.82rem;font-weight:800;color:#92400e;margin-bottom:5px;}
+    .mine-card p{font-size:.75rem;color:#78350f;line-height:1.4;}
+    .mine-num{font-size:1.3rem;font-weight:900;color:#ea580c;margin:5px 0 2px;}
+    .mine-bar{height:4px;border-radius:2px;background:#fed7aa;margin-top:5px;}
+    .mine-bar-fill{height:4px;border-radius:2px;background:#ea580c;}
+
+    /* Radar-like ring */
+    .defor-gauge{display:flex;align-items:center;gap:20px;}
+    .gauge-wrap{position:relative;width:120px;height:120px;flex-shrink:0;}
+    .gauge-wrap svg{transform:rotate(-90deg);}
+    .gauge-label{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+    .gauge-label strong{font-size:1.1rem;font-weight:900;color:#dc2626;}
+    .gauge-label small{font-size:.64rem;color:var(--muted);}
+
+    /* Toast */
+    #toast{position:fixed;bottom:24px;right:24px;z-index:9999;background:var(--g3);color:#fff;padding:11px 17px;border-radius:10px;font-size:.82rem;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.2);display:none;align-items:center;gap:8px;}
+  </style>
+</head>
+<body>
+
+<!-- ── NAVBAR ── -->
+<nav class="nb">
+  <a class="nb-brand" href="dashboard.html">
+    <div class="ico">🌍</div><h1>Geo<em>Hub</em></h1>
+  </a>
+  <div class="nb-links">
+    <a class="nb-lnk" href="dashboard.html"><i class="fas fa-th-large"></i>Dashboard</a>
+    <a class="nb-lnk" href="map.html"><i class="fas fa-map-marked-alt"></i>Map Viewer</a>
+    <a class="nb-lnk on" href="analytics.html"><i class="fas fa-chart-bar"></i>Analytics</a>
+    <a class="nb-lnk" href="data.html"><i class="fas fa-cloud-upload-alt"></i>Data Upload</a>
+    <a class="nb-lnk" href="settings.html"><i class="fas fa-cog"></i>Settings</a>
+    <span id="adminLink" style="display:none;"><a class="nb-lnk" href="admin.html"><i class="fas fa-user-shield"></i>Admin</a></span>
+  </div>
+  <div class="nb-right">
+    <div class="nb-av" id="nbAv">?</div>
+    <span class="nb-uname" id="nbName">—</span>
+    <button class="btn-out" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i>Sign Out</button>
+  </div>
+</nav>
+
+<main class="main">
+
+  <!-- Page header -->
+  <div class="pg-hd">
+    <div class="pg-hd-l">
+      <h2>📊 Analytics &amp; Insights</h2>
+      <p>Real spatial data — NSDI GRID3, FAO, CHIRPS, LCCS, ZDA sources</p>
+    </div>
+    <div class="pg-hd-r">
+      <button class="btn-sm btn-outline" onclick="exportAllCSV()"><i class="fas fa-file-csv"></i>Export All CSV</button>
+      <button class="btn-sm btn-outline" onclick="window.print()"><i class="fas fa-print"></i>Print Report</button>
+      <button class="btn-sm btn-primary" onclick="window.location.href='map.html'"><i class="fas fa-map"></i>View on Map</button>
+    </div>
+  </div>
+
+  <!-- Controls bar -->
+  <div class="ctrl-bar">
+    <label>Province</label>
+    <select class="ctrl-sel" id="provSel" onchange="updateCharts()">
+      <option value="">All Provinces</option>
+    </select>
+    <div class="ctrl-divider"></div>
+    <label>Dataset</label>
+    <select class="ctrl-sel" id="dsSel" onchange="updateCharts()">
+      <option value="forest">Forest Cover</option>
+      <option value="rainfall">Rainfall</option>
+      <option value="landcover">Land Cover</option>
+      <option value="population">Population</option>
+    </select>
+    <div class="ctrl-divider"></div>
+    <label>Year Range</label>
+    <select class="ctrl-sel" id="yrSel" onchange="updateCharts()">
+      <option value="2018-2024">2018–2024</option>
+      <option value="2020-2024">2020–2024</option>
+      <option value="2022-2024">2022–2024</option>
+    </select>
+    <div class="ctrl-divider"></div>
+    <label>Chart Type</label>
+    <select class="ctrl-sel" id="chartTypeSel" onchange="buildForestChart()">
+      <option value="line">Line</option>
+      <option value="bar">Bar</option>
+      <option value="area">Area Fill</option>
+    </select>
+    <button class="btn-sm btn-primary" style="margin-left:auto;" onclick="updateCharts()"><i class="fas fa-sync-alt"></i>Refresh</button>
+  </div>
+
+  <!-- Stats row -->
+  <div class="stats4">
+    <div class="stat-c">
+      <div class="stat-ico" style="background:#f0fdf4;"><i class="fas fa-tree" style="color:var(--g3);"></i></div>
+      <div>
+        <div class="stat-v">435,000</div>
+        <div class="stat-l">Forest Cover km² (2024)</div>
+        <div class="stat-delta dn"><i class="fas fa-arrow-down"></i>12% since 2018</div>
+      </div>
+    </div>
+    <div class="stat-c">
+      <div class="stat-ico" style="background:#eff6ff;"><i class="fas fa-cloud-rain" style="color:#2563eb;"></i></div>
+      <div>
+        <div class="stat-v">880 mm</div>
+        <div class="stat-l">Avg Annual Rainfall — Lusaka</div>
+        <div class="stat-delta up"><i class="fas fa-arrow-up"></i>Normal range ±5%</div>
+      </div>
+    </div>
+    <div class="stat-c">
+      <div class="stat-ico" style="background:#fff7ed;"><i class="fas fa-industry" style="color:#ea580c;"></i></div>
+      <div>
+        <div class="stat-v">756K t</div>
+        <div class="stat-l">Total Copper Production/yr</div>
+        <div class="stat-delta up"><i class="fas fa-arrow-up"></i>6 active mines</div>
+      </div>
+    </div>
+    <div class="stat-c">
+      <div class="stat-ico" style="background:#faf5ff;"><i class="fas fa-users" style="color:#7c3aed;"></i></div>
+      <div>
+        <div class="stat-v">20.0M</div>
+        <div class="stat-l">National Population (2022)</div>
+        <div class="stat-delta up"><i class="fas fa-arrow-up"></i>+3.1% growth rate</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts row 1: Forest + Rainfall -->
+  <div class="charts2">
+    <div class="chart-card">
+      <div class="chart-hd">
+        <div><h3>Forest Cover Trend 2018–2024</h3><p>Annual estimates — Zambia Forestry Dept / FAO</p></div>
+        <span class="chart-tag tag-g">FAO</span>
+      </div>
+      <div class="chart-wrap"><canvas id="forestChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-hd">
+        <div><h3>Monthly Rainfall 2023</h3><p>CHIRPS satellite estimates — 4 stations (mm)</p></div>
+        <span class="chart-tag tag-b">CHIRPS</span>
+      </div>
+      <div class="chart-wrap"><canvas id="rainfallChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Charts row 2: Land cover + Population -->
+  <div class="charts2">
+    <div class="chart-card">
+      <div class="chart-hd">
+        <div><h3>National Land Cover 2024</h3><p>LCCS Classification — 752,612 km² total</p></div>
+        <span class="chart-tag tag-a">LCCS 2024</span>
+      </div>
+      <div class="chart-wrap"><canvas id="lcChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-hd">
+        <div><h3>Population by Province</h3><p>Census 2022 — 10 provinces sorted by size</p></div>
+        <span class="chart-tag tag-p">Census 2022</span>
+      </div>
+      <div class="chart-wrap"><canvas id="popChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- NEW Charts row 3: Stacked bar (rainfall all stations) + Scatter (pop density vs forest) -->
+  <div class="charts2">
+    <div class="chart-card">
+      <div class="chart-hd">
+        <div><h3>Rainfall Comparison — All Stations 2023</h3><p>Monthly mm — Lusaka, Ndola, Livingstone, Chipata</p></div>
+        <span class="chart-tag tag-b">CHIRPS</span>
+      </div>
+      <div class="chart-wrap"><canvas id="rainStackedChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-hd">
+        <div><h3>Population Density vs Forest Cover</h3><p>Scatter by province — Census 2022 &amp; FAO</p></div>
+        <span class="chart-tag tag-g">Multi-source</span>
+      </div>
+      <div class="chart-wrap"><canvas id="scatterChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- NEW Charts row 4: Deforestation gauge + Forest gain/loss bar -->
+  <div class="charts3" style="align-items:stretch;">
+    <!-- Deforestation gauge -->
+    <div class="chart-card">
+      <div class="chart-hd">
+        <div><h3>Deforestation Rate</h3><p>Annual avg vs national target (2024)</p></div>
+        <span class="chart-tag tag-r">Alert</span>
+      </div>
+      <div class="defor-gauge" style="margin-top:10px;">
+        <div class="gauge-wrap">
+          <svg width="120" height="120" viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r="50" fill="none" stroke="#f3f4f6" stroke-width="10"/>
+            <circle cx="60" cy="60" r="50" fill="none" stroke="#dc2626" stroke-width="10"
+              stroke-dasharray="314.16" stroke-dashoffset="188.5"
+              stroke-linecap="round" id="gaugeArc"/>
+          </svg>
+          <div class="gauge-label"><strong>40%</strong><small>of target</small></div>
+        </div>
+        <div>
+          <div style="font-size:.85rem;font-weight:700;color:var(--text);">1.8% per year</div>
+          <div style="font-size:.76rem;color:var(--muted);margin-top:4px;line-height:1.5;">Current rate exceeds<br>national target of 0.5%/yr.<br>Total loss 2018–24:</div>
+          <div style="font-size:1.2rem;font-weight:900;color:#dc2626;margin-top:6px;">−59,500 km²</div>
+          <div style="font-size:.7rem;color:var(--muted);">≈ 7.9% of 2018 cover</div>
+          <div style="margin-top:10px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:7px 10px;font-size:.73rem;color:#dc2626;font-weight:600;">
+            <i class="fas fa-exclamation-triangle"></i> High risk — Copperbelt &amp; Lusaka provinces
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Forest change bar -->
+    <div class="chart-card" style="grid-column:span 2;">
+      <div class="chart-hd">
+        <div><h3>Annual Forest Loss &amp; Gain 2018–2024</h3><p>Net change trajectory — FAO / Zambia Forestry Dept</p></div>
+        <button class="btn-sm btn-outline" onclick="exportForestCSV()" style="font-size:.72rem;padding:5px 10px;"><i class="fas fa-download"></i>Export CSV</button>
+      </div>
+      <div class="chart-wrap"><canvas id="forestBarChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Province comparison table -->
+  <div class="chart-card" style="margin-bottom:18px;">
+    <div class="chart-hd">
+      <div><h3>Province Comparison Table</h3><p>NSDI 2022 — Click column headers to sort</p></div>
+      <button class="btn-sm btn-outline" onclick="exportProvCSV()" style="font-size:.72rem;padding:5px 10px;"><i class="fas fa-download"></i>CSV</button>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="prov-table" id="provTable">
+        <thead>
+          <tr>
+            <th onclick="sortTable('name')">#</th>
+            <th onclick="sortTable('name')">Province</th>
+            <th onclick="sortTable('capital')">Capital</th>
+            <th onclick="sortTable('districts')">Districts</th>
+            <th onclick="sortTable('area_km2')">Area km²</th>
+            <th onclick="sortTable('pop')">Population</th>
+            <th onclick="sortTable('forest_pct')">Forest %</th>
+            <th onclick="sortTable('urban_pct')">Urban %</th>
+            <th>Pop Density</th>
+          </tr>
+        </thead>
+        <tbody id="provTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Mining section -->
+  <div class="chart-card" style="margin-bottom:18px;">
+    <div class="chart-hd">
+      <div><h3>Mining Operations — Copperbelt</h3><p>Zambia Development Agency 2023 Survey</p></div>
+      <span class="chart-tag tag-a">ZDA 2023</span>
+    </div>
+    <div class="mine-grid" id="mineGrid"></div>
+  </div>
+
+  <!-- Forest loss table -->
+  <div class="chart-card">
+    <div class="chart-hd">
+      <div><h3>Annual Forest Change 2018–2024</h3><p>Net cover, annual loss and gain (km²)</p></div>
+      <button class="btn-sm btn-outline" onclick="exportForestCSV()" style="font-size:.72rem;padding:5px 10px;"><i class="fas fa-download"></i>CSV</button>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="prov-table">
+        <thead><tr><th>Year</th><th>Total Cover km²</th><th>Annual Loss km²</th><th>Annual Gain km²</th><th>Net Change km²</th><th>Cover %</th><th>Trend</th></tr></thead>
+        <tbody id="forestTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<div id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════════
+   GeoHub Zambia — Analytics  v3.0
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+// ── Auth ──────────────────────────────────────────────────────────────────
+const session = GeoHubAuth.requireAuth('index.html');
+document.getElementById('nbAv').textContent   = session.avatar;
+document.getElementById('nbName').textContent = session.name;
+if (session.role === 'admin') document.getElementById('adminLink').style.display = 'inline';
+function doLogout(){ GeoHubAuth.logout(); window.location.href = 'index.html'; }
+
+// ── Province selector ──────────────────────────────────────────────────────
+ZAMBIA_PROVINCES.forEach(p => {
+  const o = document.createElement('option'); o.value=p.name; o.textContent=p.name;
+  document.getElementById('provSel').appendChild(o);
+});
+
+const GRID_COLOR='rgba(0,0,0,.05)', FONT={family:'Inter',size:11};
+let forestChart, rainfallChart, lcChart, popChart, rainStackedChart, scatterChart, forestBarChart;
+
+// ── Forest cover chart ──────────────────────────────────────────────────────
+function buildForestChart() {
+  if (forestChart) forestChart.destroy();
+  const yr    = document.getElementById('yrSel').value;
+  const start = parseInt(yr.split('-')[0]);
+  const idx   = FOREST_TREND.years.indexOf(start);
+  const years = idx>=0 ? FOREST_TREND.years.slice(idx) : FOREST_TREND.years;
+  const totals = idx>=0 ? FOREST_TREND.total_km2.slice(idx) : FOREST_TREND.total_km2;
+  const losses = idx>=0 ? FOREST_TREND.loss_km2.slice(idx)  : FOREST_TREND.loss_km2;
+  const ctType  = document.getElementById('chartTypeSel').value;
+  const isFill  = ctType === 'area';
+
+  forestChart = new Chart(document.getElementById('forestChart'), {
+    type: ctType === 'bar' ? 'bar' : 'line',
+    data: { labels:years, datasets:[
+      { label:'Total Forest Cover km²', data:totals,
+        borderColor:'#1a6b35', backgroundColor: isFill?'rgba(26,107,53,.12)':'rgba(26,107,53,.08)',
+        fill:isFill||false, tension:0.35, pointRadius:5, pointHoverRadius:7, borderWidth:2.5, yAxisID:'y' },
+      { label:'Annual Loss km²', data:losses,
+        borderColor:'#dc2626', backgroundColor:'rgba(220,38,38,.1)',
+        fill:false, tension:0.35, pointRadius:4, borderWidth:2, borderDash:[5,3], yAxisID:'y2' }
+    ]},
+    options: { responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{position:'bottom',labels:{font:FONT,boxWidth:12}},
+        tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()} km²`}}},
+      scales:{ y:{position:'left',grid:{color:GRID_COLOR},ticks:{font:FONT,callback:v=>(v/1000)+'K'},title:{display:true,text:'Total km²',font:FONT}},
+        y2:{position:'right',grid:{drawOnChartArea:false},ticks:{font:FONT},title:{display:true,text:'Loss km²',font:FONT}},
+        x:{grid:{color:GRID_COLOR},ticks:{font:FONT}}}}
+  });
+}
+
+// ── Rainfall chart ──────────────────────────────────────────────────────────
+function buildRainfallChart(prov) {
+  if (rainfallChart) rainfallChart.destroy();
+  rainfallChart = new Chart(document.getElementById('rainfallChart'), {
+    type: 'line',
+    data: { labels:RAINFALL_MONTHLY.months, datasets:[
+      { label:'Lusaka',      data:RAINFALL_MONTHLY.lusaka,      borderColor:'#1a6b35', fill:false, tension:0.4, pointRadius:4, borderWidth:2 },
+      { label:'Ndola',       data:RAINFALL_MONTHLY.ndola,       borderColor:'#2563eb', fill:false, tension:0.4, pointRadius:4, borderWidth:2 },
+      { label:'Livingstone', data:RAINFALL_MONTHLY.livingstone, borderColor:'#d97706', fill:false, tension:0.4, pointRadius:4, borderWidth:2 },
+      { label:'Chipata',     data:RAINFALL_MONTHLY.chipata,     borderColor:'#7c3aed', fill:false, tension:0.4, pointRadius:4, borderWidth:2 },
+    ]},
+    options: { responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{position:'bottom',labels:{font:FONT,boxWidth:12}},
+        tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.parsed.y} mm`}}},
+      scales:{ y:{grid:{color:GRID_COLOR},ticks:{font:FONT,callback:v=>v+'mm'},title:{display:true,text:'Rainfall (mm)',font:FONT}},
+        x:{grid:{color:GRID_COLOR},ticks:{font:FONT}}}}
+  });
+}
+
+// ── Land cover chart ────────────────────────────────────────────────────────
+function buildLCChart(prov) {
+  if (lcChart) lcChart.destroy();
+  const lc     = LAND_COVER_NATIONAL;
+  const labels = Object.values(lc).map(v=>v.label);
+  const colors = Object.values(lc).map(v=>v.color);
+  let data     = Object.values(lc).map(v=>v.area);
+  if (prov) {
+    const p = ZAMBIA_PROVINCES.find(x=>x.name===prov);
+    if (p) data = [p.forest_pct,p.agri_pct,0,p.water_pct,p.urban_pct,p.bare_pct,0].map(pct=>Math.round(pct/100*p.area_km2));
+  }
+  lcChart = new Chart(document.getElementById('lcChart'), {
+    type: 'bar',
+    data: { labels, datasets:[{ data, backgroundColor:colors, borderRadius:5, borderWidth:0 }]},
+    options: { indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>` ${ctx.parsed.x.toLocaleString()} km²`}}},
+      scales:{ x:{grid:{color:GRID_COLOR},ticks:{font:FONT,callback:v=>(v/1000)+'K'},title:{display:true,text:'Area (km²)',font:FONT}},
+        y:{grid:{display:false},ticks:{font:FONT}}}}
+  });
+}
+
+// ── Population chart ────────────────────────────────────────────────────────
+function buildPopChart() {
+  if (popChart) popChart.destroy();
+  const sorted = [...ZAMBIA_PROVINCES].sort((a,b)=>b.pop-a.pop);
+  popChart = new Chart(document.getElementById('popChart'), {
+    type: 'bar',
+    data: { labels:sorted.map(p=>p.name), datasets:[{
+      label:'Population',
+      data:sorted.map(p=>p.pop),
+      backgroundColor:sorted.map(p=>p.color+'cc'),
+      borderColor:sorted.map(p=>p.color),
+      borderWidth:1.5, borderRadius:5
+    }]},
+    options: { responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>` ${(ctx.parsed.y/1e6).toFixed(2)}M people`}}},
+      scales:{ y:{grid:{color:GRID_COLOR},ticks:{font:FONT,callback:v=>(v/1e6).toFixed(1)+'M'},title:{display:true,text:'Population',font:FONT}},
+        x:{grid:{display:false},ticks:{font:FONT,maxRotation:40}}}}
+  });
+}
+
+// ── Rainfall stacked comparison ─────────────────────────────────────────────
+function buildRainStackedChart() {
+  if (rainStackedChart) rainStackedChart.destroy();
+  rainStackedChart = new Chart(document.getElementById('rainStackedChart'), {
+    type: 'bar',
+    data: { labels:RAINFALL_MONTHLY.months, datasets:[
+      { label:'Lusaka',      data:RAINFALL_MONTHLY.lusaka,      backgroundColor:'rgba(26,107,53,.8)',  stack:'total', borderRadius:2 },
+      { label:'Ndola',       data:RAINFALL_MONTHLY.ndola,       backgroundColor:'rgba(37,99,235,.75)',  stack:'total', borderRadius:2 },
+      { label:'Livingstone', data:RAINFALL_MONTHLY.livingstone, backgroundColor:'rgba(217,119,6,.75)',  stack:'total', borderRadius:2 },
+      { label:'Chipata',     data:RAINFALL_MONTHLY.chipata,     backgroundColor:'rgba(124,58,237,.75)', stack:'total', borderRadius:2 },
+    ]},
+    options: { responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{position:'bottom',labels:{font:FONT,boxWidth:10}},
+        tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.parsed.y} mm`}}},
+      scales:{ x:{stacked:true,grid:{display:false},ticks:{font:FONT}},
+        y:{stacked:true,grid:{color:GRID_COLOR},ticks:{font:FONT,callback:v=>v+'mm'},title:{display:true,text:'Total mm',font:FONT}}}}
+  });
+}
+
+// ── Scatter chart: Population density vs Forest % ──────────────────────────
+function buildScatterChart() {
+  if (scatterChart) scatterChart.destroy();
+  const data = ZAMBIA_PROVINCES.map(p => ({
+    x: (p.pop / p.area_km2),
+    y: p.forest_pct,
+    label: p.name,
+    color: p.color
+  }));
+  scatterChart = new Chart(document.getElementById('scatterChart'), {
+    type: 'scatter',
+    data: { datasets: data.map(d => ({
+      label: d.label,
+      data: [{ x: d.x, y: d.y }],
+      backgroundColor: d.color + 'cc',
+      borderColor: d.color,
+      pointRadius: 9,
+      pointHoverRadius: 12,
+      borderWidth: 2
+    }))},
+    options: { responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.x.toFixed(2)}/km² pop density, ${ctx.parsed.y}% forest`}}},
+      scales:{ x:{grid:{color:GRID_COLOR},ticks:{font:FONT},title:{display:true,text:'Population Density (people/km²)',font:FONT}},
+        y:{grid:{color:GRID_COLOR},ticks:{font:FONT},title:{display:true,text:'Forest Cover (%)',font:FONT}}}}
+  });
+}
+
+// ── Forest gain/loss bar ─────────────────────────────────────────────────────
+function buildForestBarChart() {
+  if (forestBarChart) forestBarChart.destroy();
+  forestBarChart = new Chart(document.getElementById('forestBarChart'), {
+    type: 'bar',
+    data: { labels:FOREST_TREND.years, datasets:[
+      { label:'Annual Loss km²', data:FOREST_TREND.loss_km2.map(v=>-v), backgroundColor:'rgba(220,38,38,.7)', borderRadius:4 },
+      { label:'Annual Gain km²', data:FOREST_TREND.gain_km2,            backgroundColor:'rgba(26,107,53,.7)',  borderRadius:4 }
+    ]},
+    options: { responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{position:'bottom',labels:{font:FONT,boxWidth:12}},
+        tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${Math.abs(ctx.parsed.y).toLocaleString()} km²`}}},
+      scales:{ y:{grid:{color:GRID_COLOR},ticks:{font:FONT,callback:v=>Math.abs(v).toLocaleString()},title:{display:true,text:'km²',font:FONT}},
+        x:{grid:{display:false},ticks:{font:FONT}}}}
+  });
+}
+
+// ── Province table ─────────────────────────────────────────────────────────
+let sortCol='pop',sortDir=-1;
+const pd = [...ZAMBIA_PROVINCES];
+function sortTable(col) {
+  if(sortCol===col) sortDir*=-1; else{sortCol=col;sortDir=-1;}
+  pd.sort((a,b)=>{
+    const va=a[col]??a.name, vb=b[col]??b.name;
+    return typeof va==='string'?va.localeCompare(vb)*sortDir:(va-vb)*sortDir;
+  });
+  renderProvTable();
+}
+function renderProvTable() {
+  const maxPop = Math.max(...pd.map(p=>p.pop));
+  document.getElementById('provTableBody').innerHTML = pd.map((p,i) => `<tr>
+    <td style="font-weight:700;color:var(--muted);">${i+1}</td>
+    <td><span class="prov-dot" style="background:${p.color};"></span>${p.name}</td>
+    <td>${p.capital}</td>
+    <td style="text-align:center;">${p.districts}</td>
+    <td>${p.area_km2.toLocaleString()}</td>
+    <td><div class="bar-cell"><div class="bar-bg"><div class="bar-fill" style="width:${Math.round(p.pop/maxPop*100)}%;background:${p.color};"></div></div>${(p.pop/1e6).toFixed(2)}M</div></td>
+    <td><div class="bar-cell"><div class="bar-bg"><div class="bar-fill" style="width:${p.forest_pct}%;background:#1a6b35;"></div></div>${p.forest_pct}%</div></td>
+    <td>${p.urban_pct}%</td>
+    <td>${(p.pop/p.area_km2).toFixed(1)}/km²</td>
+  </tr>`).join('');
+}
+
+// ── Mining cards ────────────────────────────────────────────────────────────
+function buildMineCards() {
+  const maxP = Math.max(...MINING_SITES.map(m=>m.production_t));
+  document.getElementById('mineGrid').innerHTML = MINING_SITES.map(m => `
+    <div class="mine-card">
+      <h4>⛏ ${m.name}</h4>
+      <p style="color:#92400e;">${m.company}</p>
+      <div class="mine-num">${m.production_t.toLocaleString()} t/yr</div>
+      <p style="font-size:.7rem;">${m.type}</p>
+      <div class="mine-bar"><div class="mine-bar-fill" style="width:${Math.round(m.production_t/maxP*100)}%;"></div></div>
+    </div>`).join('');
+}
+
+// ── Forest table ────────────────────────────────────────────────────────────
+function buildForestTable() {
+  const body = document.getElementById('forestTableBody');
+  let prevCover = FOREST_TREND.total_km2[0];
+  body.innerHTML = FOREST_TREND.years.map((yr,i) => {
+    const net  = FOREST_TREND.gain_km2[i]-FOREST_TREND.loss_km2[i];
+    const pct  = ((FOREST_TREND.total_km2[i]/752612)*100).toFixed(1);
+    const chg  = i > 0 ? FOREST_TREND.total_km2[i]-FOREST_TREND.total_km2[i-1] : 0;
+    const trend= i===0 ? '—' : chg >= 0 ? `<span style="color:#16a34a;font-weight:700;">▲ ${chg.toLocaleString()}</span>` : `<span style="color:#dc2626;font-weight:700;">▼ ${Math.abs(chg).toLocaleString()}</span>`;
+    return `<tr>
+      <td><strong>${yr}</strong></td>
+      <td>${FOREST_TREND.total_km2[i].toLocaleString()}</td>
+      <td style="color:#dc2626;font-weight:700;">−${FOREST_TREND.loss_km2[i].toLocaleString()}</td>
+      <td style="color:#16a34a;font-weight:700;">+${FOREST_TREND.gain_km2[i].toLocaleString()}</td>
+      <td style="color:${net>=0?'#16a34a':'#dc2626'};font-weight:700;">${net>=0?'+':''}${net.toLocaleString()}</td>
+      <td>${pct}%</td>
+      <td>${trend}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Gauge animation ─────────────────────────────────────────────────────────
+function animateGauge() {
+  const arc = document.getElementById('gaugeArc');
+  if (!arc) return;
+  // 40% of target = 40% of circle = stroke-dashoffset adjustment
+  // Full circle = 314.16, 40% filled = offset = 314.16 * 0.6 = 188.5
+  let offset = 314.16;
+  const target = 188.5;
+  const timer = setInterval(() => {
+    offset -= 3;
+    if (offset <= target) { offset = target; clearInterval(timer); }
+    arc.setAttribute('stroke-dashoffset', offset);
+  }, 20);
+}
+
+// ── Master update ────────────────────────────────────────────────────────────
+function updateCharts() {
+  const prov = document.getElementById('provSel').value;
+  buildForestChart();
+  buildRainfallChart(prov);
+  buildLCChart(prov);
+  buildPopChart();
+  showToast(prov ? `Data filtered to ${prov}` : 'Showing national data');
+}
+
+// ── Export helpers ───────────────────────────────────────────────────────────
+function exportProvCSV() {
+  const h = ['Province','Capital','Districts','Area_km2','Population','Forest_pct','Urban_pct','Water_pct','Agri_pct','Pop_Density'];
+  const rows = ZAMBIA_PROVINCES.map(p=>[p.name,p.capital,p.districts,p.area_km2,p.pop,p.forest_pct,p.urban_pct,p.water_pct,p.agri_pct,(p.pop/p.area_km2).toFixed(1)]);
+  dlCSV([h,...rows],'zambia_provinces_NSDI2022.csv');
+}
+function exportForestCSV() {
+  const h=['Year','Total_km2','Loss_km2','Gain_km2','Net_km2','Cover_pct'];
+  const rows=FOREST_TREND.years.map((yr,i)=>[yr,FOREST_TREND.total_km2[i],FOREST_TREND.loss_km2[i],FOREST_TREND.gain_km2[i],FOREST_TREND.gain_km2[i]-FOREST_TREND.loss_km2[i],((FOREST_TREND.total_km2[i]/752612)*100).toFixed(1)]);
+  dlCSV([h,...rows],'zambia_forest_trend_FAO.csv');
+}
+function exportRainfallCSV() {
+  const h=['Month','Lusaka_mm','Ndola_mm','Livingstone_mm','Chipata_mm'];
+  const rows=RAINFALL_MONTHLY.months.map((m,i)=>[m,RAINFALL_MONTHLY.lusaka[i],RAINFALL_MONTHLY.ndola[i],RAINFALL_MONTHLY.livingstone[i],RAINFALL_MONTHLY.chipata[i]]);
+  dlCSV([h,...rows],'zambia_rainfall_CHIRPS2023.csv');
+}
+function exportAllCSV() {
+  exportProvCSV();
+  setTimeout(exportForestCSV, 300);
+  setTimeout(exportRainfallCSV, 600);
+}
+function dlCSV(rows, name) {
+  const csv=rows.map(r=>r.join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
+  a.download=name; a.click();
+  showToast(`Exported: ${name}`);
+  GeoHubAuth.addAuditLog('EXPORT_CSV',`Exported: ${name}`,session.id);
+}
+function showToast(msg) {
+  const t=document.getElementById('toast');
+  t.innerHTML=`<i class="fas fa-check-circle"></i>${msg}`;
+  t.style.display='flex'; clearTimeout(t._t);
+  t._t=setTimeout(()=>t.style.display='none',2500);
+}
+
+// ── Sort table default ───────────────────────────────────────────────────────
+pd.sort((a,b)=>b.pop-a.pop);
+
+// ── INIT ────────────────────────────────────────────────────────────────────
+updateCharts();
+buildRainStackedChart();
+buildScatterChart();
+buildForestBarChart();
+buildProvTable();
+renderProvTable();
+buildMineCards();
+buildForestTable();
+animateGauge();
+GeoHubAuth.addAuditLog('ANALYTICS_VIEW','Viewed Analytics page v3.0',session.id);
+</script>
+</body>
+</html>

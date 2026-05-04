@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GeoHub Zambia – Settings</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css"/>
+  <script src="js/auth.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --g1:#040e07;--g2:#0a2e1a;--g3:#1a6b35;--g4:#2d9e5f;--g5:#4CAF50;
+      --white:#fff;--bg:#f1f5f1;--text:#111827;--muted:#6b7280;
+      --border:#e5e7eb;--card:#fff;
+      --sh:0 1px 3px rgba(0,0,0,.06),0 2px 8px rgba(0,0,0,.04);
+      --sh2:0 4px 20px rgba(0,0,0,.08);--r:14px;--nb:62px;
+    }
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+    .nb{position:fixed;top:0;left:0;right:0;height:var(--nb);background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;z-index:200;box-shadow:var(--sh);}
+    .nb-brand{display:flex;align-items:center;gap:10px;text-decoration:none;}
+    .nb-brand .ico{width:36px;height:36px;background:linear-gradient(135deg,var(--g3),var(--g4));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;}
+    .nb-brand h1{font-size:1.15rem;font-weight:900;color:var(--text);}
+    .nb-brand h1 em{color:var(--g3);font-style:normal;}
+    .nb-links{display:flex;align-items:center;gap:1px;margin-left:28px;flex:1;}
+    .nb-lnk{padding:6px 11px;border-radius:7px;font-size:.83rem;font-weight:500;color:var(--muted);text-decoration:none;display:flex;align-items:center;gap:5px;transition:background .15s,color .15s;}
+    .nb-lnk:hover{background:#f3f4f6;color:var(--text);}
+    .nb-lnk.on{background:#f0fdf4;color:var(--g3);font-weight:700;position:relative;}
+    .nb-lnk.on::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:2.5px;background:var(--g5);border-radius:2px 2px 0 0;}
+    .nb-right{display:flex;align-items:center;gap:8px;margin-left:auto;}
+    .nb-av{width:30px;height:30px;background:linear-gradient(135deg,var(--g3),var(--g4));border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:.72rem;}
+    .nb-uname{font-size:.82rem;font-weight:600;color:var(--text);}
+    .btn-out{padding:6px 12px;background:none;border:1.5px solid var(--border);border-radius:7px;font-family:'Inter',sans-serif;font-size:.78rem;font-weight:600;color:var(--muted);cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s;}
+    .btn-out:hover{background:#fef2f2;border-color:#fca5a5;color:#dc2626;}
+    .main{margin-top:var(--nb);padding:24px 28px 60px;max-width:860px;margin-left:auto;margin-right:auto;}
+    .pg-hd{margin-bottom:24px;}
+    .pg-hd h2{font-size:1.45rem;font-weight:900;}
+    .pg-hd p{font-size:.83rem;color:var(--muted);margin-top:3px;}
+    .card{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:22px 24px;box-shadow:var(--sh);margin-bottom:18px;}
+    .card-hd{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border);}
+    .card-hd h3{font-size:.97rem;font-weight:800;}
+    .card-hd p{font-size:.75rem;color:var(--muted);margin-top:2px;}
+    .btn-sm{padding:8px 14px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;border:1.5px solid transparent;font-family:'Inter',sans-serif;display:inline-flex;align-items:center;gap:6px;transition:all .15s;}
+    .btn-primary{background:var(--g3);color:#fff;border-color:var(--g3);}
+    .btn-primary:hover{background:var(--g2);}
+    .btn-outline{background:#fff;color:var(--text);border-color:var(--border);}
+    .btn-outline:hover{background:#f9fafb;}
+    .btn-danger{background:#dc2626;color:#fff;border-color:#dc2626;}
+    .btn-danger:hover{background:#b91c1c;}
+
+    /* Profile avatar */
+    .profile-top{display:flex;align-items:center;gap:20px;margin-bottom:24px;}
+    .prof-av{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--g3),var(--g4));display:flex;align-items:center;justify-content:center;font-size:1.6rem;font-weight:900;color:#fff;flex-shrink:0;}
+    .prof-info h3{font-size:1.1rem;font-weight:900;}
+    .prof-info p{font-size:.82rem;color:var(--muted);margin-top:2px;}
+    .role-badge{display:inline-flex;align-items:center;gap:5px;font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:20px;margin-top:6px;}
+    .rb-admin{background:#fef2f2;color:#dc2626;border:1px solid #fecaca;}
+    .rb-standard{background:#f0fdf4;color:var(--g3);border:1px solid #bbf7d0;}
+
+    /* Form */
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+    .fld{margin-bottom:0;}
+    .fld label{display:block;font-size:.74rem;font-weight:700;color:#374151;margin-bottom:5px;text-transform:uppercase;letter-spacing:.3px;}
+    .inp{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:'Inter',sans-serif;font-size:.86rem;color:var(--text);outline:none;transition:border .2s;}
+    .inp:focus{border-color:var(--g3);box-shadow:0 0 0 3px rgba(26,107,53,.1);}
+    .inp:read-only{background:#f9fafb;color:var(--muted);}
+    .inp-sel{background:#fff;cursor:pointer;}
+    .form-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;}
+
+    /* Toggle row */
+    .tog-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f3f4f6;}
+    .tog-row:last-child{border-bottom:none;}
+    .tog-info strong{font-size:.86rem;font-weight:700;}
+    .tog-info small{font-size:.74rem;color:var(--muted);display:block;margin-top:2px;}
+    .toggle{position:relative;width:44px;height:24px;flex-shrink:0;}
+    .toggle input{opacity:0;width:0;height:0;}
+    .toggle-sl{position:absolute;inset:0;background:#d1d5db;border-radius:24px;cursor:pointer;transition:background .2s;}
+    .toggle-sl::before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.15);}
+    .toggle input:checked + .toggle-sl{background:var(--g4);}
+    .toggle input:checked + .toggle-sl::before{transform:translateX(20px);}
+
+    /* API key */
+    .api-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+    .api-key{flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:'Courier New',monospace;font-size:.82rem;color:var(--muted);background:#f9fafb;}
+    .copy-btn{padding:8px 12px;background:#f3f4f6;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;font-size:.78rem;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:5px;transition:all .15s;}
+    .copy-btn:hover{background:#f0fdf4;border-color:var(--g4);color:var(--g3);}
+
+    /* Perm badge */
+    .perm-grid{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px;}
+    .perm{font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:20px;background:#f0fdf4;color:var(--g3);border:1px solid #bbf7d0;}
+
+    /* Danger zone */
+    .danger-zone{background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;}
+    .danger-zone p{font-size:.82rem;color:#7f1d1d;line-height:1.4;}
+
+    #toast{position:fixed;bottom:24px;right:24px;z-index:9999;background:var(--g3);color:#fff;padding:11px 17px;border-radius:10px;font-size:.82rem;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.2);display:none;align-items:center;gap:8px;}
+    #toast.err{background:#dc2626;}
+  </style>
+</head>
+<body>
+<nav class="nb">
+  <a class="nb-brand" href="dashboard.html"><div class="ico">🌍</div><h1>Geo<em>Hub</em></h1></a>
+  <div class="nb-links">
+    <a class="nb-lnk" href="dashboard.html"><i class="fas fa-th-large"></i>Dashboard</a>
+    <a class="nb-lnk" href="map.html"><i class="fas fa-map-marked-alt"></i>Map Viewer</a>
+    <a class="nb-lnk" href="analytics.html"><i class="fas fa-chart-bar"></i>Analytics</a>
+    <a class="nb-lnk" href="data.html"><i class="fas fa-cloud-upload-alt"></i>Data Upload</a>
+    <a class="nb-lnk on" href="settings.html"><i class="fas fa-cog"></i>Settings</a>
+    <span id="adminLink" style="display:none;"><a class="nb-lnk" href="admin.html"><i class="fas fa-user-shield"></i>Admin</a></span>
+  </div>
+  <div class="nb-right">
+    <div class="nb-av" id="nbAv">?</div>
+    <span class="nb-uname" id="nbName">—</span>
+    <button class="btn-out" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i>Sign Out</button>
+  </div>
+</nav>
+
+<main class="main">
+  <div class="pg-hd">
+    <h2>⚙️ Settings</h2>
+    <p>Manage your profile, preferences and account settings</p>
+  </div>
+
+  <!-- Profile card -->
+  <div class="card">
+    <div class="card-hd">
+      <div><h3>Profile Information</h3><p>Update your personal details</p></div>
+    </div>
+    <div class="profile-top">
+      <div class="prof-av" id="profAv">?</div>
+      <div class="prof-info">
+        <h3 id="profName">—</h3>
+        <p id="profTitle">—</p>
+        <p id="profOrg" style="font-size:.78rem;color:var(--muted);"></p>
+        <span class="role-badge" id="roleBadge">—</span>
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="fld"><label>Full Name</label><input class="inp" id="pf-name" autocomplete="name"/></div>
+      <div class="fld"><label>Email Address</label><input class="inp" id="pf-email" type="email" autocomplete="email" readonly/></div>
+      <div class="fld"><label>Job Title</label><input class="inp" id="pf-title" autocomplete="organization-title"/></div>
+      <div class="fld"><label>Organisation</label><input class="inp" id="pf-org" autocomplete="organization"/></div>
+    </div>
+    <div class="form-footer">
+      <button class="btn-sm btn-outline" onclick="resetProfileForm()"><i class="fas fa-undo"></i>Reset</button>
+      <button class="btn-sm btn-primary" onclick="saveProfile()"><i class="fas fa-save"></i>Save Changes</button>
+    </div>
+  </div>
+
+  <!-- Change password -->
+  <div class="card">
+    <div class="card-hd">
+      <div><h3>Change Password</h3><p>Update your login password</p></div>
+    </div>
+    <div class="form-grid">
+      <div class="fld"><label>Current Password</label><input class="inp" id="pw-curr" type="password" autocomplete="current-password"/></div>
+      <div style=""></div>
+      <div class="fld"><label>New Password</label><input class="inp" id="pw-new" type="password" autocomplete="new-password"/></div>
+      <div class="fld"><label>Confirm New Password</label><input class="inp" id="pw-confirm" type="password" autocomplete="new-password"/></div>
+    </div>
+    <div id="pwErr" style="display:none;color:#dc2626;font-size:.8rem;margin-top:8px;padding:8px 12px;background:#fef2f2;border-radius:8px;border:1px solid #fecaca;"></div>
+    <div class="form-footer">
+      <button class="btn-sm btn-primary" onclick="changePassword()"><i class="fas fa-lock"></i>Update Password</button>
+    </div>
+  </div>
+
+  <!-- Map preferences -->
+  <div class="card">
+    <div class="card-hd">
+      <div><h3>Map Preferences</h3><p>Default map settings</p></div>
+    </div>
+    <div class="form-grid">
+      <div class="fld">
+        <label>Default Base Map</label>
+        <select class="inp inp-sel" id="pref-basemap">
+          <option value="osm">OpenStreetMap (Street)</option>
+          <option value="sat">Esri Satellite</option>
+          <option value="terrain">OpenTopoMap (Terrain)</option>
+          <option value="dark">CartoDB Dark</option>
+        </select>
+      </div>
+      <div class="fld">
+        <label>Default Zoom Level</label>
+        <select class="inp inp-sel" id="pref-zoom">
+          <option value="5">5 — National</option>
+          <option value="6" selected>6 — Country</option>
+          <option value="7">7 — Province</option>
+          <option value="8">8 — District</option>
+        </select>
+      </div>
+      <div class="fld">
+        <label>Coordinate Display</label>
+        <select class="inp inp-sel" id="pref-coords">
+          <option value="dd">Decimal Degrees (DD)</option>
+          <option value="dms">Degrees Minutes Seconds (DMS)</option>
+        </select>
+      </div>
+      <div class="fld">
+        <label>Default Province Focus</label>
+        <select class="inp inp-sel" id="pref-prov">
+          <option value="">All Zambia</option>
+          <option>Lusaka</option><option>Copperbelt</option>
+          <option>Southern</option><option>Eastern</option>
+          <option>Northern</option><option>Western</option>
+          <option>Central</option><option>Luapula</option>
+          <option>North-Western</option><option>Muchinga</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-footer">
+      <button class="btn-sm btn-primary" onclick="saveMapPrefs()"><i class="fas fa-save"></i>Save Preferences</button>
+    </div>
+  </div>
+
+  <!-- Notification settings -->
+  <div class="card">
+    <div class="card-hd">
+      <div><h3>Notification Settings</h3><p>Control what alerts you receive</p></div>
+    </div>
+    <div class="tog-row">
+      <div class="tog-info"><strong>Dataset Updates</strong><small>Notified when new spatial datasets are added</small></div>
+      <label class="toggle"><input type="checkbox" id="notif-datasets" checked/><span class="toggle-sl"></span></label>
+    </div>
+    <div class="tog-row">
+      <div class="tog-info"><strong>System Maintenance</strong><small>Alerts about scheduled downtime</small></div>
+      <label class="toggle"><input type="checkbox" id="notif-system" checked/><span class="toggle-sl"></span></label>
+    </div>
+    <div class="tog-row">
+      <div class="tog-info"><strong>Export Completion</strong><small>Alert when data exports are ready</small></div>
+      <label class="toggle"><input type="checkbox" id="notif-export" checked/><span class="toggle-sl"></span></label>
+    </div>
+    <div class="tog-row">
+      <div class="tog-info"><strong>User Activity (Admin)</strong><small>Admin alerts for user logins and actions</small></div>
+      <label class="toggle"><input type="checkbox" id="notif-admin"/><span class="toggle-sl"></span></label>
+    </div>
+    <div class="form-footer">
+      <button class="btn-sm btn-primary" onclick="saveNotifs()"><i class="fas fa-save"></i>Save Notifications</button>
+    </div>
+  </div>
+
+  <!-- Permissions & API -->
+  <div class="card">
+    <div class="card-hd">
+      <div><h3>Permissions & API Access</h3><p>Your account capabilities</p></div>
+    </div>
+    <div style="margin-bottom:16px;">
+      <div style="font-size:.8rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">Granted Permissions</div>
+      <div class="perm-grid" id="permGrid"></div>
+    </div>
+    <div style="margin-bottom:16px;">
+      <div style="font-size:.8rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">Read-Only API Key</div>
+      <div class="api-row">
+        <div class="api-key" id="apiKey">ghz_ro_••••••••••••••••••••</div>
+        <button class="copy-btn" id="revealBtn" onclick="toggleApiKey()"><i class="fas fa-eye"></i>Reveal</button>
+        <button class="copy-btn" onclick="copyApiKey()"><i class="fas fa-copy"></i>Copy</button>
+        <button class="copy-btn" onclick="regenerateKey()"><i class="fas fa-sync-alt"></i>Regenerate</button>
+      </div>
+      <p style="font-size:.74rem;color:var(--muted);margin-top:6px;"><i class="fas fa-info-circle" style="color:var(--g4);"></i> This key grants read-only access to public Zambia spatial datasets via the GeoHub API.</p>
+    </div>
+  </div>
+
+  <!-- Danger zone -->
+  <div class="card">
+    <div class="card-hd">
+      <div><h3>Danger Zone</h3><p>Irreversible account actions</p></div>
+    </div>
+    <div class="danger-zone">
+      <div>
+        <p><strong style="color:#dc2626;">Sign Out All Devices</strong><br>This will terminate all active sessions and log you out everywhere.</p>
+      </div>
+      <button class="btn-sm btn-danger" onclick="signOutAll()"><i class="fas fa-sign-out-alt"></i>Sign Out All</button>
+    </div>
+  </div>
+</main>
+
+<div id="toast"></div>
+
+<script>
+// ── Auth ──────────────────────────────────────────────────────────────────
+const session = GeoHubAuth.requireAuth('index.html');
+document.getElementById('nbAv').textContent   = session.avatar;
+document.getElementById('nbName').textContent = session.name;
+if (session.role === 'admin') document.getElementById('adminLink').style.display = 'inline';
+function doLogout(){ GeoHubAuth.logout(); window.location.href = 'index.html'; }
+
+// ── Load profile ──────────────────────────────────────────────────────────
+function loadProfile() {
+  document.getElementById('profAv').textContent    = session.avatar;
+  document.getElementById('profName').textContent  = session.name;
+  document.getElementById('profTitle').textContent = session.title || 'Platform User';
+  document.getElementById('profOrg').textContent   = session.org || '';
+  const rb = document.getElementById('roleBadge');
+  rb.textContent = session.role === 'admin' ? '🛡 Administrator' : '👤 Standard User';
+  rb.className = 'role-badge ' + (session.role === 'admin' ? 'rb-admin' : 'rb-standard');
+  document.getElementById('pf-name').value  = session.name;
+  document.getElementById('pf-email').value = session.email;
+  document.getElementById('pf-title').value = session.title || '';
+  document.getElementById('pf-org').value   = session.org || '';
+}
+function resetProfileForm() { loadProfile(); showToast('Profile form reset'); }
+
+// ── Save profile ──────────────────────────────────────────────────────────
+function saveProfile() {
+  const name  = document.getElementById('pf-name').value.trim();
+  const title = document.getElementById('pf-title').value.trim();
+  const org   = document.getElementById('pf-org').value.trim();
+  if (!name) { showToast('Name is required', true); return; }
+  const result = GeoHubAuth.updateUser(session.id, { name, title, org, avatar: name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2) });
+  if (!result.success) { showToast(result.error, true); return; }
+  // Update local session display
+  document.getElementById('nbAv').textContent   = result.user.avatar;
+  document.getElementById('nbName').textContent = result.user.name;
+  document.getElementById('profAv').textContent = result.user.avatar;
+  document.getElementById('profName').textContent = result.user.name;
+  document.getElementById('profTitle').textContent = result.user.title;
+  document.getElementById('profOrg').textContent   = result.user.org;
+  showToast('Profile updated successfully');
+  GeoHubAuth.addAuditLog('PROFILE_UPDATE', `User updated profile`, session.id);
+}
+
+// ── Change password ────────────────────────────────────────────────────────
+function changePassword() {
+  const curr    = document.getElementById('pw-curr').value;
+  const newPass = document.getElementById('pw-new').value;
+  const confirm = document.getElementById('pw-confirm').value;
+  const errEl   = document.getElementById('pwErr');
+  errEl.style.display = 'none';
+
+  const users   = GeoHubAuth.getUsers();
+  const user    = users.find(u => u.id === session.id);
+  if (!user) { errEl.textContent = 'Session error.'; errEl.style.display = 'block'; return; }
+  if (user.password !== curr) { errEl.textContent = 'Current password is incorrect.'; errEl.style.display = 'block'; return; }
+  if (newPass.length < 6) { errEl.textContent = 'New password must be at least 6 characters.'; errEl.style.display = 'block'; return; }
+  if (newPass !== confirm) { errEl.textContent = 'Passwords do not match.'; errEl.style.display = 'block'; return; }
+
+  GeoHubAuth.updateUser(session.id, { password: newPass });
+  document.getElementById('pw-curr').value = '';
+  document.getElementById('pw-new').value  = '';
+  document.getElementById('pw-confirm').value = '';
+  showToast('Password changed successfully');
+  GeoHubAuth.addAuditLog('PASSWORD_CHANGE', 'User changed password', session.id);
+}
+
+// ── Map prefs ─────────────────────────────────────────────────────────────
+function saveMapPrefs() {
+  const prefs = {
+    basemap: document.getElementById('pref-basemap').value,
+    zoom:    document.getElementById('pref-zoom').value,
+    coords:  document.getElementById('pref-coords').value,
+    prov:    document.getElementById('pref-prov').value
+  };
+  localStorage.setItem('ghz_map_prefs_' + session.id, JSON.stringify(prefs));
+  showToast('Map preferences saved');
+}
+function loadMapPrefs() {
+  const saved = JSON.parse(localStorage.getItem('ghz_map_prefs_' + session.id) || '{}');
+  if (saved.basemap) document.getElementById('pref-basemap').value = saved.basemap;
+  if (saved.zoom)    document.getElementById('pref-zoom').value    = saved.zoom;
+  if (saved.coords)  document.getElementById('pref-coords').value  = saved.coords;
+  if (saved.prov)    document.getElementById('pref-prov').value    = saved.prov;
+}
+
+// ── Notifications ─────────────────────────────────────────────────────────
+function saveNotifs() {
+  const notifs = {
+    datasets: document.getElementById('notif-datasets').checked,
+    system:   document.getElementById('notif-system').checked,
+    export:   document.getElementById('notif-export').checked,
+    admin:    document.getElementById('notif-admin').checked
+  };
+  localStorage.setItem('ghz_notifs_' + session.id, JSON.stringify(notifs));
+  showToast('Notification preferences saved');
+}
+function loadNotifs() {
+  const saved = JSON.parse(localStorage.getItem('ghz_notifs_' + session.id) || '{}');
+  if (saved.datasets !== undefined) document.getElementById('notif-datasets').checked = saved.datasets;
+  if (saved.system   !== undefined) document.getElementById('notif-system').checked   = saved.system;
+  if (saved.export   !== undefined) document.getElementById('notif-export').checked   = saved.export;
+  if (saved.admin    !== undefined) document.getElementById('notif-admin').checked    = saved.admin;
+  if (session.role !== 'admin') document.getElementById('notif-admin').disabled = true;
+}
+
+// ── Permissions display ────────────────────────────────────────────────────
+function loadPermissions() {
+  const permLabels = {
+    view_map: '🗺 View Map', upload_data: '☁ Upload Data',
+    view_analytics: '📊 Analytics', export_data: '📥 Export Data',
+    manage_users: '👥 Manage Users', manage_layers: '🗂 Manage Layers',
+    view_audit: '📋 Audit Log'
+  };
+  document.getElementById('permGrid').innerHTML = session.permissions.map(p =>
+    `<span class="perm">${permLabels[p] || p}</span>`
+  ).join('');
+}
+
+// ── API key ───────────────────────────────────────────────────────────────
+let apiKeyRevealed = false;
+const realKey = 'ghz_ro_' + btoa(session.id).replace(/=/g,'').slice(0,20);
+function toggleApiKey() {
+  apiKeyRevealed = !apiKeyRevealed;
+  document.getElementById('apiKey').textContent = apiKeyRevealed ? realKey : 'ghz_ro_••••••••••••••••••••';
+  const btn = document.getElementById('revealBtn');
+  btn.innerHTML = apiKeyRevealed ? '<i class="fas fa-eye-slash"></i>Hide' : '<i class="fas fa-eye"></i>Reveal';
+}
+function copyApiKey() {
+  navigator.clipboard.writeText(realKey).then(() => showToast('API key copied to clipboard')).catch(() => showToast('Copy failed', true));
+}
+function regenerateKey() {
+  if (!confirm('Regenerate your API key? The old key will stop working.')) return;
+  showToast('API key regenerated (session-based)');
+  GeoHubAuth.addAuditLog('API_KEY_REGEN', 'User regenerated API key', session.id);
+}
+
+// ── Sign out all ──────────────────────────────────────────────────────────
+function signOutAll() {
+  if (!confirm('Sign out from all devices?')) return;
+  GeoHubAuth.logout();
+  window.location.href = 'index.html';
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────
+function showToast(msg, isErr=false) {
+  const t = document.getElementById('toast');
+  t.className = isErr ? 'err' : '';
+  t.innerHTML = `<i class="fas fa-${isErr?'exclamation-circle':'check-circle'}"></i>${msg}`;
+  t.style.display = 'flex'; clearTimeout(t._t);
+  t._t = setTimeout(() => t.style.display = 'none', 2800);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+loadProfile();
+loadMapPrefs();
+loadNotifs();
+loadPermissions();
+</script>
+</body>
+</html>

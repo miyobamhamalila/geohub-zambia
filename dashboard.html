@@ -1,0 +1,2199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GeoHub Zambia – Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/zambia-data.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --g1:#040e07;--g2:#0a2e1a;--g3:#1a6b35;--g4:#2d9e5f;--g5:#4CAF50;--g6:#81c784;
+      --white:#fff;--bg:#f0f4f1;--text:#111827;--muted:#6b7280;
+      --border:#e5e7eb;--card:#fff;
+      --sh:0 1px 3px rgba(0,0,0,.06),0 2px 8px rgba(0,0,0,.04);
+      --sh2:0 4px 20px rgba(0,0,0,.1);--r:14px;--nb:62px;
+      --temp-cold:#3b82f6;--temp-warm:#f97316;--temp-hot:#dc2626;
+    }
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+    /* ── NAVBAR ── */
+    .nb{position:fixed;top:0;left:0;right:0;height:var(--nb);
+      background:#fff;border-bottom:1px solid var(--border);
+      display:flex;align-items:center;padding:0 22px;z-index:200;box-shadow:var(--sh);}
+    .nb-brand{display:flex;align-items:center;gap:10px;text-decoration:none;flex-shrink:0;}
+    .nb-brand .ico{width:36px;height:36px;background:linear-gradient(135deg,var(--g3),var(--g4));
+      border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 2px 8px rgba(26,107,53,.3);}
+    .nb-brand h1{font-size:1.1rem;font-weight:900;color:var(--text);}
+    .nb-brand h1 em{font-style:normal;color:var(--g3);}
+    .nb-links{display:flex;align-items:center;gap:1px;margin-left:20px;flex:1;}
+    .nb-lnk{padding:6px 10px;border-radius:7px;font-size:.8rem;font-weight:500;
+      color:var(--muted);text-decoration:none;display:flex;align-items:center;gap:5px;transition:all .15s;white-space:nowrap;}
+    .nb-lnk:hover{background:#f3f4f6;color:var(--text);}
+    .nb-lnk.on{background:#f0fdf4;color:var(--g3);font-weight:700;position:relative;}
+    .nb-lnk.on::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:2.5px;background:var(--g5);border-radius:2px 2px 0 0;}
+    .nb-right{display:flex;align-items:center;gap:7px;margin-left:auto;flex-shrink:0;}
+    .nb-clock{font-size:.76rem;font-weight:700;color:var(--text);background:#f3f4f6;
+      border-radius:7px;padding:5px 10px;letter-spacing:.3px;font-variant-numeric:tabular-nums;}
+    .nb-notif{width:34px;height:34px;background:#f3f4f6;border-radius:8px;
+      display:flex;align-items:center;justify-content:center;cursor:pointer;
+      font-size:.85rem;color:var(--muted);position:relative;transition:background .15s;}
+    .nb-notif:hover{background:#e9ecef;}
+    .notif-dot{position:absolute;top:6px;right:6px;width:7px;height:7px;background:#ef4444;border-radius:50%;border:1.5px solid #fff;}
+    .nb-pill{display:flex;align-items:center;gap:8px;background:#f3f4f6;border-radius:50px;padding:4px 12px 4px 4px;cursor:pointer;transition:background .15s;}
+    .nb-pill:hover{background:#e9ecef;}
+    .nb-av{width:30px;height:30px;background:linear-gradient(135deg,var(--g3),var(--g4));border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:.72rem;}
+    .nb-uname{font-size:.8rem;font-weight:600;color:var(--text);}
+    .btn-out{padding:5px 11px;background:none;border:1.5px solid var(--border);border-radius:7px;font-family:'Inter',sans-serif;font-size:.76rem;font-weight:600;color:var(--muted);cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s;}
+    .btn-out:hover{background:#fef2f2;border-color:#fca5a5;color:#dc2626;}
+
+    /* ── SYSTEM STATUS BAR ── */
+    .sys-bar{background:linear-gradient(90deg,var(--g1),var(--g2));padding:5px 26px;
+      display:flex;align-items:center;gap:18px;font-size:.69rem;color:rgba(255,255,255,.6);
+      margin-top:var(--nb);flex-wrap:wrap;}
+    .sys-dot{width:6px;height:6px;border-radius:50%;background:#4CAF50;animation:blink 2s ease infinite;flex-shrink:0;}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+    .sys-seg{display:flex;align-items:center;gap:5px;white-space:nowrap;}
+    .sys-seg strong{color:#fff;font-weight:700;}
+
+    .main{padding:16px 26px 60px;max-width:1700px;margin:0 auto;}
+
+    /* Page header */
+    .pg-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;}
+    .pg-hd-l h2{font-size:1.35rem;font-weight:900;}
+    .pg-hd-l p{font-size:.8rem;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:8px;}
+    .pg-hd-r{display:flex;gap:7px;flex-wrap:wrap;}
+    .btn-sm{padding:7px 12px;border-radius:8px;font-size:.78rem;font-weight:600;cursor:pointer;border:1.5px solid transparent;font-family:'Inter',sans-serif;display:inline-flex;align-items:center;gap:5px;transition:all .15s;}
+    .btn-primary{background:var(--g3);color:#fff;border-color:var(--g3);}
+    .btn-primary:hover{background:var(--g2);}
+    .btn-outline{background:#fff;color:var(--text);border-color:var(--border);}
+    .btn-outline:hover{background:#f9fafb;}
+
+    /* ── STATS GRID ── */
+    .stats8{display:grid;grid-template-columns:repeat(8,1fr);gap:12px;margin-bottom:18px;}
+    .stat-c{background:#fff;border:1px solid var(--border);border-radius:13px;padding:14px 15px;box-shadow:var(--sh);transition:all .2s;cursor:default;overflow:hidden;position:relative;}
+    .stat-c:hover{box-shadow:var(--sh2);transform:translateY(-2px);}
+    .stat-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:7px;}
+    .stat-ico{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:.95rem;}
+    .stat-trend{font-size:.62rem;font-weight:700;padding:2px 6px;border-radius:20px;}
+    .up{background:#f0fdf4;color:#16a34a;}.dn{background:#fef2f2;color:#dc2626;}
+    .neutral{background:#f3f4f6;color:var(--muted);}
+    .stat-v{font-size:1.3rem;font-weight:900;line-height:1;color:var(--text);}
+    .stat-l{font-size:.67rem;color:var(--muted);margin-top:3px;}
+    .stat-spark{height:24px;margin-top:7px;}
+
+    /* ── CARD ── */
+    .card{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;box-shadow:var(--sh);}
+    .card-hd{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;}
+    .card-hd h3{font-size:.92rem;font-weight:800;color:var(--text);}
+    .card-hd p{font-size:.71rem;color:var(--muted);margin-top:2px;}
+    .card-tag{font-size:.67rem;font-weight:700;padding:3px 9px;border-radius:20px;background:#f0fdf4;color:var(--g3);border:1px solid #bbf7d0;white-space:nowrap;}
+    .lnk-all{font-size:.75rem;color:var(--g3);font-weight:700;text-decoration:none;display:flex;align-items:center;gap:3px;white-space:nowrap;}
+    .lnk-all:hover{text-decoration:underline;}
+
+    /* ── GRID LAYOUTS ── */
+    .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:15px;margin-bottom:15px;}
+    .row2{display:grid;grid-template-columns:1fr 340px;gap:15px;margin-bottom:15px;}
+    .row2-eq{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:15px;}
+    .row4{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:15px;}
+    .row-map{display:grid;grid-template-columns:1fr 320px;gap:15px;margin-bottom:15px;}
+    .row-temp{display:grid;grid-template-columns:2fr 1fr;gap:15px;margin-bottom:15px;}
+
+    /* Quick actions */
+    .qa-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:9px;margin-bottom:16px;}
+    .qa-btn{background:#fff;border:1.5px solid var(--border);border-radius:10px;padding:11px 7px;cursor:pointer;transition:all .2s;text-align:center;text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:5px;}
+    .qa-btn:hover{border-color:var(--g4);background:#f0fdf4;transform:translateY(-2px);box-shadow:var(--sh2);}
+    .qa-ico{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.9rem;}
+    .qa-btn span{font-size:.69rem;font-weight:700;color:var(--text);}
+    .qa-btn small{font-size:.6rem;color:var(--muted);}
+
+    /* Chart wrappers */
+    .chart-wrap{position:relative;}
+
+    /* Province table */
+    .prov-tbl{width:100%;border-collapse:collapse;font-size:.77rem;}
+    .prov-tbl th{padding:7px 9px;background:#f9fafb;border-bottom:2px solid var(--border);font-size:.68rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;text-align:left;cursor:pointer;user-select:none;white-space:nowrap;}
+    .prov-tbl th:hover{background:#f3f4f6;}
+    .prov-tbl td{padding:6px 9px;border-bottom:1px solid #f3f4f6;vertical-align:middle;}
+    .prov-tbl tr:hover td{background:#f0fdf4;cursor:pointer;}
+    .prov-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px;}
+    .bar-cell{display:flex;align-items:center;gap:5px;}
+    .bar-bg{flex:1;height:5px;background:#f3f4f6;border-radius:3px;}
+    .bar-fill{height:5px;border-radius:3px;transition:width .4s;}
+
+    /* Activity feed */
+    .act-item{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid #f9fafb;}
+    .act-item:last-child{border-bottom:none;}
+    .act-dot{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:.72rem;flex-shrink:0;}
+    .act-txt strong{display:block;font-size:.78rem;font-weight:700;color:var(--text);line-height:1.3;}
+    .act-txt span{font-size:.69rem;color:var(--muted);}
+    .act-time{font-size:.64rem;color:var(--muted);margin-left:auto;white-space:nowrap;flex-shrink:0;}
+
+    /* Dataset cards */
+    .ds-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
+    .ds-card{background:#fff;border:1px solid var(--border);border-radius:11px;padding:14px 15px;transition:all .2s;cursor:pointer;}
+    .ds-card:hover{border-color:var(--g4);box-shadow:var(--sh2);transform:translateY(-2px);}
+    .ds-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:7px;}
+    .ds-ico{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0;}
+    .ds-tag{font-size:.63rem;font-weight:700;padding:2px 7px;border-radius:20px;}
+    .ds-card h4{font-size:.82rem;font-weight:800;color:var(--text);}
+    .ds-card p{font-size:.71rem;color:var(--muted);margin-top:2px;line-height:1.4;}
+    .ds-meta{display:flex;gap:9px;margin-top:7px;font-size:.68rem;color:var(--muted);flex-wrap:wrap;}
+
+    /* Province drill-down modal */
+    #provModal{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:8000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px);}
+    #provModal.open{display:flex;}
+    .prov-modal-box{background:#fff;border-radius:18px;padding:26px;max-width:820px;width:96%;max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25);}
+    .prov-modal-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;}
+    .prov-modal-head h2{font-size:1.25rem;font-weight:900;}
+    .prov-close{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem;padding:0;}
+    .prov-close:hover{color:var(--text);}
+    .prov-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin-bottom:16px;}
+    .prov-stat-box{background:#f9fafb;border:1px solid var(--border);border-radius:9px;padding:11px 13px;text-align:center;}
+    .prov-stat-box strong{display:block;font-size:1.1rem;font-weight:900;color:var(--text);}
+    .prov-stat-box small{font-size:.67rem;color:var(--muted);}
+    .prov-lc-bars{display:flex;flex-direction:column;gap:6px;}
+    .lc-bar-row{display:flex;align-items:center;gap:8px;font-size:.77rem;}
+    .lc-bar-label{width:130px;color:var(--muted);flex-shrink:0;}
+    .lc-bar-bg{flex:1;height:9px;background:#f3f4f6;border-radius:5px;overflow:hidden;}
+    .lc-bar-fill{height:9px;border-radius:5px;transition:width .5s;}
+    .lc-bar-val{width:33px;text-align:right;font-weight:700;color:var(--text);font-size:.74rem;}
+    .prov-dist-list{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:10px;}
+    .prov-dist-item{background:#f9fafb;border-radius:7px;padding:7px 9px;font-size:.74rem;border:1px solid var(--border);}
+    .prov-dist-item strong{display:block;font-weight:700;color:var(--text);}
+    .prov-dist-item small{color:var(--muted);}
+
+    /* Data quality indicator */
+    .dq-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;}
+    .dq-item{text-align:center;}
+    .dq-ring{position:relative;width:56px;height:56px;margin:0 auto 4px;}
+    .dq-ring svg{transform:rotate(-90deg);}
+    .dq-ring-lbl{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:900;}
+    .dq-name{font-size:.68rem;color:var(--muted);font-weight:600;}
+
+    /* ── WEATHER WIDGET ── */
+    .wx-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:4px;}
+    .wx-card{background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #bbf7d0;border-radius:10px;padding:10px 12px;text-align:center;}
+    .wx-icon{font-size:1.5rem;margin-bottom:3px;}
+    .wx-city{font-size:.68rem;font-weight:800;color:var(--text);margin-bottom:1px;}
+    .wx-temp{font-size:1.1rem;font-weight:900;color:var(--g3);}
+    .wx-desc{font-size:.62rem;color:var(--muted);margin-top:2px;}
+    .wx-extra{display:flex;justify-content:center;gap:8px;margin-top:5px;font-size:.62rem;color:var(--muted);}
+
+    /* ── TEMPERATURE PANEL ── */
+    .temp-province-tabs{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;}
+    .temp-ptab{padding:3px 9px;border-radius:6px;font-size:.67rem;font-weight:700;cursor:pointer;
+      border:1.5px solid var(--border);background:#fff;color:var(--muted);transition:all .15s;}
+    .temp-ptab.active{border-color:var(--g4);background:#f0fdf4;color:var(--g3);}
+    .temp-year-tabs{display:flex;gap:4px;margin-bottom:8px;}
+    .temp-ytab{padding:3px 8px;border-radius:5px;font-size:.65rem;font-weight:700;cursor:pointer;
+      border:1.5px solid var(--border);background:#fff;color:var(--muted);transition:all .15s;}
+    .temp-ytab.active{background:var(--g3);color:#fff;border-color:var(--g3);}
+    /* Temperature colour scale legend */
+    .temp-legend{display:flex;align-items:center;gap:6px;font-size:.64rem;color:var(--muted);margin-top:8px;}
+    .temp-legend-bar{flex:1;height:8px;border-radius:4px;
+      background:linear-gradient(90deg,#3b82f6,#22c55e,#f97316,#dc2626);}
+    /* Province temp heatmap grid */
+    .temp-heatmap-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:3px;margin-top:4px;}
+    .temp-hm-cell{border-radius:4px;padding:6px 3px;text-align:center;cursor:pointer;transition:transform .15s;}
+    .temp-hm-cell:hover{transform:scale(1.1);}
+    .temp-hm-prov{font-size:.55rem;font-weight:800;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.4);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .temp-hm-val{font-size:.68rem;font-weight:900;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.5);}
+    /* Monthly temp table */
+    .temp-month-table{width:100%;border-collapse:collapse;font-size:.69rem;}
+    .temp-month-table th{padding:4px 6px;background:#f9fafb;border-bottom:1px solid var(--border);font-weight:700;color:var(--muted);font-size:.62rem;text-align:center;}
+    .temp-month-table td{padding:4px 6px;text-align:center;border-bottom:1px solid #f9fafb;font-weight:600;}
+    .temp-badge{display:inline-block;padding:2px 6px;border-radius:4px;font-size:.62rem;font-weight:700;color:#fff;}
+
+    /* ── MULTI-LAYER MAP ── */
+    .map-section{background:#fff;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh);margin-bottom:15px;}
+    .map-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+    .map-header h3{font-size:.95rem;font-weight:800;display:flex;align-items:center;gap:7px;}
+    .map-toolbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+    .map-tool-btn{padding:5px 11px;border-radius:7px;font-size:.72rem;font-weight:700;border:1.5px solid var(--border);background:#fff;color:var(--text);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:4px;}
+    .map-tool-btn:hover{background:#f0fdf4;border-color:var(--g4);color:var(--g3);}
+    .map-tool-btn.active{background:var(--g3);color:#fff;border-color:var(--g3);}
+
+    /* Map + side panel layout */
+    .map-body{display:grid;grid-template-columns:1fr 270px;height:500px;}
+    #miniMapWrap{position:relative;height:100%;overflow:hidden;}
+    #miniMap{width:100%;height:100%;}
+    .map-side{border-left:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;background:#fafafa;}
+    .map-side-sect{padding:12px 14px;border-bottom:1px solid var(--border);}
+    .map-side-title{font-size:.63rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:5px;}
+
+    /* Basemap grid */
+    .bm-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+    .bm-item{border:2px solid transparent;border-radius:7px;overflow:hidden;cursor:pointer;transition:all .15s;}
+    .bm-item.active{border-color:var(--g3);box-shadow:0 0 0 1px var(--g3);}
+    .bm-item img{width:100%;height:34px;object-fit:cover;display:block;}
+    .bm-label{font-size:.6rem;font-weight:700;text-align:center;padding:2px 0;background:#f9fafb;color:var(--text);}
+
+    /* Layer list */
+    .layer-row{display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid #f3f4f6;cursor:grab;}
+    .layer-row:last-child{border-bottom:none;}
+    .layer-drag{color:#d1d5db;font-size:.65rem;cursor:grab;}
+    .layer-color{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
+    .layer-name{flex:1;font-size:.72rem;font-weight:600;color:var(--text);}
+    .layer-count{font-size:.63rem;color:var(--muted);margin-right:2px;}
+    .layer-toggle{position:relative;width:30px;height:16px;flex-shrink:0;}
+    .layer-toggle input{opacity:0;width:0;height:0;}
+    .layer-toggle-sl{position:absolute;inset:0;background:#d1d5db;border-radius:15px;cursor:pointer;transition:background .2s;}
+    .layer-toggle-sl::before{content:'';position:absolute;width:11px;height:11px;left:2.5px;top:2.5px;background:#fff;border-radius:50%;transition:transform .2s;}
+    .layer-toggle input:checked + .layer-toggle-sl{background:var(--g4);}
+    .layer-toggle input:checked + .layer-toggle-sl::before{transform:translateX(14px);}
+
+    /* Opacity row */
+    .op-row{display:flex;align-items:center;gap:7px;font-size:.67rem;color:var(--muted);}
+    .op-slider{flex:1;-webkit-appearance:none;height:3px;border-radius:2px;background:#e5e7eb;outline:none;}
+    .op-slider::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:var(--g5);cursor:pointer;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.2);}
+    .op-val{font-weight:700;color:var(--text);min-width:30px;}
+
+    /* Map status bar */
+    .map-status{position:absolute;bottom:0;left:0;right:0;background:rgba(255,255,255,.93);border-top:1px solid rgba(0,0,0,.08);padding:4px 10px;display:flex;align-items:center;justify-content:space-between;font-size:.65rem;color:var(--muted);backdrop-filter:blur(6px);z-index:400;}
+    .map-status strong{color:var(--text);}
+
+    /* Notifications popup */
+    #notifPanel{position:fixed;top:calc(var(--nb)+8px);right:80px;z-index:1000;
+      background:#fff;border:1px solid var(--border);border-radius:12px;
+      width:310px;max-height:420px;overflow-y:auto;
+      box-shadow:0 8px 32px rgba(0,0,0,.15);display:none;}
+    .notif-head{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+    .notif-head h4{font-size:.85rem;font-weight:800;color:var(--text);}
+    .notif-item{padding:10px 14px;border-bottom:1px solid #f9fafb;display:flex;gap:9px;align-items:flex-start;cursor:pointer;transition:background .12s;}
+    .notif-item:hover{background:#f9fafb;}
+    .notif-item:last-child{border-bottom:none;}
+    .notif-ico{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:.72rem;flex-shrink:0;}
+    .notif-txt strong{display:block;font-size:.77rem;font-weight:700;color:var(--text);line-height:1.3;}
+    .notif-txt span{font-size:.67rem;color:var(--muted);}
+
+    /* Toast */
+    #toast{position:fixed;bottom:22px;right:22px;z-index:9999;background:var(--g3);color:#fff;padding:10px 16px;border-radius:10px;font-size:.81rem;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.18);display:none;align-items:center;gap:7px;}
+
+    /* Loading */
+    #loadOv{position:fixed;inset:0;background:var(--g1);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;transition:opacity .5s;}
+    #loadOv.hidden{opacity:0;pointer-events:none;}
+    .sp{width:38px;height:38px;border:3px solid rgba(76,175,80,.18);border-top-color:var(--g5);border-radius:50%;animation:spin .7s linear infinite;}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .load-bar{width:220px;height:3px;background:rgba(76,175,80,.15);border-radius:2px;overflow:hidden;margin-top:4px;}
+    .load-bar-fill{height:3px;background:var(--g5);border-radius:2px;width:0;transition:width .4s ease;}
+
+    /* Live indicator */
+    .live-dot{display:inline-flex;align-items:center;gap:5px;font-size:.69rem;color:#16a34a;font-weight:700;}
+    .live-dot::before{content:'';width:6px;height:6px;border-radius:50%;background:#16a34a;animation:lpulse 2s ease infinite;}
+    @keyframes lpulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.5)}}
+
+    /* Sort indicator */
+    .sort-asc::after{content:' ↑';}
+    .sort-desc::after{content:' ↓';}
+
+    /* Coord quick widget */
+    .coord-widget{background:linear-gradient(135deg,#040e07,#0a2e1a);border-radius:10px;padding:14px;color:#fff;}
+    .coord-widget h4{font-size:.76rem;font-weight:800;color:var(--g5);margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+    .cw-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.06);}
+    .cw-row:last-child{border-bottom:none;}
+    .cw-key{font-size:.64rem;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.4px;flex-shrink:0;}
+    .cw-val{font-size:.72rem;font-weight:700;color:#fff;font-family:'Courier New',monospace;text-align:right;flex:1;margin-left:8px;}
+    .cw-tab{display:inline-flex;gap:3px;background:rgba(255,255,255,.08);border-radius:6px;padding:2px;margin-bottom:7px;flex-wrap:wrap;}
+    .cw-t{padding:3px 8px;border-radius:5px;font-size:.61rem;font-weight:700;cursor:pointer;color:rgba(255,255,255,.5);transition:all .15s;}
+    .cw-t.active{background:var(--g3);color:#fff;}
+
+    /* Section headings */
+    .section-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+    .section-hd h3{font-size:.95rem;font-weight:800;color:var(--text);}
+
+    /* KPI row */
+    .kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px;}
+    .kpi-box{background:#f9fafb;border:1px solid var(--border);border-radius:8px;padding:8px 10px;text-align:center;}
+    .kpi-box strong{display:block;font-size:1rem;font-weight:900;color:var(--text);}
+    .kpi-box small{font-size:.62rem;color:var(--muted);}
+
+    /* Temp KPI row */
+    .temp-kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px;}
+    .temp-kpi-box{background:#f9fafb;border:1px solid var(--border);border-radius:8px;padding:9px 11px;text-align:center;}
+    .temp-kpi-box strong{display:block;font-size:1rem;font-weight:900;}
+    .temp-kpi-box small{font-size:.63rem;color:var(--muted);}
+
+    @media(max-width:1400px){
+      .stats8{grid-template-columns:repeat(4,1fr);}
+      .qa-grid{grid-template-columns:repeat(4,1fr);}
+      .row3,.row2{grid-template-columns:1fr;}
+      .ds-grid{grid-template-columns:repeat(2,1fr);}
+      .map-body{grid-template-columns:1fr;height:auto;}
+      .map-side{height:300px;border-left:none;border-top:1px solid var(--border);}
+      .row-temp{grid-template-columns:1fr;}
+    }
+    @media(max-width:900px){
+      .stats8{grid-template-columns:repeat(2,1fr);}
+      .qa-grid{grid-template-columns:repeat(3,1fr);}
+      .row2-eq{grid-template-columns:1fr;}
+      .ds-grid{grid-template-columns:1fr;}
+      .nb-clock{display:none;}
+      .map-body{height:auto;}
+      #miniMapWrap{height:320px;}
+      .prov-stats{grid-template-columns:repeat(2,1fr);}
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── LOADING OVERLAY ── -->
+<div id="loadOv">
+  <div style="font-size:36px;margin-bottom:4px;">🌍</div>
+  <div class="sp"></div>
+  <p style="color:rgba(255,255,255,.7);font-size:.86rem;font-weight:600;" id="loadMsg">Initialising GeoHub…</p>
+  <div class="load-bar"><div class="load-bar-fill" id="loadBarFill"></div></div>
+  <p style="color:rgba(255,255,255,.35);font-size:.7rem;margin-top:4px;" id="loadStep">Verifying session…</p>
+</div>
+
+<!-- ── NAVBAR ── -->
+<nav class="nb">
+  <a class="nb-brand" href="dashboard.html">
+    <div class="ico">🌍</div><h1>Geo<em>Hub</em></h1>
+  </a>
+  <div class="nb-links">
+    <a class="nb-lnk on" href="dashboard.html"><i class="fas fa-th-large"></i>Dashboard</a>
+    <a class="nb-lnk" href="map.html"><i class="fas fa-map-marked-alt"></i>Map Viewer</a>
+    <a class="nb-lnk" href="analytics.html"><i class="fas fa-chart-bar"></i>Analytics</a>
+    <a class="nb-lnk" href="data.html"><i class="fas fa-cloud-upload-alt"></i>Data Upload</a>
+    <a class="nb-lnk" href="settings.html"><i class="fas fa-cog"></i>Settings</a>
+    <span id="adminLink" style="display:none;"><a class="nb-lnk" href="admin.html"><i class="fas fa-user-shield"></i>Admin</a></span>
+  </div>
+  <div class="nb-right">
+    <div class="nb-clock" id="nbClock">--:--:--</div>
+    <div class="nb-notif" id="notifBtn" title="Notifications" onclick="toggleNotif()">
+      <i class="fas fa-bell"></i><span class="notif-dot" id="notifDot"></span>
+    </div>
+    <div class="nb-pill">
+      <div class="nb-av" id="nbAv">?</div>
+      <div>
+        <div class="nb-uname" id="nbName">—</div>
+        <div style="font-size:.66rem;color:var(--muted);" id="nbRole">—</div>
+      </div>
+    </div>
+    <button class="btn-out" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i>Sign Out</button>
+  </div>
+</nav>
+
+<!-- ── SYSTEM STATUS BAR ── -->
+<div class="sys-bar">
+  <div class="sys-seg"><div class="sys-dot"></div><strong>All Systems Operational</strong></div>
+  <div class="sys-seg"><i class="fas fa-database" style="color:var(--g5);font-size:.65rem;"></i>NSDI GRID3 2022 · <strong>116 districts</strong></div>
+  <div class="sys-seg"><i class="fas fa-thermometer-half" style="color:#f97316;font-size:.65rem;"></i>LST 2022–2025 · <strong>10 provinces</strong></div>
+  <div class="sys-seg"><i class="fas fa-satellite" style="color:#3b82f6;font-size:.65rem;"></i>WGS 84 / EPSG:4326</div>
+  <div class="sys-seg"><i class="fas fa-layer-group" style="color:#7c3aed;font-size:.65rem;"></i>Multi-layer GIS Active</div>
+  <div class="sys-seg"><i class="fas fa-shield-alt" style="color:#a78bfa;font-size:.65rem;"></i>Secure session</div>
+  <div class="sys-seg" style="margin-left:auto;"><i class="fas fa-sync-alt" style="font-size:.62rem;"></i>Last sync: <strong id="sysSync">—</strong></div>
+</div>
+
+<!-- ── NOTIFICATIONS PANEL ── -->
+<div id="notifPanel">
+  <div class="notif-head">
+    <h4><i class="fas fa-bell" style="color:var(--g3);margin-right:6px;"></i>Notifications</h4>
+    <button onclick="toggleNotif()" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:.85rem;"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="notif-item"><div class="notif-ico" style="background:#f0fdf4;color:var(--g3);"><i class="fas fa-check-circle"></i></div><div class="notif-txt"><strong>NSDI GRID3 2022 dataset active</strong><span>116 districts loaded · All coordinates verified in WGS 84</span></div></div>
+  <div class="notif-item"><div class="notif-ico" style="background:#fff7ed;color:#ea580c;"><i class="fas fa-thermometer-half"></i></div><div class="notif-txt"><strong>LST Temperature data loaded</strong><span>10 provinces · 48 months (2022–2025) · province-level LST</span></div></div>
+  <div class="notif-item"><div class="notif-ico" style="background:#eff6ff;color:#2563eb;"><i class="fas fa-layer-group"></i></div><div class="notif-txt"><strong>Multi-layer map v5.1 live</strong><span>Districts, provinces, water, mining, temperature, WMS layers</span></div></div>
+  <div class="notif-item"><div class="notif-ico" style="background:#fffbeb;color:#d97706;"><i class="fas fa-exclamation-triangle"></i></div><div class="notif-txt"><strong>Forest cover declining</strong><span>−1.8%/yr trend detected in FAO 2024 data</span></div></div>
+  <div class="notif-item"><div class="notif-ico" style="background:#f0fdfa;color:#0d9488;"><i class="fas fa-cloud-rain"></i></div><div class="notif-txt"><strong>CHIRPS 2023 rainfall synchronized</strong><span>4 stations · Jan–Dec 2023 data</span></div></div>
+</div>
+
+<main class="main">
+
+  <!-- Page header -->
+  <div class="pg-hd">
+    <div class="pg-hd-l">
+      <h2 id="greetMsg">Dashboard</h2>
+      <p>Zambia National Spatial Data Platform &nbsp;·&nbsp; <span class="live-dot">Live</span> &nbsp;·&nbsp; <span id="lastUpdated"></span></p>
+    </div>
+    <div class="pg-hd-r">
+      <button class="btn-sm btn-outline" onclick="window.location.href='data.html'"><i class="fas fa-upload"></i>Upload</button>
+      <button class="btn-sm btn-outline" onclick="window.location.href='analytics.html'"><i class="fas fa-chart-bar"></i>Analytics</button>
+      <button class="btn-sm btn-primary" onclick="window.location.href='map.html'"><i class="fas fa-map"></i>Open Map</button>
+    </div>
+  </div>
+
+  <!-- ── 8 STATS ── -->
+  <div class="stats8">
+    <div class="stat-c">
+      <div class="stat-top">
+        <div class="stat-ico" style="background:#f0fdf4;"><i class="fas fa-border-all" style="color:var(--g3);"></i></div>
+        <span class="stat-trend neutral">NSDI 2022</span>
+      </div>
+      <div class="stat-v" id="sv1">0</div>
+      <div class="stat-l">Districts Mapped</div>
+      <canvas class="stat-spark" id="spark1"></canvas>
+    </div>
+    <div class="stat-c">
+      <div class="stat-top">
+        <div class="stat-ico" style="background:#f0fdf4;"><i class="fas fa-globe-africa" style="color:var(--g3);"></i></div>
+        <span class="stat-trend neutral">10 prov.</span>
+      </div>
+      <div class="stat-v">752K</div>
+      <div class="stat-l">km² Total Area</div>
+      <canvas class="stat-spark" id="spark2"></canvas>
+    </div>
+    <div class="stat-c">
+      <div class="stat-top">
+        <div class="stat-ico" style="background:#fffbeb;"><i class="fas fa-tree" style="color:#d97706;"></i></div>
+        <span class="stat-trend dn"><i class="fas fa-arrow-down"></i>1.8%/yr</span>
+      </div>
+      <div class="stat-v" id="sv2">0</div>
+      <div class="stat-l">Forest Cover km²</div>
+      <canvas class="stat-spark" id="spark3"></canvas>
+    </div>
+    <div class="stat-c">
+      <div class="stat-top">
+        <div class="stat-ico" style="background:#eff6ff;"><i class="fas fa-users" style="color:#2563eb;"></i></div>
+        <span class="stat-trend up"><i class="fas fa-arrow-up"></i>3.1%</span>
+      </div>
+      <div class="stat-v" id="sv3">0</div>
+      <div class="stat-l">Population (2022)</div>
+      <canvas class="stat-spark" id="spark4"></canvas>
+    </div>
+    <div class="stat-c">
+      <div class="stat-top">
+        <div class="stat-ico" style="background:#f0fdfa;"><i class="fas fa-water" style="color:#0d9488;"></i></div>
+        <span class="stat-trend neutral">6 lakes</span>
+      </div>
+      <div class="stat-v">48K</div>
+      <div class="stat-l">Water Bodies km²</div>
+      <canvas class="stat-spark" id="spark5"></canvas>
+    </div>
+    <div class="stat-c">
+      <div class="stat-top">
+        <div class="stat-ico" style="background:#fff7ed;"><i class="fas fa-industry" style="color:#ea580c;"></i></div>
+        <span class="stat-trend up"><i class="fas fa-arrow-up"></i>ZDA 2023</span>
+      </div>
+      <div class="stat-v">756K</div>
+      <div class="stat-l">Copper t/yr</div>
+      <canvas class="stat-spark" id="spark6"></canvas>
+    </div>
+    <!-- NEW: Temperature stat -->
+    <div class="stat-c">
+      <div class="stat-top">
+        <div class="stat-ico" style="background:#fff1f2;"><i class="fas fa-thermometer-half" style="color:#dc2626;"></i></div>
+        <span class="stat-trend dn"><i class="fas fa-fire-alt"></i>Peak LST</span>
+      </div>
+      <div class="stat-v" id="sv4">—</div>
+      <div class="stat-l">Max LST Oct °C</div>
+      <canvas class="stat-spark" id="spark7"></canvas>
+    </div>
+    <!-- NEW: Avg national LST -->
+    <div class="stat-c">
+      <div class="stat-top">
+        <div class="stat-ico" style="background:#eff6ff;"><i class="fas fa-temperature-low" style="color:#2563eb;"></i></div>
+        <span class="stat-trend neutral">2022–25</span>
+      </div>
+      <div class="stat-v" id="sv5">—</div>
+      <div class="stat-l">Avg National LST °C</div>
+      <canvas class="stat-spark" id="spark8"></canvas>
+    </div>
+  </div>
+
+  <!-- Quick actions -->
+  <div class="qa-grid">
+    <a class="qa-btn" href="map.html"><div class="qa-ico" style="background:#f0fdf4;"><i class="fas fa-map-marked-alt" style="color:var(--g3);"></i></div><span>Map Viewer</span><small>Multi-layer</small></a>
+    <a class="qa-btn" href="analytics.html"><div class="qa-ico" style="background:#eff6ff;"><i class="fas fa-chart-line" style="color:#2563eb;"></i></div><span>Analytics</span><small>8+ charts</small></a>
+    <a class="qa-btn" href="data.html"><div class="qa-ico" style="background:#fffbeb;"><i class="fas fa-upload" style="color:#d97706;"></i></div><span>Upload Data</span><small>GeoJSON, CSV</small></a>
+    <a class="qa-btn" href="map.html"><div class="qa-ico" style="background:#faf5ff;"><i class="fas fa-exchange-alt" style="color:#7c3aed;"></i></div><span>Coord Convert</span><small>DD·DMS·UTM·MGRS</small></a>
+    <a class="qa-btn" href="map.html"><div class="qa-ico" style="background:#f0fdfa;"><i class="fas fa-ruler-combined" style="color:#0d9488;"></i></div><span>Measure Tool</span><small>Distance &amp; area</small></a>
+    <a class="qa-btn" href="#tempSection" onclick="document.getElementById('tempSection').scrollIntoView({behavior:'smooth'})"><div class="qa-ico" style="background:#fff1f2;"><i class="fas fa-thermometer-half" style="color:#dc2626;"></i></div><span>Temperature</span><small>LST 2022–25</small></a>
+    <a class="qa-btn" href="admin.html" id="qaAdmin" style="display:none;"><div class="qa-ico" style="background:#fef2f2;"><i class="fas fa-user-shield" style="color:#dc2626;"></i></div><span>Admin Panel</span><small>User mgmt</small></a>
+    <a class="qa-btn" href="settings.html" id="qaSettings"><div class="qa-ico" style="background:#fff7ed;"><i class="fas fa-cog" style="color:#ea580c;"></i></div><span>Settings</span><small>Profile &amp; prefs</small></a>
+  </div>
+
+  <!-- Row 1: Charts row -->
+  <div class="row3">
+    <div class="card">
+      <div class="card-hd">
+        <div><h3>Land Cover 2024</h3><p>National LCCS distribution</p></div>
+        <span class="card-tag">LCCS</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="position:relative;height:150px;width:150px;flex-shrink:0;">
+          <canvas id="lcDonut"></canvas>
+          <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;">
+            <div style="font-size:1rem;font-weight:900;color:var(--text);">752K</div>
+            <div style="font-size:.58rem;color:var(--muted);">km²</div>
+          </div>
+        </div>
+        <div id="lcLeg" style="font-size:.7rem;flex:1;"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd">
+        <div><h3>Forest Cover 2018–24</h3><p>FAO / Zambia Forestry</p></div>
+        <a class="lnk-all" href="analytics.html">Detail <i class="fas fa-arrow-right"></i></a>
+      </div>
+      <div class="chart-wrap" style="height:160px;"><canvas id="forestMini"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-hd">
+        <div><h3>Monthly Rainfall 2023</h3><p>CHIRPS · Lusaka vs Ndola</p></div>
+        <a class="lnk-all" href="analytics.html">Detail <i class="fas fa-arrow-right"></i></a>
+      </div>
+      <div class="chart-wrap" style="height:160px;"><canvas id="rainMini"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Row 2: Province table + Activity feed -->
+  <div class="row2">
+    <div class="card">
+      <div class="card-hd">
+        <div><h3>Province Overview</h3><p>Click row for details · Click header to sort</p></div>
+        <a class="lnk-all" href="analytics.html">Full analytics <i class="fas fa-arrow-right"></i></a>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="prov-tbl" id="provTable">
+          <thead>
+            <tr>
+              <th onclick="sortProvTable('name')" id="th-name">Province</th>
+              <th onclick="sortProvTable('districts')" id="th-districts">Dist.</th>
+              <th onclick="sortProvTable('pop')" id="th-pop">Population</th>
+              <th onclick="sortProvTable('forest_pct')" id="th-forest">Forest %</th>
+              <th onclick="sortProvTable('area_km2')" id="th-area">Area km²</th>
+              <th onclick="sortProvTable('avg_temp')" id="th-temp">Avg LST °C</th>
+              <th onclick="sortProvTable('capital')" id="th-cap">Capital</th>
+            </tr>
+          </thead>
+          <tbody id="provTBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd">
+        <h3>Recent Activity</h3>
+        <span class="card-tag" id="actTag">—</span>
+      </div>
+      <div id="actFeed"></div>
+      <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+        <a href="admin.html" class="lnk-all" id="auditLink" style="display:none;">View full audit log <i class="fas fa-arrow-right"></i></a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════
+       TEMPERATURE / LST SECTION  (NEW — uses zambia_district_temperature_2022_2025.csv)
+       ════════════════════════════════════════════════════════════════ -->
+  <div class="section-hd" id="tempSection">
+    <h3><i class="fas fa-thermometer-half" style="color:#dc2626;margin-right:6px;"></i>Land Surface Temperature (LST) · Province Level · 2022–2025</h3>
+    <span class="card-tag" style="background:#fff1f2;color:#dc2626;border-color:#fecaca;">zambia_district_temperature_2022_2025.csv</span>
+  </div>
+
+  <!-- Temp KPI row -->
+  <div class="temp-kpi-row">
+    <div class="temp-kpi-box">
+      <strong id="tkpi1" style="color:#dc2626;">—</strong>
+      <small>Max LST recorded (Eastern Oct 2022)</small>
+    </div>
+    <div class="temp-kpi-box">
+      <strong id="tkpi2" style="color:#3b82f6;">—</strong>
+      <small>Min LST recorded (Copperbelt Jun 2025)</small>
+    </div>
+    <div class="temp-kpi-box">
+      <strong id="tkpi3" style="color:var(--g3);">—</strong>
+      <small>National avg LST 2022–2025</small>
+    </div>
+    <div class="temp-kpi-box">
+      <strong id="tkpi4" style="color:#f97316;">—</strong>
+      <small>Hottest province annual avg 2024</small>
+    </div>
+  </div>
+
+  <!-- Temp main charts row -->
+  <div class="row-temp">
+    <!-- Left: Annual LST time-series by province -->
+    <div class="card">
+      <div class="card-hd">
+        <div>
+          <h3>Monthly LST by Province (°C)</h3>
+          <p>Select province and year to view monthly profile</p>
+        </div>
+        <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;">
+          <div class="temp-year-tabs" id="tempYearTabs">
+            <span class="temp-ytab active" onclick="switchTempYear(2022,this)">2022</span>
+            <span class="temp-ytab" onclick="switchTempYear(2023,this)">2023</span>
+            <span class="temp-ytab" onclick="switchTempYear(2024,this)">2024</span>
+            <span class="temp-ytab" onclick="switchTempYear(2025,this)">2025</span>
+          </div>
+        </div>
+      </div>
+      <div class="temp-province-tabs" id="tempProvTabs"></div>
+      <div class="chart-wrap" style="height:220px;"><canvas id="tempLineChart"></canvas></div>
+      <div class="temp-legend">
+        <span>Cool</span>
+        <div class="temp-legend-bar"></div>
+        <span>Hot (45°C+)</span>
+      </div>
+    </div>
+
+    <!-- Right: Province heatmap by month -->
+    <div class="card">
+      <div class="card-hd">
+        <div><h3>Province LST Heatmap</h3><p>All 10 provinces · Annual averages</p></div>
+        <div class="temp-year-tabs">
+          <span class="temp-ytab active" onclick="switchHeatmapYear(2022,this)">2022</span>
+          <span class="temp-ytab" onclick="switchHeatmapYear(2023,this)">2023</span>
+          <span class="temp-ytab" onclick="switchHeatmapYear(2024,this)">2024</span>
+          <span class="temp-ytab" onclick="switchHeatmapYear(2025,this)">2025</span>
+        </div>
+      </div>
+      <div class="chart-wrap" style="height:240px;"><canvas id="tempHeatBar"></canvas></div>
+      <div class="temp-legend" style="margin-top:4px;">
+        <span>Low</span><div class="temp-legend-bar"></div><span>High</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Temp row 2: all-years comparison + monthly table -->
+  <div class="row2-eq">
+    <!-- All years comparison line -->
+    <div class="card">
+      <div class="card-hd">
+        <div><h3>Multi-Year LST Comparison</h3><p>National avg monthly LST · 2022–2025</p></div>
+        <span class="card-tag">4-Year Trend</span>
+      </div>
+      <div class="chart-wrap" style="height:200px;"><canvas id="tempMultiYear"></canvas></div>
+    </div>
+
+    <!-- Monthly data table for selected province -->
+    <div class="card">
+      <div class="card-hd">
+        <div><h3>Monthly LST Data Table</h3><p id="tempTableTitle">Select province above</p></div>
+        <button class="btn-sm btn-outline" onclick="exportTempCSV()" style="font-size:.7rem;padding:4px 9px;"><i class="fas fa-download"></i>CSV</button>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="temp-month-table" id="tempDataTable">
+          <thead>
+            <tr>
+              <th>Month</th><th>2022</th><th>2023</th><th>2024</th><th>2025</th>
+            </tr>
+          </thead>
+          <tbody id="tempDataTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       MULTI-LAYER MAP SECTION
+       ══════════════════════════════════════════════════════════════ -->
+  <div class="section-hd">
+    <h3><i class="fas fa-layer-group" style="color:var(--g3);margin-right:6px;"></i>Zambia Interactive Map — Multi-Layer GIS + Temperature Overlay</h3>
+    <a href="map.html" class="btn-sm btn-primary" style="text-decoration:none;font-size:.76rem;"><i class="fas fa-expand-arrows-alt"></i>Full Map Viewer</a>
+  </div>
+
+  <div class="map-section">
+    <div class="map-header">
+      <h3>
+        <i class="fas fa-map" style="color:var(--g3);"></i>
+        Zambia Districts — Live Multi-Layer
+        <span style="font-size:.65rem;background:#f0fdf4;color:var(--g3);border:1px solid #bbf7d0;border-radius:4px;padding:2px 7px;font-weight:700;margin-left:4px;">116 Districts</span>
+      </h3>
+      <div class="map-toolbar">
+        <button class="map-tool-btn active" id="tbDistricts" onclick="quickToggleLayer('districts',this)"><span style="width:8px;height:8px;border-radius:50%;background:#4CAF50;display:inline-block;"></span>Districts</button>
+        <button class="map-tool-btn active" id="tbProvinces" onclick="quickToggleLayer('provinces',this)"><span style="width:8px;height:8px;border-radius:50%;background:#fff;border:1.5px solid #666;display:inline-block;"></span>Provinces</button>
+        <button class="map-tool-btn active" id="tbWater" onclick="quickToggleLayer('water',this)"><span style="width:8px;height:8px;border-radius:50%;background:#3b82f6;display:inline-block;"></span>Water</button>
+        <button class="map-tool-btn active" id="tbMining" onclick="quickToggleLayer('mining',this)"><span style="width:8px;height:8px;border-radius:50%;background:#f97316;display:inline-block;"></span>Mining</button>
+        <button class="map-tool-btn" id="tbTemperature" onclick="quickToggleLayer('temperature',this)"><span style="width:8px;height:8px;border-radius:50%;background:#dc2626;display:inline-block;"></span>LST Temp</button>
+        <button class="map-tool-btn" id="tbHeatmap" onclick="quickToggleLayer('heatmap',this)"><span style="width:8px;height:8px;border-radius:50%;background:#ef4444;display:inline-block;"></span>Pop Heat</button>
+        <button class="map-tool-btn" id="tbGrid" onclick="quickToggleLayer('grid',this)"><span style="width:8px;height:8px;border-radius:50%;background:#6b7280;display:inline-block;"></span>Grid</button>
+        <button class="map-tool-btn" onclick="miniMapFlyToZambia()"><i class="fas fa-crosshairs"></i>Reset</button>
+        <a href="map.html" class="map-tool-btn" style="text-decoration:none;"><i class="fas fa-expand-arrows-alt"></i>Full Map</a>
+      </div>
+    </div>
+
+    <div class="map-body">
+      <div id="miniMapWrap">
+        <div id="miniMap"></div>
+        <div class="map-status" id="mlMapStatus">
+          <strong id="mlNearby">Zambia</strong>
+          <span id="mlCoords">—</span>
+          <span id="mlTempLabel" style="color:#dc2626;font-weight:700;"></span>
+          <span>Zoom: <strong id="mlZoom">5</strong></span>
+        </div>
+      </div>
+
+      <div class="map-side">
+        <!-- Basemap selector -->
+        <div class="map-side-sect">
+          <div class="map-side-title"><i class="fas fa-map"></i>Base Map</div>
+          <div class="bm-grid">
+            <div class="bm-item active" id="bm-osm" onclick="mlSwitchBasemap('osm',this)">
+              <img src="https://tile.openstreetmap.org/6/36/24.png" alt="OSM" onerror="this.style.background='#e5e7eb'"/>
+              <div class="bm-label">Street</div>
+            </div>
+            <div class="bm-item" id="bm-sat" onclick="mlSwitchBasemap('sat',this)">
+              <img src="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/6/24/36" alt="Sat" onerror="this.style.background='#374151'"/>
+              <div class="bm-label">Satellite</div>
+            </div>
+            <div class="bm-item" id="bm-terrain" onclick="mlSwitchBasemap('terrain',this)">
+              <img src="https://tile.opentopomap.org/5/18/12.png" alt="Terrain" onerror="this.style.background='#d1fae5'"/>
+              <div class="bm-label">Terrain</div>
+            </div>
+            <div class="bm-item" id="bm-dark" onclick="mlSwitchBasemap('dark',this)">
+              <img src="https://cartodb-basemaps-a.global.ssl.fastly.net/dark_all/6/36/24.png" alt="Dark" onerror="this.style.background='#111827'"/>
+              <div class="bm-label">Dark</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Overlay layers -->
+        <div class="map-side-sect" style="flex:1;">
+          <div class="map-side-title"><i class="fas fa-layer-group"></i>Overlay Layers <span id="mlActiveCount" style="margin-left:auto;background:var(--g3);color:#fff;border-radius:10px;padding:1px 7px;font-size:.6rem;">4</span></div>
+          <div id="mlLayerList"></div>
+        </div>
+
+        <!-- Temperature year picker for map -->
+        <div class="map-side-sect">
+          <div class="map-side-title"><i class="fas fa-thermometer-half" style="color:#dc2626;"></i>LST Overlay Year</div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;">
+            <button onclick="setMapTempYear(2022,this)" class="temp-ytab active" id="mty2022">2022</button>
+            <button onclick="setMapTempYear(2023,this)" class="temp-ytab" id="mty2023">2023</button>
+            <button onclick="setMapTempYear(2024,this)" class="temp-ytab" id="mty2024">2024</button>
+            <button onclick="setMapTempYear(2025,this)" class="temp-ytab" id="mty2025">2025</button>
+          </div>
+          <div style="margin-top:6px;font-size:.62rem;color:var(--muted);">Annual avg LST shown when Temperature layer is active</div>
+        </div>
+
+        <!-- Opacity -->
+        <div class="map-side-sect">
+          <div class="map-side-title"><i class="fas fa-adjust"></i>District Fill Opacity</div>
+          <div class="op-row">
+            <span>0%</span>
+            <input class="op-slider" type="range" min="0" max="100" value="80" id="mlOpSlider" oninput="mlSetOpacity(this.value)"/>
+            <span class="op-val" id="mlOpVal">80%</span>
+          </div>
+        </div>
+
+        <!-- Layer style -->
+        <div class="map-side-sect">
+          <div class="map-side-title"><i class="fas fa-palette"></i>Color Districts By</div>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <label style="display:flex;align-items:center;gap:6px;font-size:.72rem;cursor:pointer;">
+              <input type="radio" name="colorMode" value="province" checked onchange="mlRecolor(this.value)"/>Province
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:.72rem;cursor:pointer;">
+              <input type="radio" name="colorMode" value="population" onchange="mlRecolor(this.value)"/>Population density
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:.72rem;cursor:pointer;">
+              <input type="radio" name="colorMode" value="area" onchange="mlRecolor(this.value)"/>Area size
+            </label>
+          </div>
+        </div>
+
+        <!-- Map stats -->
+        <div class="map-side-sect">
+          <div class="map-side-title"><i class="fas fa-info-circle"></i>Map Statistics</div>
+          <div style="font-size:.7rem;display:flex;flex-direction:column;gap:4px;">
+            <div style="display:flex;justify-content:space-between;"><span style="color:var(--muted);">Active layers</span><strong id="mlActiveCountBottom">4</strong></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:var(--muted);">Districts shown</span><strong>116</strong></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:var(--muted);">Provinces w/ LST</span><strong>10</strong></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:var(--muted);">Mining sites</span><strong>6</strong></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 3: Pop chart + Coord widget + Weather -->
+  <div class="row3">
+    <div class="card">
+      <div class="card-hd">
+        <div><h3>Population by Province</h3><p>Census 2022 — 20M total</p></div>
+        <button class="btn-sm btn-outline" onclick="togglePopChart()" style="font-size:.7rem;padding:4px 9px;" id="popChartToggle">Horizontal</button>
+      </div>
+      <div class="chart-wrap" style="height:240px;"><canvas id="popChart"></canvas></div>
+    </div>
+
+    <div class="card" style="padding:0;overflow:hidden;">
+      <div style="padding:13px 16px 11px;border-bottom:1px solid var(--border);">
+        <h3 style="font-size:.9rem;font-weight:800;">Quick Coordinate Converter</h3>
+        <p style="font-size:.7rem;color:var(--muted);margin-top:2px;">Major Zambia cities — all formats</p>
+      </div>
+      <div style="padding:12px 16px;">
+        <div class="cw-tab" id="cwTabs">
+          <span class="cw-t active" onclick="switchCWMode('lusaka',this)">Lusaka</span>
+          <span class="cw-t" onclick="switchCWMode('ndola',this)">Ndola</span>
+          <span class="cw-t" onclick="switchCWMode('livingstone',this)">Livingstone</span>
+          <span class="cw-t" onclick="switchCWMode('chipata',this)">Chipata</span>
+          <span class="cw-t" onclick="switchCWMode('kasama',this)">Kasama</span>
+        </div>
+        <div class="coord-widget">
+          <h4><i class="fas fa-crosshairs"></i> <span id="cw-city">Lusaka</span></h4>
+          <div class="cw-row"><span class="cw-key">DD</span><span class="cw-val" id="cw-dd">—</span></div>
+          <div class="cw-row"><span class="cw-key">DMS Lat</span><span class="cw-val" id="cw-dms-lat">—</span></div>
+          <div class="cw-row"><span class="cw-key">DMS Lng</span><span class="cw-val" id="cw-dms-lng">—</span></div>
+          <div class="cw-row"><span class="cw-key">UTM</span><span class="cw-val" id="cw-utm">—</span></div>
+          <div class="cw-row"><span class="cw-key">MGRS</span><span class="cw-val" id="cw-mgrs">—</span></div>
+        </div>
+        <a href="map.html" class="btn-sm btn-primary" style="width:100%;justify-content:center;margin-top:9px;text-decoration:none;"><i class="fas fa-exchange-alt"></i>Full Converter on Map</a>
+      </div>
+    </div>
+
+    <!-- Weather widget -->
+    <div class="card">
+      <div class="card-hd">
+        <div><h3>Zambia Weather</h3><p>Current conditions · Major cities</p></div>
+        <span class="card-tag">Seasonal</span>
+      </div>
+      <div class="wx-grid" id="wxGrid"></div>
+      <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border);font-size:.66rem;color:var(--muted);display:flex;align-items:center;gap:5px;">
+        <i class="fas fa-info-circle"></i>
+        Typical seasonal averages — Zambia dry season May–Oct, wet season Nov–Apr
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 4: Data quality + Forest loss -->
+  <div class="row2-eq">
+    <div class="card">
+      <div class="card-hd">
+        <div><h3>Dataset Quality Indicators</h3><p>Completeness &amp; accuracy metrics</p></div>
+        <span class="card-tag">QA/QC</span>
+      </div>
+      <div class="dq-grid" id="dqGrid"></div>
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">
+        <div class="chart-wrap" style="height:100px;"><canvas id="dqBarChart"></canvas></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd">
+        <div><h3>Forest Loss &amp; Gain 2018–2024</h3><p>Cumulative trend — FAO estimates</p></div>
+        <a class="lnk-all" href="analytics.html">More <i class="fas fa-arrow-right"></i></a>
+      </div>
+      <div class="chart-wrap" style="height:200px;"><canvas id="forestLoss"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Available datasets -->
+  <div class="section-hd">
+    <h3>Available Datasets</h3>
+    <a class="lnk-all" href="data.html">All datasets <i class="fas fa-arrow-right"></i></a>
+  </div>
+  <div class="ds-grid">
+    <div class="ds-card" onclick="window.location.href='map.html'">
+      <div class="ds-top"><div class="ds-ico" style="background:#f0fdf4;"><i class="fas fa-border-all" style="color:var(--g3);"></i></div><span class="ds-tag" style="background:#f0fdf4;color:var(--g3);border:1px solid #bbf7d0;">GRID3 2022</span></div>
+      <h4>NSDI District Boundaries</h4><p>116-district dataset — full population, area &amp; multi-format coordinates (DD/DMS/UTM/MGRS).</p>
+      <div class="ds-meta"><span><i class="fas fa-border-all"></i> 116 districts</span><span><i class="fas fa-globe"></i> WGS 84</span><span><i class="fas fa-download"></i> CSV · GeoJSON · KML</span></div>
+    </div>
+    <div class="ds-card" onclick="document.getElementById('tempSection').scrollIntoView({behavior:'smooth'})">
+      <div class="ds-top"><div class="ds-ico" style="background:#fff1f2;"><i class="fas fa-thermometer-half" style="color:#dc2626;"></i></div><span class="ds-tag" style="background:#fff1f2;color:#dc2626;border:1px solid #fecaca;">LST 2022–2025</span></div>
+      <h4>Province Temperature Data</h4><p>Monthly Land Surface Temperature (LST) for all 10 provinces — 2022 to 2025, sourced from CSV dataset.</p>
+      <div class="ds-meta"><span><i class="fas fa-calendar"></i> 2022–2025</span><span><i class="fas fa-globe-africa"></i> 10 provinces</span><span><i class="fas fa-chart-area"></i> 480 records</span></div>
+    </div>
+    <div class="ds-card" onclick="window.location.href='analytics.html'">
+      <div class="ds-top"><div class="ds-ico" style="background:#fffbeb;"><i class="fas fa-tree" style="color:#d97706;"></i></div><span class="ds-tag" style="background:#fffbeb;color:#d97706;border:1px solid #fde68a;">FAO 2024</span></div>
+      <h4>Forest Cover &amp; Change</h4><p>Annual forest cover 2018–2024. Loss/gain tracking with cumulative deforestation rates.</p>
+      <div class="ds-meta"><span><i class="fas fa-calendar"></i> 2018–2024</span><span><i class="fas fa-chart-line"></i> 7yr trend</span></div>
+    </div>
+    <div class="ds-card" onclick="window.location.href='analytics.html'">
+      <div class="ds-top"><div class="ds-ico" style="background:#eff6ff;"><i class="fas fa-cloud-rain" style="color:#2563eb;"></i></div><span class="ds-tag" style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;">CHIRPS 2023</span></div>
+      <h4>Monthly Rainfall</h4><p>Satellite rainfall estimates — Lusaka, Ndola, Livingstone &amp; Chipata, Jan–Dec 2023.</p>
+      <div class="ds-meta"><span><i class="fas fa-map-pin"></i> 4 stations</span><span><i class="fas fa-calendar"></i> Jan–Dec</span></div>
+    </div>
+  </div>
+
+</main>
+
+<!-- Province drill-down modal -->
+<div id="provModal">
+  <div class="prov-modal-box">
+    <div class="prov-modal-head">
+      <div>
+        <h2 id="pm-title">—</h2>
+        <p id="pm-sub" style="font-size:.78rem;color:var(--muted);margin-top:2px;">Province Details · NSDI GRID3 2022 + LST 2022–2025</p>
+      </div>
+      <button class="prov-close" onclick="closeProvModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="prov-stats" id="pm-stats"></div>
+    <div id="pm-coords" style="background:#f9fafb;border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:14px;display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.75rem;"></div>
+    <!-- Temperature mini chart in modal -->
+    <h4 style="font-size:.8rem;font-weight:800;margin-bottom:8px;"><i class="fas fa-thermometer-half" style="color:#dc2626;margin-right:5px;"></i>Monthly LST Temperature Profile</h4>
+    <div class="chart-wrap" style="height:140px;margin-bottom:12px;"><canvas id="pm-temp-chart"></canvas></div>
+    <h4 style="font-size:.8rem;font-weight:800;margin-bottom:9px;">Land Cover Breakdown</h4>
+    <div class="prov-lc-bars" id="pm-lc"></div>
+    <h4 style="font-size:.8rem;font-weight:800;margin:13px 0 9px;">Districts (by population)</h4>
+    <div class="prov-dist-list" id="pm-dists"></div>
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <button class="btn-sm btn-primary" onclick="window.location.href='map.html'" style="flex:1;justify-content:center;"><i class="fas fa-map"></i>View on Map</button>
+      <button class="btn-sm btn-outline" onclick="window.location.href='analytics.html'" style="flex:1;justify-content:center;"><i class="fas fa-chart-bar"></i>Analytics</button>
+      <button class="btn-sm btn-outline" onclick="closeProvModal()" style="flex:1;justify-content:center;"><i class="fas fa-times"></i>Close</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════════
+   GeoHub Zambia — Dashboard  v6.0
+   NEW: Full LST temperature integration (zambia_district_temperature_2022_2025.csv)
+        - Province monthly line chart with year/province selector
+        - Province heatmap bar chart
+        - Multi-year comparison chart
+        - Monthly data table with CSV export
+        - Temperature layer on mini-map (province-coloured by annual avg LST)
+        - 2 new stat cards (max LST, avg national LST)
+        - Temperature column in province table
+        - Temperature mini-chart in province drill-down modal
+   FIXED: Auth safe-guard; loading overlay always hides; no avatar null crash
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+// ── AUTH — safe, never throws, always hides loader ───────────────────────────
+function hideLoader() {
+  const ov = document.getElementById('loadOv');
+  if (!ov) return;
+  ov.classList.add('hidden');
+  setTimeout(() => { ov.style.display = 'none'; }, 520);
+}
+
+function setLoadProgress(pct, msg, step) {
+  const fill = document.getElementById('loadBarFill');
+  const lmsg = document.getElementById('loadMsg');
+  const lstep = document.getElementById('loadStep');
+  if (fill) fill.style.width = pct + '%';
+  if (msg  && lmsg)  lmsg.textContent  = msg;
+  if (step && lstep) lstep.textContent = step;
+}
+
+// ── Run auth before anything else ────────────────────────────────────────────
+const session = (() => {
+  try {
+    return GeoHubAuth.requireAuth('index.html');
+  } catch(e) {
+    return null;
+  }
+})();
+
+if (!session) {
+  hideLoader();
+  throw new Error('Not authenticated — redirecting');
+}
+
+// ── Populate navbar with session data ────────────────────────────────────────
+const initials = (session.avatar || session.name || 'GU').slice(0,2).toUpperCase();
+document.getElementById('nbAv').textContent   = initials;
+document.getElementById('nbName').textContent = session.name  || '—';
+document.getElementById('nbRole').textContent = session.role === 'admin' ? 'Administrator' : (session.title || 'Standard User');
+if (session.role === 'admin') {
+  document.getElementById('adminLink').style.display = 'inline';
+  const qa = document.getElementById('qaAdmin');
+  if (qa) qa.style.display = 'flex';
+  const al = document.getElementById('auditLink');
+  if (al) al.style.display = 'inline-flex';
+  const qs = document.getElementById('qaSettings');
+  if (qs) qs.style.display = 'none';
+}
+
+function doLogout() { GeoHubAuth.logout(); window.location.href = 'index.html'; }
+
+// ── CLOCK ────────────────────────────────────────────────────────────────────
+function tickClock() {
+  const now = new Date();
+  const el = document.getElementById('nbClock');
+  if (el) el.textContent = now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+tickClock();
+setInterval(tickClock, 1000);
+document.getElementById('sysSync').textContent =
+  new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+
+// ── GREETING ──────────────────────────────────────────────────────────────────
+const h = new Date().getHours();
+document.getElementById('greetMsg').textContent =
+  `${h<12?'Good morning':h<17?'Good afternoon':'Good evening'}, ${(session.name||'User').split(' ')[0]} 👋`;
+document.getElementById('lastUpdated').textContent =
+  new Date().toLocaleString('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+
+// ── NOTIFICATIONS ─────────────────────────────────────────────────────────────
+function toggleNotif() {
+  const p = document.getElementById('notifPanel');
+  p.style.display = p.style.display === 'block' ? 'none' : 'block';
+}
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('#notifPanel') && !e.target.closest('#notifBtn'))
+    document.getElementById('notifPanel').style.display = 'none';
+});
+
+// ── COORDINATE FUNCTIONS ──────────────────────────────────────────────────────
+function ddToDMS(deg, isLat) {
+  const abs=Math.abs(deg), d=Math.floor(abs);
+  const mf=(abs-d)*60, m=Math.floor(mf);
+  const s=((mf-m)*60).toFixed(2);
+  const dir=isLat?(deg>=0?'N':'S'):(deg>=0?'E':'W');
+  return `${d}° ${m}' ${s}" ${dir}`;
+}
+function ddToUTM(lat, lng) {
+  const a=6378137.0,f=1/298.257223563,b=a*(1-f),e2=1-(b*b)/(a*a),k0=0.9996;
+  const zone=Math.floor((lng+180)/6)+1;
+  const lon0=((zone-1)*6-180+3)*Math.PI/180;
+  const latR=lat*Math.PI/180,lngR=lng*Math.PI/180;
+  const N=a/Math.sqrt(1-e2*Math.sin(latR)**2);
+  const T=Math.tan(latR)**2,C=(e2/(1-e2))*Math.cos(latR)**2;
+  const A=Math.cos(latR)*(lngR-lon0);
+  const M=a*((1-e2/4-3*e2**2/64-5*e2**3/256)*latR-(3*e2/8+3*e2**2/32+45*e2**3/1024)*Math.sin(2*latR)+(15*e2**2/256+45*e2**3/1024)*Math.sin(4*latR)-35*e2**3/3072*Math.sin(6*latR));
+  const E=k0*N*(A+(1-T+C)*A**3/6+(5-18*T+T**2+72*C-58*(e2/(1-e2)))*A**5/120)+500000;
+  const Nn=k0*(M+N*Math.tan(latR)*(A**2/2+(5-T+9*C+4*C**2)*A**4/24+(61-58*T+T**2+600*C-330*(e2/(1-e2)))*A**6/720));
+  return {zone,hemisphere:lat>=0?'N':'S',easting:Math.round(E),northing:Math.round(lat<0?Nn+10000000:Nn)};
+}
+function ddToMGRS(lat, lng) {
+  const utm=ddToUTM(lat,lng);
+  const latBands='CDEFGHJKLMNPQRSTUVWX';
+  const band=latBands[Math.max(0,Math.min(Math.floor((lat+80)/8),19))];
+  const e100k=Math.floor(utm.easting/100000)%8;
+  const n100k=Math.floor(utm.northing/100000)%20;
+  const eCols='ABCDEFGH',nRows='ABCDEFGHJKLMNPQRSTUV';
+  const eL=eCols[(utm.zone-1)%3*3+e100k-1]||'A';
+  const nL=nRows[n100k]||'A';
+  return `${utm.zone}${band} ${eL}${nL} ${String(utm.easting%100000).padStart(5,'0')} ${String(utm.northing%100000).padStart(5,'0')}`;
+}
+
+// ── COORDINATE WIDGET ─────────────────────────────────────────────────────────
+const CW_CITIES = {
+  lusaka:      { name:'Lusaka Capital',    lat:-15.4167, lng:28.2833 },
+  ndola:       { name:'Ndola City',        lat:-12.9667, lng:28.6333 },
+  livingstone: { name:'Livingstone',       lat:-17.8500, lng:25.8667 },
+  chipata:     { name:'Chipata',           lat:-13.6500, lng:32.6500 },
+  kasama:      { name:'Kasama',            lat:-10.2167, lng:31.1833 },
+};
+function updateCWDisplay(key) {
+  const c = CW_CITIES[key];
+  if (!c) return;
+  const utm  = ddToUTM(c.lat, c.lng);
+  const mgrs = ddToMGRS(c.lat, c.lng);
+  document.getElementById('cw-city').textContent   = c.name;
+  document.getElementById('cw-dd').textContent      = `${c.lat.toFixed(5)}°, ${c.lng.toFixed(5)}°`;
+  document.getElementById('cw-dms-lat').textContent = ddToDMS(c.lat, true);
+  document.getElementById('cw-dms-lng').textContent = ddToDMS(c.lng, false);
+  document.getElementById('cw-utm').textContent     = `Z${utm.zone}${utm.hemisphere} E${utm.easting.toLocaleString()} N${utm.northing.toLocaleString()}`;
+  document.getElementById('cw-mgrs').textContent    = mgrs;
+}
+function switchCWMode(key, el) {
+  document.querySelectorAll('.cw-t').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+  updateCWDisplay(key);
+}
+
+// ── WEATHER WIDGET ────────────────────────────────────────────────────────────
+const WX_DATA = [
+  { city:'Lusaka',      icon:'🌤️', temp:'27°C', desc:'Partly cloudy', hum:'45%', wind:'12 km/h', season:'Dry' },
+  { city:'Ndola',       icon:'⛅',  temp:'25°C', desc:'Scattered cloud', hum:'52%', wind:'9 km/h', season:'Dry' },
+  { city:'Livingstone', icon:'☀️',  temp:'31°C', desc:'Sunny',          hum:'38%', wind:'15 km/h', season:'Dry' },
+  { city:'Chipata',     icon:'🌦️', temp:'24°C', desc:'Light showers',  hum:'68%', wind:'8 km/h', season:'Trans.' },
+];
+function buildWeather() {
+  const el = document.getElementById('wxGrid');
+  if (!el) return;
+  el.innerHTML = WX_DATA.map(w => `
+    <div class="wx-card">
+      <div class="wx-icon">${w.icon}</div>
+      <div class="wx-city">${w.city}</div>
+      <div class="wx-temp">${w.temp}</div>
+      <div class="wx-desc">${w.desc}</div>
+      <div class="wx-extra">
+        <span><i class="fas fa-tint" style="color:#3b82f6;"></i> ${w.hum}</span>
+        <span><i class="fas fa-wind" style="color:#6b7280;"></i> ${w.wind}</span>
+      </div>
+      <div style="margin-top:4px;font-size:.6rem;background:rgba(26,107,53,.1);color:var(--g3);border-radius:4px;padding:2px 6px;font-weight:700;">${w.season}</div>
+    </div>`).join('');
+}
+
+// ── ANIMATED COUNTERS ─────────────────────────────────────────────────────────
+function animateCount(id, target, fmt) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  let v=0; const step=Math.max(1, target/60);
+  const t=setInterval(()=>{
+    v+=step; if(v>=target){v=target;clearInterval(t);}
+    el.textContent = fmt ? fmt(Math.round(v)) : Math.round(v).toLocaleString();
+  }, 16);
+}
+
+// ── SPARKLINES ────────────────────────────────────────────────────────────────
+function buildSparkline(id, data, color, fill) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  try {
+    new Chart(canvas, {
+      type: 'line',
+      data: { labels: data.map((_,i)=>i), datasets: [{ data, borderColor:color, backgroundColor:fill||'transparent', fill:!!fill, tension:0.4, pointRadius:0, borderWidth:1.5 }]},
+      options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false},tooltip:{enabled:false}}, scales:{x:{display:false},y:{display:false}}, animation:{duration:800}}
+    });
+  } catch(e) { console.warn('Sparkline error:', id, e); }
+}
+
+// ── LAND COVER DONUT ──────────────────────────────────────────────────────────
+function buildLCDonut() {
+  if (!window.LAND_COVER_NATIONAL) return;
+  const lc = LAND_COVER_NATIONAL;
+  const vals = Object.values(lc);
+  try {
+    new Chart(document.getElementById('lcDonut'), {
+      type: 'doughnut',
+      data: { labels:vals.map(v=>v.label), datasets:[{ data:vals.map(v=>v.area), backgroundColor:vals.map(v=>v.color), borderWidth:2, borderColor:'#fff', hoverOffset:6 }]},
+      options: { cutout:'68%', responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.parsed.toLocaleString()} km² (${vals[ctx.dataIndex].pct}%)`}}}}
+    });
+    document.getElementById('lcLeg').innerHTML = vals.map(v =>
+      `<div style="display:flex;align-items:center;gap:5px;margin-bottom:4px;">
+        <span style="width:8px;height:8px;border-radius:2px;background:${v.color};flex-shrink:0;"></span>
+        <div><div style="font-weight:700;color:var(--text);font-size:.69rem;">${v.label.split(' ')[0]}</div>
+        <div style="font-size:.63rem;color:var(--muted);">${(v.area/1000).toFixed(0)}K · ${v.pct}%</div></div>
+      </div>`
+    ).join('');
+  } catch(e) { console.warn('LC donut error', e); }
+}
+
+// ── FOREST MINI ───────────────────────────────────────────────────────────────
+function buildForestMini() {
+  if (!window.FOREST_TREND) return;
+  try {
+    new Chart(document.getElementById('forestMini'), {
+      type: 'line',
+      data: { labels:FOREST_TREND.years, datasets:[
+        { label:'Cover km²', data:FOREST_TREND.total_km2, borderColor:'#1a6b35', backgroundColor:'rgba(26,107,53,.1)', fill:true, tension:0.4, pointRadius:3, borderWidth:2, yAxisID:'y' },
+        { label:'Loss km²',  data:FOREST_TREND.loss_km2,  borderColor:'#dc2626', borderDash:[4,3], tension:0.4, pointRadius:2, borderWidth:1.5, fill:false, yAxisID:'y2' }
+      ]},
+      options: { responsive:true, maintainAspectRatio:false,
+        plugins:{legend:{position:'bottom',labels:{font:{size:9},boxWidth:9}}},
+        scales:{y:{position:'left',ticks:{font:{size:9},callback:v=>(v/1000)+'K'},grid:{color:'rgba(0,0,0,.04)'}},
+          y2:{position:'right',ticks:{font:{size:9}},grid:{drawOnChartArea:false}},
+          x:{ticks:{font:{size:9}},grid:{color:'rgba(0,0,0,.04)'}}}}
+    });
+  } catch(e) { console.warn('Forest mini error', e); }
+}
+
+// ── RAINFALL MINI ─────────────────────────────────────────────────────────────
+function buildRainMini() {
+  if (!window.RAINFALL_MONTHLY) return;
+  try {
+    new Chart(document.getElementById('rainMini'), {
+      type: 'bar',
+      data: { labels:RAINFALL_MONTHLY.months, datasets:[
+        { label:'Lusaka', data:RAINFALL_MONTHLY.lusaka, backgroundColor:'rgba(26,107,53,.75)', borderRadius:3 },
+        { label:'Ndola',  data:RAINFALL_MONTHLY.ndola,  backgroundColor:'rgba(37,99,235,.6)',  borderRadius:3 }
+      ]},
+      options: { responsive:true, maintainAspectRatio:false,
+        plugins:{legend:{position:'bottom',labels:{font:{size:9},boxWidth:9}}},
+        scales:{y:{ticks:{font:{size:9},callback:v=>v+'mm'},grid:{color:'rgba(0,0,0,.04)'}},
+          x:{ticks:{font:{size:9}},grid:{display:false}}}}
+    });
+  } catch(e) { console.warn('Rain mini error', e); }
+}
+
+// ── POPULATION CHART ──────────────────────────────────────────────────────────
+let popChart, popHorizontal = false;
+function buildPopChart() {
+  if (!window.ZAMBIA_PROVINCES) return;
+  try {
+    if (popChart) popChart.destroy();
+    popChart = new Chart(document.getElementById('popChart'), {
+      type: 'bar',
+      data: { labels:ZAMBIA_PROVINCES.map(p=>p.name), datasets:[{
+        label:'Population',
+        data:ZAMBIA_PROVINCES.map(p=>p.pop),
+        backgroundColor:ZAMBIA_PROVINCES.map(p=>p.color+'cc'),
+        borderColor:ZAMBIA_PROVINCES.map(p=>p.color),
+        borderWidth:1.5, borderRadius:5
+      }]},
+      options: { indexAxis:popHorizontal?'y':'x', responsive:true, maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${(ctx.parsed[popHorizontal?'x':'y']/1e6).toFixed(2)}M`}}},
+        scales:{y:{ticks:{font:{size:9},callback:v=>typeof v==='number'?(v/1e6).toFixed(1)+'M':v},grid:{color:'rgba(0,0,0,.04)'}},
+          x:{ticks:{font:{size:9},maxRotation:35},grid:{display:popHorizontal}}}}
+    });
+  } catch(e) { console.warn('Pop chart error', e); }
+}
+function togglePopChart() {
+  popHorizontal = !popHorizontal;
+  document.getElementById('popChartToggle').textContent = popHorizontal ? 'Vertical' : 'Horizontal';
+  buildPopChart();
+}
+
+// ── FOREST LOSS ───────────────────────────────────────────────────────────────
+function buildForestLoss() {
+  if (!window.FOREST_TREND) return;
+  try {
+    new Chart(document.getElementById('forestLoss'), {
+      type: 'bar',
+      data: { labels:FOREST_TREND.years, datasets:[
+        { label:'Annual Loss km²', data:FOREST_TREND.loss_km2, backgroundColor:'rgba(220,38,38,.7)', borderRadius:4 },
+        { label:'Annual Gain km²', data:FOREST_TREND.gain_km2, backgroundColor:'rgba(26,107,53,.7)', borderRadius:4 }
+      ]},
+      options: { responsive:true, maintainAspectRatio:false,
+        plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:10}}},
+        scales:{y:{ticks:{font:{size:9}},grid:{color:'rgba(0,0,0,.04)'},title:{display:true,text:'km²',font:{size:10}}},
+          x:{ticks:{font:{size:9}},grid:{display:false}}}}
+    });
+  } catch(e) { console.warn('Forest loss error', e); }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  TEMPERATURE MODULE  (NEW)
+// ══════════════════════════════════════════════════════════════════════════════
+let tempLineChartObj   = null;
+let tempHeatBarObj     = null;
+let tempMultiYearObj   = null;
+let tempModalChart     = null;
+let currentTempProv    = 'Lusaka';
+let currentTempYear    = 2022;
+let currentHeatYear    = 2022;
+
+// Helper: temp -> colour (blue=cold, green=mid, orange=warm, red=hot)
+function tempToColor(t, alpha) {
+  alpha = alpha || 1;
+  if (t < 22)  return `rgba(59,130,246,${alpha})`;   // blue
+  if (t < 27)  return `rgba(34,197,94,${alpha})`;    // green
+  if (t < 33)  return `rgba(249,115,22,${alpha})`;   // orange
+  if (t < 38)  return `rgba(239,68,68,${alpha})`;    // red
+  return `rgba(127,0,0,${alpha})`;                   // dark red
+}
+function tempToHex(t) {
+  if (t < 22) return '#3b82f6';
+  if (t < 27) return '#22c55e';
+  if (t < 33) return '#f97316';
+  if (t < 38) return '#ef4444';
+  return '#7f0000';
+}
+
+// Compute national monthly averages across all provinces for a given year
+function getNationalMonthlyAvg(year) {
+  if (!window.ZAMBIA_TEMPERATURE) return Array(12).fill(28);
+  const provs = Object.values(ZAMBIA_TEMPERATURE.provinces);
+  return Array.from({length:12}, (_,mi) => {
+    const vals = provs.map(p => p[year] ? p[year][mi] : null).filter(v=>v!==null);
+    return vals.length ? parseFloat((vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(2)) : null;
+  });
+}
+
+// Compute province annual mean for a given year
+function getProvAnnualMean(prov, year) {
+  if (!window.ZAMBIA_TEMPERATURE) return null;
+  const data = ZAMBIA_TEMPERATURE.provinces[prov]?.[year];
+  if (!data) return null;
+  return parseFloat((data.reduce((a,b)=>a+b,0)/12).toFixed(2));
+}
+
+// Init temperature KPIs
+function buildTempKPIs() {
+  if (!window.ZAMBIA_TEMPERATURE) return;
+  const T = ZAMBIA_TEMPERATURE;
+  // Find global max/min
+  let maxT = -Infinity, minT = Infinity;
+  let allVals = [];
+  Object.values(T.provinces).forEach(p => {
+    T.years.forEach(y => {
+      if (p[y]) { p[y].forEach(v => { if(v>maxT)maxT=v; if(v<minT)minT=v; allVals.push(v); }); }
+    });
+  });
+  const avgNat = parseFloat((allVals.reduce((a,b)=>a+b,0)/allVals.length).toFixed(1));
+  // Hottest province in 2024
+  const provMeans2024 = Object.keys(T.provinces).map(pn => ({pn, m:getProvAnnualMean(pn,2024)}));
+  provMeans2024.sort((a,b)=>b.m-a.m);
+  const hotProv = provMeans2024[0];
+
+  const t1=document.getElementById('tkpi1'), t2=document.getElementById('tkpi2');
+  const t3=document.getElementById('tkpi3'), t4=document.getElementById('tkpi4');
+  if(t1) t1.textContent = `${maxT.toFixed(1)}°C`;
+  if(t2) t2.textContent = `${minT.toFixed(1)}°C`;
+  if(t3) t3.textContent = `${avgNat}°C`;
+  if(t4) t4.textContent = hotProv ? `${hotProv.pn} ${hotProv.m.toFixed(1)}°C` : '—';
+
+  // Stat cards
+  const sv4 = document.getElementById('sv4'), sv5 = document.getElementById('sv5');
+  if (sv4) sv4.textContent = `${maxT.toFixed(1)}°C`;
+  if (sv5) sv5.textContent = `${avgNat}°C`;
+}
+
+// Build province selector tabs for temp section
+function buildTempProvTabs() {
+  if (!window.ZAMBIA_TEMPERATURE) return;
+  const el = document.getElementById('tempProvTabs');
+  if (!el) return;
+  el.innerHTML = Object.keys(ZAMBIA_TEMPERATURE.provinces).map((pn,i) =>
+    `<span class="temp-ptab${i===4?' active':''}" onclick="switchTempProv('${pn}',this)">${pn}</span>`
+  ).join('');
+  currentTempProv = 'Lusaka';
+}
+
+function switchTempProv(prov, el) {
+  currentTempProv = prov;
+  document.querySelectorAll('.temp-ptab').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+  buildTempLineChart();
+  buildTempDataTable();
+}
+
+function switchTempYear(year, el) {
+  currentTempYear = year;
+  document.querySelectorAll('#tempYearTabs .temp-ytab').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+  buildTempLineChart();
+  buildTempDataTable();
+}
+
+function switchHeatmapYear(year, el) {
+  currentHeatYear = year;
+  el.closest('.temp-year-tabs').querySelectorAll('.temp-ytab').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+  buildTempHeatBar();
+}
+
+// Monthly line chart for selected province + year
+function buildTempLineChart() {
+  if (!window.ZAMBIA_TEMPERATURE) return;
+  const data = ZAMBIA_TEMPERATURE.provinces[currentTempProv]?.[currentTempYear] || [];
+  const months = ZAMBIA_TEMPERATURE.months;
+  const colors = data.map(t => tempToColor(t, 0.85));
+  const borderColors = data.map(t => tempToHex(t));
+
+  try {
+    if (tempLineChartObj) tempLineChartObj.destroy();
+    tempLineChartObj = new Chart(document.getElementById('tempLineChart'), {
+      type: 'line',
+      data: {
+        labels: months,
+        datasets: [{
+          label: `${currentTempProv} LST ${currentTempYear}`,
+          data,
+          borderColor: '#dc2626',
+          backgroundColor: 'rgba(220,38,38,.1)',
+          fill: true,
+          tension: 0.4,
+          pointRadius: 5,
+          pointBackgroundColor: borderColors,
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2,
+          borderWidth: 2.5
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.y.toFixed(1)}°C LST` } }
+        },
+        scales: {
+          y: {
+            ticks: { font:{size:9}, callback: v => v+'°C' },
+            grid: { color:'rgba(0,0,0,.05)' },
+            title: { display:true, text:'°C (LST)', font:{size:9} }
+          },
+          x: { ticks:{font:{size:9}}, grid:{display:false} }
+        }
+      }
+    });
+    // Update table title
+    const tt = document.getElementById('tempTableTitle');
+    if (tt) tt.textContent = `${currentTempProv} · All years`;
+  } catch(e) { console.warn('Temp line chart error', e); }
+}
+
+// Province annual avg bar chart (heatmap-style)
+function buildTempHeatBar() {
+  if (!window.ZAMBIA_TEMPERATURE) return;
+  const T = ZAMBIA_TEMPERATURE;
+  const provs = Object.keys(T.provinces);
+  const means = provs.map(p => getProvAnnualMean(p, currentHeatYear));
+  const colors = means.map(m => tempToColor(m, 0.85));
+  const border = means.map(m => tempToHex(m));
+
+  try {
+    if (tempHeatBarObj) tempHeatBarObj.destroy();
+    tempHeatBarObj = new Chart(document.getElementById('tempHeatBar'), {
+      type: 'bar',
+      data: {
+        labels: provs.map(p => p.length > 7 ? p.slice(0,7)+'…' : p),
+        datasets: [{
+          label: `Annual Avg LST ${currentHeatYear}`,
+          data: means,
+          backgroundColor: colors,
+          borderColor: border,
+          borderWidth: 1.5,
+          borderRadius: 5
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.x.toFixed(1)}°C avg LST ${currentHeatYear}` } }
+        },
+        scales: {
+          x: {
+            ticks: { font:{size:9}, callback: v => v+'°C' },
+            grid: { color:'rgba(0,0,0,.05)' },
+            min: 20, max: 38
+          },
+          y: { ticks:{font:{size:9}}, grid:{display:false} }
+        }
+      }
+    });
+  } catch(e) { console.warn('Temp heatbar error', e); }
+}
+
+// Multi-year national monthly avg comparison
+function buildTempMultiYear() {
+  if (!window.ZAMBIA_TEMPERATURE) return;
+  const months = ZAMBIA_TEMPERATURE.months;
+  const yearColors = { 2022:'#3b82f6', 2023:'#22c55e', 2024:'#f97316', 2025:'#dc2626' };
+  const datasets = ZAMBIA_TEMPERATURE.years.map(y => ({
+    label: `${y}`,
+    data: getNationalMonthlyAvg(y),
+    borderColor: yearColors[y],
+    backgroundColor: 'transparent',
+    tension: 0.4,
+    pointRadius: 3,
+    borderWidth: 2,
+    borderDash: y === 2025 ? [5,4] : []
+  }));
+
+  try {
+    if (tempMultiYearObj) tempMultiYearObj.destroy();
+    tempMultiYearObj = new Chart(document.getElementById('tempMultiYear'), {
+      type: 'line',
+      data: { labels: months, datasets },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { position:'bottom', labels:{font:{size:9},boxWidth:9} },
+          tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}°C` } }
+        },
+        scales: {
+          y: {
+            ticks: { font:{size:9}, callback: v => v+'°C' },
+            grid: { color:'rgba(0,0,0,.05)' }
+          },
+          x: { ticks:{font:{size:9}}, grid:{display:false} }
+        }
+      }
+    });
+  } catch(e) { console.warn('Temp multi-year error', e); }
+}
+
+// Monthly data table for selected province (all years)
+function buildTempDataTable() {
+  if (!window.ZAMBIA_TEMPERATURE) return;
+  const T = ZAMBIA_TEMPERATURE;
+  const prov = T.provinces[currentTempProv];
+  if (!prov) return;
+  const months = T.months;
+
+  document.getElementById('tempDataTbody').innerHTML = months.map((mo, mi) => {
+    const vals = T.years.map(y => prov[y] ? prov[y][mi] : null);
+    const cells = vals.map(v => {
+      if (v === null) return '<td>—</td>';
+      const c = tempToHex(v);
+      return `<td><span class="temp-badge" style="background:${c}">${v.toFixed(1)}</span></td>`;
+    });
+    return `<tr><td style="font-weight:700;color:var(--muted);">${mo}</td>${cells.join('')}</tr>`;
+  }).join('');
+}
+
+// Export temp data as CSV
+function exportTempCSV() {
+  if (!window.ZAMBIA_TEMPERATURE) return;
+  const T = ZAMBIA_TEMPERATURE;
+  const prov = T.provinces[currentTempProv];
+  if (!prov) return;
+  let csv = 'Province,Month,2022,2023,2024,2025\n';
+  T.months.forEach((mo, mi) => {
+    const vals = T.years.map(y => prov[y] ? prov[y][mi].toFixed(2) : '');
+    csv += `${currentTempProv},${mo},${vals.join(',')}\n`;
+  });
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `zambia_lst_${currentTempProv.replace(/[^a-z0-9]/gi,'_')}.csv`;
+  a.click();
+  showToast(`📥 CSV exported for ${currentTempProv}`);
+}
+
+// Build temp chart for province modal
+function buildModalTempChart(provName) {
+  const canvas = document.getElementById('pm-temp-chart');
+  if (!canvas || !window.ZAMBIA_TEMPERATURE) return;
+  const T = ZAMBIA_TEMPERATURE;
+  const prov = T.provinces[provName];
+  if (!prov) return;
+
+  if (tempModalChart) tempModalChart.destroy();
+  const yearColors = { 2022:'#3b82f6', 2023:'#22c55e', 2024:'#f97316', 2025:'#dc2626' };
+  const datasets = T.years.map(y => ({
+    label: String(y),
+    data: prov[y] || [],
+    borderColor: yearColors[y],
+    backgroundColor:'transparent',
+    tension:0.4, pointRadius:2, borderWidth:1.8,
+    borderDash: y===2025 ? [4,3] : []
+  }));
+
+  try {
+    tempModalChart = new Chart(canvas, {
+      type:'line',
+      data:{ labels: T.months, datasets },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{
+          legend:{position:'bottom',labels:{font:{size:8},boxWidth:8}},
+          tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}°C`}}
+        },
+        scales:{
+          y:{ticks:{font:{size:8},callback:v=>v+'°C'},grid:{color:'rgba(0,0,0,.04)'}},
+          x:{ticks:{font:{size:8}},grid:{display:false}}
+        }
+      }
+    });
+  } catch(e) { console.warn('Modal temp chart error', e); }
+}
+
+// Sparklines for temp stats
+function buildTempSparklines() {
+  if (!window.ZAMBIA_TEMPERATURE) return;
+  // spark7: max monthly oct temps 2022-2025 (Eastern is hottest in oct)
+  const octTemps = ZAMBIA_TEMPERATURE.years.map(y =>
+    ZAMBIA_TEMPERATURE.provinces['Eastern']?.[y]?.[9] || 38
+  );
+  buildSparkline('spark7', octTemps, '#dc2626', 'rgba(220,38,38,.1)');
+  // spark8: national avg per year
+  const annualAvgs = ZAMBIA_TEMPERATURE.years.map(y => {
+    const vals = getNationalMonthlyAvg(y);
+    return parseFloat((vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1));
+  });
+  buildSparkline('spark8', annualAvgs, '#f97316', 'rgba(249,115,22,.08)');
+}
+
+// ── PROVINCE TABLE ────────────────────────────────────────────────────────────
+let provSortCol = 'pop', provSortDir = -1;
+// Augment province data with avg_temp
+function getProvData() {
+  if (!window.ZAMBIA_PROVINCES) return [];
+  return ZAMBIA_PROVINCES.map(p => {
+    const avgTemp = window.ZAMBIA_TEMPERATURE
+      ? (() => {
+          const allVals = ZAMBIA_TEMPERATURE.years.flatMap(y =>
+            ZAMBIA_TEMPERATURE.provinces[p.name]?.[y] || []
+          );
+          return allVals.length ? parseFloat((allVals.reduce((a,b)=>a+b,0)/allVals.length).toFixed(1)) : null;
+        })()
+      : null;
+    return { ...p, avg_temp: avgTemp };
+  });
+}
+
+const provData = getProvData();
+
+function sortProvTable(col) {
+  if (provSortCol === col) provSortDir *= -1;
+  else { provSortCol = col; provSortDir = -1; }
+  document.querySelectorAll('.prov-tbl th').forEach(th => th.className = '');
+  const thMap = {name:'th-name',districts:'th-districts',pop:'th-pop',forest_pct:'th-forest',area_km2:'th-area',avg_temp:'th-temp',capital:'th-cap'};
+  if (thMap[col]) document.getElementById(thMap[col]).className = provSortDir===1?'sort-asc':'sort-desc';
+  provData.sort((a,b) => {
+    const va=a[col]??a.name, vb=b[col]??b.name;
+    if (va===null && vb===null) return 0;
+    if (va===null) return 1; if (vb===null) return -1;
+    return typeof va==='string'?va.localeCompare(vb)*provSortDir:(va-vb)*provSortDir;
+  });
+  renderProvTable();
+}
+
+function renderProvTable() {
+  const maxPop = Math.max(...provData.map(p=>p.pop));
+  document.getElementById('provTBody').innerHTML = provData.map(p => {
+    const tc = p.avg_temp ? tempToHex(p.avg_temp) : '#9ca3af';
+    return `
+    <tr onclick="openProvModal('${p.name}')" title="Click for details">
+      <td><span class="prov-dot" style="background:${p.color};"></span>${p.name}</td>
+      <td style="text-align:center;font-weight:700;">${p.districts}</td>
+      <td><div class="bar-cell"><div class="bar-bg"><div class="bar-fill" style="width:${Math.round(p.pop/maxPop*100)}%;background:${p.color};"></div></div><span style="font-size:.71rem;font-weight:700;white-space:nowrap;">${(p.pop/1e6).toFixed(1)}M</span></div></td>
+      <td><div class="bar-cell"><div class="bar-bg"><div class="bar-fill" style="width:${p.forest_pct}%;background:#1a6b35;"></div></div><span style="font-size:.71rem;font-weight:700;">${p.forest_pct}%</span></div></td>
+      <td style="font-size:.73rem;color:var(--muted);">${(p.area_km2/1000).toFixed(0)}K</td>
+      <td style="text-align:center;">
+        ${p.avg_temp ? `<span class="temp-badge" style="background:${tc}">${p.avg_temp.toFixed(1)}°</span>` : '—'}
+      </td>
+      <td style="font-size:.73rem;">${p.capital||'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function buildProvTable() {
+  if (!provData.length) return;
+  provData.sort((a,b)=>b.pop-a.pop);
+  document.getElementById('th-pop').className = 'sort-desc';
+  renderProvTable();
+}
+
+// ── PROVINCE MODAL ────────────────────────────────────────────────────────────
+function openProvModal(name) {
+  if (!window.ZAMBIA_PROVINCES) return;
+  const p = ZAMBIA_PROVINCES.find(x=>x.name===name);
+  if (!p) return;
+  const dists = (window.ZAMBIA_DISTRICTS||[]).filter(d=>d.province===name).sort((a,b)=>b.pop-a.pop);
+  const capDist = dists[0];
+  const avgTemp = window.ZAMBIA_TEMPERATURE
+    ? (() => {
+        const allVals = ZAMBIA_TEMPERATURE.years.flatMap(y => ZAMBIA_TEMPERATURE.provinces[name]?.[y]||[]);
+        return allVals.length ? parseFloat((allVals.reduce((a,b)=>a+b,0)/allVals.length).toFixed(1)) : null;
+      })()
+    : null;
+
+  document.getElementById('pm-title').textContent = `${name} Province`;
+  document.getElementById('pm-title').style.color = p.color;
+  document.getElementById('pm-stats').innerHTML = `
+    <div class="prov-stat-box"><strong>${p.districts}</strong><small>Districts</small></div>
+    <div class="prov-stat-box"><strong>${(p.pop/1e6).toFixed(2)}M</strong><small>Population</small></div>
+    <div class="prov-stat-box"><strong>${(p.area_km2/1000).toFixed(0)}K</strong><small>km²</small></div>
+    <div class="prov-stat-box"><strong>${p.capital||'—'}</strong><small>Capital</small></div>
+    <div class="prov-stat-box"><strong style="color:${avgTemp?tempToHex(avgTemp):'#9ca3af'};">${avgTemp?avgTemp.toFixed(1)+'°C':'—'}</strong><small>Avg LST</small></div>`;
+
+  if (capDist) {
+    const utm=ddToUTM(capDist.lat,capDist.lng);
+    const mgrs=ddToMGRS(capDist.lat,capDist.lng);
+    document.getElementById('pm-coords').innerHTML = `
+      <div>
+        <div style="font-size:.63rem;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);margin-bottom:3px;">Capital: ${p.capital||capDist.district}</div>
+        <div style="font-size:.72rem;font-weight:700;">DD: ${capDist.lat.toFixed(5)}°, ${capDist.lng.toFixed(5)}°</div>
+        <div style="font-size:.7rem;color:var(--muted);margin-top:2px;">${ddToDMS(capDist.lat,true)}</div>
+        <div style="font-size:.7rem;color:var(--muted);">${ddToDMS(capDist.lng,false)}</div>
+      </div>
+      <div>
+        <div style="font-size:.63rem;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);margin-bottom:3px;">UTM (WGS 84)</div>
+        <div style="font-size:.72rem;font-weight:700;">Zone ${utm.zone}${utm.hemisphere}</div>
+        <div style="font-size:.7rem;color:var(--muted);">E: ${utm.easting.toLocaleString()} m</div>
+        <div style="font-size:.7rem;color:var(--muted);">N: ${utm.northing.toLocaleString()} m</div>
+        <div style="font-size:.7rem;color:var(--g3);font-weight:700;margin-top:2px;">MGRS: ${mgrs}</div>
+      </div>`;
+  }
+
+  // Build temp chart
+  buildModalTempChart(name);
+
+  const lcItems = [
+    { label:'Forest/Woodland', pct:p.forest_pct, color:'#1a6b35' },
+    { label:'Agriculture',     pct:p.agri_pct,   color:'#eab308' },
+    { label:'Urban/Built-up',  pct:p.urban_pct,  color:'#f97316' },
+    { label:'Water Bodies',    pct:p.water_pct,  color:'#3b82f6' },
+    { label:'Bare Land',       pct:p.bare_pct,   color:'#9ca3af' },
+  ];
+  document.getElementById('pm-lc').innerHTML = lcItems.map(l => `
+    <div class="lc-bar-row">
+      <span class="lc-bar-label">${l.label}</span>
+      <div class="lc-bar-bg"><div class="lc-bar-fill" style="width:${l.pct||0}%;background:${l.color};"></div></div>
+      <span class="lc-bar-val">${l.pct||0}%</span>
+    </div>`).join('');
+
+  document.getElementById('pm-dists').innerHTML = dists.map(d => `
+    <div class="prov-dist-item">
+      <strong>${d.district}</strong>
+      <small>Pop: ${d.pop.toLocaleString()} · ${d.area_km2.toLocaleString()} km²</small>
+    </div>`).join('');
+
+  document.getElementById('provModal').classList.add('open');
+  GeoHubAuth.addAuditLog('PROVINCE_VIEW',`Viewed province: ${name}`,session.id);
+}
+function closeProvModal() {
+  document.getElementById('provModal').classList.remove('open');
+  if (tempModalChart) { tempModalChart.destroy(); tempModalChart = null; }
+}
+document.getElementById('provModal').addEventListener('click', function(e){ if(e.target===this) closeProvModal(); });
+
+// ── ACTIVITY FEED ─────────────────────────────────────────────────────────────
+function buildActivity() {
+  const logs = GeoHubAuth.getAuditLogs() || [];
+  const sys  = [
+    { icon:'fas fa-database',       bg:'#eff6ff', color:'#2563eb', title:'NSDI GRID3 2022 dataset active — 116 districts', time:'System' },
+    { icon:'fas fa-thermometer-half',bg:'#fff1f2',color:'#dc2626', title:'LST Temperature 2022–2025 loaded — 10 provinces', time:'System' },
+    { icon:'fas fa-satellite',       bg:'#fffbeb', color:'#d97706', title:'FAO Forest Cover 2024 data loaded',               time:'System' },
+    { icon:'fas fa-cloud-rain',      bg:'#f0fdfa', color:'#0d9488', title:'CHIRPS 2023 rainfall data synchronized',          time:'System' },
+    { icon:'fas fa-layer-group',     bg:'#faf5ff', color:'#7c3aed', title:'Multi-layer GIS v5.1 — temperature layer added', time:'System' },
+  ];
+  const iconMap = a => a.includes('LOGIN')?'fas fa-sign-in-alt':a.includes('MAP')?'fas fa-map':a.includes('EXPORT')?'fas fa-download':a.includes('PROVINCE')?'fas fa-globe-africa':a.includes('DASHBOARD')?'fas fa-th-large':'fas fa-circle';
+  const bgMap   = a => a.includes('LOGIN')?'#f0fdf4':a.includes('MAP')?'#eff6ff':a.includes('EXPORT')?'#fffbeb':a.includes('PROVINCE')?'#f0fdfa':'#f3f4f6';
+  const cMap    = a => a.includes('LOGIN')?'var(--g3)':a.includes('MAP')?'#2563eb':a.includes('EXPORT')?'#d97706':a.includes('PROVINCE')?'#0d9488':'#6b7280';
+  const userLogs = logs.slice(0,5).map(l=>({icon:iconMap(l.action),bg:bgMap(l.action),color:cMap(l.action),title:l.detail,time:timeSince(l.timestamp)}));
+  const all = [...userLogs,...sys].slice(0,8);
+  document.getElementById('actFeed').innerHTML = all.map(a => `
+    <div class="act-item">
+      <div class="act-dot" style="background:${a.bg};color:${a.color};"><i class="${a.icon}"></i></div>
+      <div class="act-txt"><strong>${a.title}</strong><span>${a.time}</span></div>
+    </div>`).join('');
+  document.getElementById('actTag').textContent = `${all.length} events`;
+}
+function timeSince(ts) {
+  const s=Math.floor((Date.now()-new Date(ts))/1000);
+  if(s<60) return `${s}s ago`; if(s<3600) return `${Math.floor(s/60)}m ago`;
+  if(s<86400) return `${Math.floor(s/3600)}h ago`;
+  return new Date(ts).toLocaleDateString('en-GB');
+}
+
+// ── DATA QUALITY RINGS ────────────────────────────────────────────────────────
+function buildDQGrid() {
+  const items = [
+    { name:'Districts',   pct:100, color:'#1a6b35' },
+    { name:'Attributes',  pct:97,  color:'#2563eb' },
+    { name:'Population',  pct:94,  color:'#7c3aed' },
+    { name:'LST Data',    pct:100, color:'#dc2626' },
+  ];
+  document.getElementById('dqGrid').innerHTML = items.map(item => {
+    const r=22, circ=2*Math.PI*r, offset=circ*(1-item.pct/100);
+    return `<div class="dq-item">
+      <div class="dq-ring">
+        <svg width="56" height="56" viewBox="0 0 56 56">
+          <circle cx="28" cy="28" r="${r}" fill="none" stroke="#f3f4f6" stroke-width="5"/>
+          <circle cx="28" cy="28" r="${r}" fill="none" stroke="${item.color}" stroke-width="5"
+            stroke-dasharray="${circ.toFixed(2)}" stroke-dashoffset="${offset.toFixed(2)}"
+            stroke-linecap="round"/>
+        </svg>
+        <div class="dq-ring-lbl" style="color:${item.color};">${item.pct}%</div>
+      </div>
+      <div class="dq-name">${item.name}</div>
+    </div>`;
+  }).join('');
+
+  try {
+    new Chart(document.getElementById('dqBarChart'), {
+      type: 'bar',
+      data: {
+        labels: ['Boundary Coverage','Coordinate Accuracy','Pop. Census Align','Forest Survey','Rainfall Stations','LST Province Coverage'],
+        datasets: [{ data:[100,99,94,88,72,100], backgroundColor:['#1a6b35','#16a34a','#7c3aed','#d97706','#2563eb','#dc2626'], borderRadius:4 }]
+      },
+      options: { indexAxis:'y', responsive:true, maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.parsed.x}%`}}},
+        scales:{x:{max:100,ticks:{font:{size:8},callback:v=>v+'%'},grid:{color:'rgba(0,0,0,.04)'}},
+          y:{ticks:{font:{size:8}},grid:{display:false}}}}
+    });
+  } catch(e) { console.warn('DQ bar chart error', e); }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  ADVANCED MULTI-LAYER MINI MAP  (with temperature overlay)
+// ══════════════════════════════════════════════════════════════════════════════
+let miniMap, mlBasemaps = {}, mlActiveBase, mlLayers = {};
+let mlDistrictMarkers = [], mlDistrictOpacity = 0.80;
+let mlColorMode = 'province';
+let mlTempYear = 2022;
+
+const PROV_COLORS = {};
+if (window.ZAMBIA_PROVINCES) ZAMBIA_PROVINCES.forEach(p => { PROV_COLORS[p.name] = p.color; });
+
+function popToColor(pop) {
+  const t = Math.min(pop / 2800000, 1);
+  const r = Math.round(255 * t), g = Math.round(120 * (1-t)), b = Math.round(50 * (1-t));
+  return `rgb(${r},${g},${b})`;
+}
+function areaToColor(area) {
+  const t = Math.min(area / 37000, 1);
+  const r = Math.round(50 * t), g = Math.round(120 + 80*(1-t)), b = Math.round(200 * (1-t));
+  return `rgb(${r},${g},${b})`;
+}
+function getDistrictColor(d) {
+  if (mlColorMode === 'population') return popToColor(d.pop);
+  if (mlColorMode === 'area')       return areaToColor(d.area_km2);
+  return PROV_COLORS[d.province] || '#4CAF50';
+}
+
+function setMapTempYear(year, el) {
+  mlTempYear = year;
+  document.querySelectorAll('[id^="mty"]').forEach(b => b.classList.remove('active'));
+  if (el) el.classList.add('active');
+  if (mlLayers.temperature && mlLayers.temperature.active) buildMLTemperature();
+}
+
+function buildMiniMap() {
+  miniMap = L.map('miniMap', {
+    center: [-13.1, 27.8], zoom: 5,
+    zoomControl: true,
+    attributionControl: true,
+  });
+
+  mlBasemaps = {
+    osm:     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+              {maxZoom:19, attribution:'© <a href="https://www.openstreetmap.org" target="_blank">OpenStreetMap</a>'}),
+    sat:     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+              {maxZoom:19, attribution:'© Esri / DigitalGlobe'}),
+    terrain: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+              {maxZoom:17, attribution:'© OpenTopoMap'}),
+    dark:    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+              {maxZoom:19, attribution:'© CARTO'}),
+  };
+  mlActiveBase = mlBasemaps.osm;
+  mlActiveBase.addTo(miniMap);
+
+  mlLayers = {
+    districts:   { group: L.layerGroup(), label:'Districts (116)',       color:'#4CAF50', count:116, active:true  },
+    provinces:   { group: L.layerGroup(), label:'Province Labels',       color:'#6b7280', count:10,  active:true  },
+    water:       { group: L.layerGroup(), label:'Water Bodies',          color:'#3b82f6', count:6,   active:true  },
+    mining:      { group: L.layerGroup(), label:'Mining Sites',          color:'#f97316', count:6,   active:true  },
+    temperature: { group: L.layerGroup(), label:'LST Temperature',       color:'#dc2626', count:10,  active:false },
+    capitals:    { group: L.layerGroup(), label:'District Capitals',     color:'#7c3aed', count:20,  active:false },
+    heatmap:     { group: L.layerGroup(), label:'Pop. Heatmap',          color:'#ef4444', count:116, active:false },
+    grid:        { group: L.layerGroup(), label:'Coord Grid',            color:'#9ca3af', count:null,active:false },
+    borders:     { group: L.layerGroup(), label:'Province Borders',      color:'#111827', count:10,  active:false },
+  };
+
+  Object.entries(mlLayers).forEach(([k,l]) => { if (l.active) l.group.addTo(miniMap); });
+
+  buildMLDistricts();
+  buildMLProvinces();
+  buildMLWater();
+  buildMLMining();
+  renderMLLayerList();
+
+  miniMap.on('mousemove', e => {
+    if (!mlDistrictMarkers.length) return;
+    const nearby = mlDistrictMarkers.reduce((best,{data}) => {
+      const d = Math.hypot(data.lat-e.latlng.lat, data.lng-e.latlng.lng);
+      return d < best.d ? {d, name:`${data.district}, ${data.province}`} : best;
+    }, {d:Infinity, name:'Zambia'});
+    document.getElementById('mlNearby').textContent = nearby.name;
+    document.getElementById('mlCoords').textContent = `${e.latlng.lat.toFixed(4)}°, ${e.latlng.lng.toFixed(4)}°`;
+    // Show temp for nearest province
+    if (window.ZAMBIA_TEMPERATURE && nearby.name !== 'Zambia') {
+      const province = nearby.name.split(', ')[1];
+      const mean = getProvAnnualMean(province, mlTempYear);
+      if (mean) {
+        const tlabel = document.getElementById('mlTempLabel');
+        if (tlabel) tlabel.textContent = `🌡 ${province}: ${mean.toFixed(1)}°C`;
+      }
+    }
+  });
+
+  miniMap.on('zoomend', () => {
+    const el = document.getElementById('mlZoom');
+    if (el) el.textContent = miniMap.getZoom();
+  });
+}
+
+function buildMLTemperature() {
+  mlLayers.temperature.group.clearLayers();
+  if (!window.ZAMBIA_TEMPERATURE || !window.ZAMBIA_PROVINCES) return;
+
+  ZAMBIA_PROVINCES.forEach(p => {
+    const dists = (window.ZAMBIA_DISTRICTS||[]).filter(d=>d.province===p.name);
+    if (!dists.length) return;
+    const mean = getProvAnnualMean(p.name, mlTempYear);
+    if (mean === null) return;
+
+    const color = tempToHex(mean);
+    const lat = dists.reduce((s,d)=>s+d.lat,0)/dists.length;
+    const lng = dists.reduce((s,d)=>s+d.lng,0)/dists.length;
+
+    // Draw large semi-transparent circle for each province
+    dists.forEach(d => {
+      L.circleMarker([d.lat, d.lng], {
+        radius: 18,
+        fillColor: color,
+        color: 'rgba(255,255,255,0.6)',
+        weight: 1,
+        fillOpacity: 0.45,
+        interactive: false
+      }).addTo(mlLayers.temperature.group);
+    });
+
+    // Province label with temp
+    const icon = L.divIcon({
+      html: `<div style="background:${color};color:#fff;padding:4px 8px;border-radius:6px;font-size:10px;font-weight:800;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.3);border:1.5px solid rgba(255,255,255,.4);">${p.name.slice(0,8)}<br>${mean.toFixed(1)}°C</div>`,
+      className: '', iconAnchor: [0, 0]
+    });
+    L.marker([lat, lng], {icon})
+      .bindPopup(`<div style="font-family:'Inter',sans-serif;font-size:.8rem;">
+        <strong style="color:${color};">${p.name} Province</strong><br>
+        Annual avg LST (${mlTempYear}): <strong style="color:${color};">${mean.toFixed(2)}°C</strong><br>
+        <div style="margin-top:5px;font-size:.72rem;color:#6b7280;">Source: LST Dataset 2022–2025</div>
+      </div>`, {maxWidth:220})
+      .addTo(mlLayers.temperature.group);
+  });
+}
+
+function renderMLLayerList() {
+  const el = document.getElementById('mlLayerList');
+  if (!el) return;
+  el.innerHTML = Object.entries(mlLayers).map(([k,l]) => `
+    <div class="layer-row" id="lr-${k}">
+      <span class="layer-drag"><i class="fas fa-grip-vertical"></i></span>
+      <span class="layer-color" style="background:${l.color};"></span>
+      <span class="layer-name">${l.label}</span>
+      ${l.count !== null ? `<span class="layer-count">${l.count}</span>` : ''}
+      <label class="layer-toggle">
+        <input type="checkbox" ${l.active?'checked':''} onchange="mlToggleLayer('${k}',this.checked)"/>
+        <span class="layer-toggle-sl"></span>
+      </label>
+    </div>`).join('');
+  updateMLActiveCount();
+}
+
+function updateMLActiveCount() {
+  const n = Object.values(mlLayers).filter(l=>l.active).length;
+  const e1 = document.getElementById('mlActiveCount');
+  const e2 = document.getElementById('mlActiveCountBottom');
+  if (e1) e1.textContent = n;
+  if (e2) e2.textContent = n;
+}
+
+function buildMLDistricts() {
+  mlLayers.districts.group.clearLayers();
+  mlDistrictMarkers = [];
+  if (!window.ZAMBIA_DISTRICTS) return;
+  ZAMBIA_DISTRICTS.forEach(d => {
+    const color = getDistrictColor(d);
+    const density = (d.pop / d.area_km2).toFixed(1);
+    const utm = ddToUTM(d.lat, d.lng);
+    const m = L.circleMarker([d.lat, d.lng], {
+      radius:6, fillColor:color, color:'rgba(255,255,255,0.7)', weight:1.5,
+      fillOpacity:mlDistrictOpacity
+    });
+    m.bindPopup(`<div style="font-family:'Inter',sans-serif;min-width:200px;">
+      <div style="background:${color};padding:8px 10px;margin:-10px -12px 9px;border-radius:5px 5px 0 0;">
+        <strong style="color:#fff;font-size:.88rem;">${d.district}</strong>
+        <div style="color:rgba(255,255,255,.85);font-size:.7rem;">${d.province} Province · ${d.id}</div>
+      </div>
+      <table style="width:100%;font-size:.74rem;border-collapse:collapse;">
+        <tr><td style="color:#6b7280;padding:2px 0;">DD Coords</td><td style="font-weight:700;text-align:right;font-family:'Courier New',monospace;">${d.lat.toFixed(4)}°, ${d.lng.toFixed(4)}°</td></tr>
+        <tr><td style="color:#6b7280;padding:2px 0;">UTM Zone</td><td style="font-weight:700;text-align:right;">Z${utm.zone}${utm.hemisphere}</td></tr>
+        <tr><td style="color:#6b7280;padding:2px 0;">Population</td><td style="font-weight:700;text-align:right;">${d.pop.toLocaleString()}</td></tr>
+        <tr><td style="color:#6b7280;padding:2px 0;">Area</td><td style="font-weight:700;text-align:right;">${d.area_km2.toLocaleString()} km²</td></tr>
+        <tr><td style="color:#6b7280;padding:2px 0;">Density</td><td style="font-weight:700;text-align:right;">${density} /km²</td></tr>
+      </table>
+      <a href="map.html" style="display:block;text-align:center;background:#1a6b35;color:#fff;padding:6px;border-radius:6px;font-size:.72rem;font-weight:700;text-decoration:none;margin-top:8px;">🗺️ View Full Detail in Map Viewer →</a>
+    </div>`, {maxWidth:250});
+    m.on('mouseover', function(){ this.setStyle({radius:10,weight:2,fillOpacity:1}); });
+    m.on('mouseout',  function(){ this.setStyle({radius:6,weight:1.5,fillOpacity:mlDistrictOpacity}); });
+    m.addTo(mlLayers.districts.group);
+    mlDistrictMarkers.push({marker:m, data:d});
+  });
+}
+
+function buildMLProvinces() {
+  mlLayers.provinces.group.clearLayers();
+  if (!window.ZAMBIA_PROVINCES) return;
+  ZAMBIA_PROVINCES.forEach(p => {
+    const d = (window.ZAMBIA_DISTRICTS||[]).find(x=>x.province===p.name);
+    if (!d) return;
+    const icon = L.divIcon({
+      html:`<div style="background:rgba(0,0,0,.75);color:#fff;padding:3px 8px;border-radius:4px;font-size:9px;font-weight:800;white-space:nowrap;font-family:'Inter',sans-serif;border:1.5px solid ${p.color};letter-spacing:.3px;">${p.name.toUpperCase()}</div>`,
+      className:'', iconAnchor:[0,0]
+    });
+    L.marker([d.lat - 0.4, d.lng], {icon}).addTo(mlLayers.provinces.group);
+  });
+}
+
+function buildMLWater() {
+  mlLayers.water.group.clearLayers();
+  if (!window.WATER_BODIES) return;
+  WATER_BODIES.forEach(w => {
+    L.circleMarker([w.lat, w.lng], {
+      radius: w.area_km2 > 5000 ? 13 : 8,
+      fillColor:'#3b82f6', color:'#93c5fd', weight:2, fillOpacity:0.65
+    }).bindPopup(`<div style="font-family:'Inter',sans-serif;font-size:.78rem;">
+      <strong style="font-size:.88rem;">${w.name}</strong><br>
+      <span style="color:#6b7280;">${w.type}</span> · <strong>${w.area_km2.toLocaleString()} km²</strong>
+    </div>`)
+    .addTo(mlLayers.water.group);
+  });
+}
+
+function buildMLMining() {
+  mlLayers.mining.group.clearLayers();
+  if (!window.MINING_SITES) return;
+  MINING_SITES.forEach(m => {
+    const icon = L.divIcon({
+      html:`<div title="${m.name}" style="background:#f97316;color:#fff;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4);">⛏</div>`,
+      className:'', iconAnchor:[11,11]
+    });
+    L.marker([m.lat, m.lng], {icon})
+     .bindPopup(`<div style="font-family:'Inter',sans-serif;font-size:.78rem;">
+       <strong style="font-size:.88rem;">${m.name}</strong><br>
+       <span style="color:#6b7280;">${m.company}</span><br>
+       <strong style="color:#f97316;">${m.production_t.toLocaleString()} t/yr</strong>
+     </div>`)
+     .addTo(mlLayers.mining.group);
+  });
+}
+
+function buildMLCapitals() {
+  mlLayers.capitals.group.clearLayers();
+  if (!window.ZAMBIA_DISTRICTS) return;
+  const capitals = ZAMBIA_DISTRICTS.filter(d => d.pop > 200000).slice(0, 20);
+  capitals.forEach(d => {
+    const icon = L.divIcon({
+      html:`<div style="background:#7c3aed;color:#fff;padding:2px 7px;border-radius:10px;font-size:9px;font-weight:700;white-space:nowrap;border:1px solid rgba(255,255,255,.5);">★ ${d.district}</div>`,
+      className:'', iconAnchor:[0,10]
+    });
+    L.marker([d.lat, d.lng], {icon}).bindPopup(`<strong>${d.district}</strong><br>${d.province} · Pop: ${d.pop.toLocaleString()}`)
+    .addTo(mlLayers.capitals.group);
+  });
+}
+
+function buildMLHeatmap() {
+  mlLayers.heatmap.group.clearLayers();
+  if (!window.ZAMBIA_DISTRICTS) return;
+  const maxPop = Math.max(...ZAMBIA_DISTRICTS.map(d=>d.pop));
+  ZAMBIA_DISTRICTS.forEach(d => {
+    const t = d.pop / maxPop;
+    const radius = 8 + t * 28;
+    const r = Math.round(255*t), g = Math.round(80-t*60);
+    L.circleMarker([d.lat, d.lng], {
+      radius, fillColor:`rgb(${r},${g},0)`, color:'none', fillOpacity:Math.max(0.06, 0.22*t), interactive:false
+    }).addTo(mlLayers.heatmap.group);
+  });
+}
+
+function buildMLGrid() {
+  mlLayers.grid.group.clearLayers();
+  for (let lat=-18; lat<=-8; lat+=2) {
+    L.polyline([[lat,22],[lat,34]], {color:'rgba(100,100,100,.25)',weight:0.8,dashArray:'3,7'}).addTo(mlLayers.grid.group);
+    L.marker([lat,22.3],{icon:L.divIcon({html:`<span style="font-size:8px;color:rgba(0,0,0,.45);background:rgba(255,255,255,.75);padding:1px 4px;border-radius:2px;">${lat}°</span>`,className:'',iconAnchor:[0,0]})}).addTo(mlLayers.grid.group);
+  }
+  for (let lng=22; lng<=34; lng+=2) {
+    L.polyline([[-8,lng],[-18,lng]], {color:'rgba(100,100,100,.25)',weight:0.8,dashArray:'3,7'}).addTo(mlLayers.grid.group);
+    L.marker([-8.5,lng],{icon:L.divIcon({html:`<span style="font-size:8px;color:rgba(0,0,0,.45);background:rgba(255,255,255,.75);padding:1px 4px;border-radius:2px;">${lng}°</span>`,className:'',iconAnchor:[0,0]})}).addTo(mlLayers.grid.group);
+  }
+}
+
+function buildMLBorders() {
+  mlLayers.borders.group.clearLayers();
+  if (!window.ZAMBIA_PROVINCES) return;
+  ZAMBIA_PROVINCES.forEach(p => {
+    const dists = (window.ZAMBIA_DISTRICTS||[]).filter(d=>d.province===p.name);
+    if (dists.length < 2) return;
+    const lats = dists.map(d=>d.lat), lngs = dists.map(d=>d.lng);
+    const bounds = [[Math.min(...lats)-0.5, Math.min(...lngs)-0.5],[Math.max(...lats)+0.5, Math.max(...lngs)+0.5]];
+    L.rectangle(bounds, {color:p.color, weight:1.5, fill:false, dashArray:'5,8', opacity:0.6})
+    .bindTooltip(p.name, {permanent:false})
+    .addTo(mlLayers.borders.group);
+  });
+}
+
+function mlToggleLayer(key, on) {
+  if (!mlLayers[key]) return;
+  if (on) {
+    mlLayers[key].group.addTo(miniMap);
+    if (key === 'heatmap')     buildMLHeatmap();
+    if (key === 'grid')        buildMLGrid();
+    if (key === 'capitals')    buildMLCapitals();
+    if (key === 'borders')     buildMLBorders();
+    if (key === 'temperature') buildMLTemperature();
+  } else {
+    miniMap.removeLayer(mlLayers[key].group);
+  }
+  mlLayers[key].active = on;
+  updateMLActiveCount();
+  const tb = document.getElementById('tb' + key.charAt(0).toUpperCase() + key.slice(1));
+  if (tb) tb.classList.toggle('active', on);
+}
+
+function quickToggleLayer(key, btn) {
+  const isOn = !mlLayers[key]?.active;
+  mlToggleLayer(key, isOn);
+  if (btn) btn.classList.toggle('active', isOn);
+  const cb = document.querySelector(`#lr-${key} input[type=checkbox]`);
+  if (cb) cb.checked = isOn;
+}
+
+function mlSwitchBasemap(key, el) {
+  if (!miniMap || !mlBasemaps[key]) return;
+  miniMap.removeLayer(mlActiveBase);
+  mlActiveBase = mlBasemaps[key];
+  mlActiveBase.addTo(miniMap);
+  mlActiveBase.bringToBack();
+  document.querySelectorAll('.bm-item').forEach(b=>b.classList.remove('active'));
+  if (el) el.classList.add('active');
+}
+
+function mlSetOpacity(val) {
+  mlDistrictOpacity = val / 100;
+  document.getElementById('mlOpVal').textContent = val + '%';
+  mlDistrictMarkers.forEach(({marker}) => marker.setStyle({fillOpacity: mlDistrictOpacity}));
+}
+
+function mlRecolor(mode) {
+  mlColorMode = mode;
+  buildMLDistricts();
+}
+
+function miniMapFlyToZambia() {
+  if (miniMap) miniMap.setView([-13.1, 27.8], 5);
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  if (!t) return;
+  t.innerHTML = `<i class="fas fa-check-circle"></i>${msg}`;
+  t.style.display = 'flex'; clearTimeout(t._t);
+  t._t = setTimeout(()=>t.style.display='none', 2500);
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════════════════════════════
+window.addEventListener('load', () => {
+  try {
+    setLoadProgress(8, 'Loading statistics…', 'Counting districts & areas…');
+    animateCount('sv1', 116);
+    animateCount('sv2', 435000);
+    animateCount('sv3', 20017675);
+
+    setLoadProgress(18, 'Building sparklines…', 'Rendering stat cards…');
+    buildSparkline('spark1', [90,92,95,98,100,104,106,110,112,116], '#1a6b35', 'rgba(26,107,53,.1)');
+    buildSparkline('spark2', [748,749,750,750,751,752,752,752,752,752], '#1a6b35', null);
+    buildSparkline('spark3', window.FOREST_TREND ? FOREST_TREND.total_km2 : [450,445,440,438,435,435,435,430,430,435], '#d97706', 'rgba(217,119,6,.1)');
+    buildSparkline('spark4', [16,16.5,17,17.5,18,18.5,19,19.5,20,20.0].map(v=>v*1e6), '#2563eb', 'rgba(37,99,235,.08)');
+    buildSparkline('spark5', [44,45,46,47,47,47,47,48,48,48].map(v=>v*1000), '#0d9488', null);
+    buildSparkline('spark6', [600,620,640,660,680,700,710,720,740,756].map(v=>v*1000), '#ea580c', 'rgba(234,88,12,.08)');
+    buildTempSparklines();
+
+    setLoadProgress(30, 'Loading temperature data…', 'Processing LST 2022–2025…');
+    buildTempKPIs();
+
+    setLoadProgress(42, 'Rendering charts…', 'Building land cover & forest charts…');
+    buildLCDonut();
+    buildForestMini();
+    buildRainMini();
+    buildPopChart();
+    buildForestLoss();
+
+    setLoadProgress(55, 'Building temperature charts…', 'Monthly LST charts & heatmap…');
+    buildTempProvTabs();
+    buildTempLineChart();
+    buildTempHeatBar();
+    buildTempMultiYear();
+    buildTempDataTable();
+
+    setLoadProgress(68, 'Loading province data…', 'Building province table…');
+    buildProvTable();
+    buildActivity();
+    buildDQGrid();
+
+    setLoadProgress(78, 'Loading widgets…', 'Setting up weather & coordinates…');
+    buildWeather();
+    updateCWDisplay('lusaka');
+
+    setLoadProgress(88, 'Rendering map layers…', 'Building multi-layer GIS map…');
+    buildMiniMap();
+
+    setLoadProgress(96, 'Finalising…', 'Recording session activity…');
+    GeoHubAuth.addAuditLog('DASHBOARD_VIEW', 'Dashboard v6.0 loaded — LST temperature data integrated', session.id);
+
+    setLoadProgress(100, 'Ready!', 'GeoHub Zambia v6.0 loaded successfully');
+    setTimeout(hideLoader, 500);
+
+  } catch(err) {
+    console.error('Dashboard init error:', err);
+    hideLoader();
+  }
+});
+</script>
+</body>
+</html>

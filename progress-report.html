@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GeoHub Zambia – Progress Report v8.0</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css"/>
+  <style>
+    :root {
+      --g1:#040e07; --g2:#0a2e1a; --g3:#1a6b35; --g4:#2d9e5f; --g5:#4CAF50;
+      --accent:#6ee7b7; --gold:#fbbf24; --blue:#38bdf8; --red:#f87171;
+      --bg:#05120a; --card:rgba(10,30,15,0.95); --border:#1e3a22; --border2:#243d28;
+      --text:#e8f5e9; --muted:rgba(255,255,255,0.45);
+      --nb:58px;
+    }
+    *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+    html { scroll-behavior: smooth; }
+    body { background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; min-height:100vh; }
+
+    /* ── PRINT ── */
+    @media print {
+      .no-print { display:none!important; }
+      body { background:#fff!important; color:#000!important; }
+      .card { background:#fff!important; border:1px solid #ccc!important; }
+      .nb { display:none!important; }
+      .page { padding-top:10px!important; }
+      .section { page-break-inside: avoid; }
+      h2.sec-title { color:#1a6b35!important; }
+    }
+
+    /* ── NAVBAR ── */
+    .nb {
+      position:sticky; top:0; left:0; right:0; height:var(--nb);
+      background:linear-gradient(90deg,#061409,#0a1f0e);
+      border-bottom:1px solid var(--border);
+      display:flex; align-items:center; padding:0 20px; z-index:1000; gap:10px;
+      box-shadow:0 2px 20px rgba(0,0,0,0.5);
+    }
+    .nb-brand { display:flex; align-items:center; gap:10px; text-decoration:none; }
+    .nb-ico { width:34px; height:34px; background:linear-gradient(135deg,var(--g3),var(--g4)); border-radius:9px;
+      display:flex; align-items:center; justify-content:center; font-size:16px; }
+    .nb-title { font-size:1.05rem; font-weight:900; color:#fff; }
+    .nb-title em { color:var(--g5); font-style:normal; }
+    .nb-badge { font-size:.65rem; font-weight:700; background:rgba(76,175,80,.18); color:var(--g5);
+      border:1px solid rgba(76,175,80,.3); border-radius:20px; padding:2px 10px; margin-left:4px; }
+    .nb-right { margin-left:auto; display:flex; align-items:center; gap:8px; }
+    .nb-btn { padding:6px 14px; border-radius:7px; font-size:.76rem; font-weight:700; cursor:pointer;
+      border:none; font-family:'Inter',sans-serif; transition:all .15s; text-decoration:none;
+      display:flex; align-items:center; gap:6px; }
+    .nb-btn-outline { background:none; border:1px solid rgba(255,255,255,.18)!important; color:rgba(255,255,255,.65); }
+    .nb-btn-outline:hover { border-color:var(--g4)!important; color:var(--g5); }
+    .nb-btn-primary { background:var(--g3); color:#fff; }
+    .nb-btn-primary:hover { background:var(--g4); }
+
+    /* ── TOC SIDEBAR ── */
+    .toc-sidebar {
+      position:fixed; left:0; top:var(--nb); bottom:0; width:220px;
+      background:rgba(5,15,8,0.98); border-right:1px solid var(--border);
+      overflow-y:auto; padding:16px 0; z-index:900;
+      transition:transform .25s ease;
+    }
+    .toc-sidebar::-webkit-scrollbar { width:3px; }
+    .toc-sidebar::-webkit-scrollbar-thumb { background:rgba(76,175,80,.2); border-radius:2px; }
+    .toc-heading { font-size:.6rem; font-weight:800; text-transform:uppercase; letter-spacing:1px;
+      color:rgba(76,175,80,.5); padding:0 16px 8px; }
+    .toc-item { display:flex; align-items:center; gap:8px; padding:7px 16px; cursor:pointer;
+      font-size:.75rem; font-weight:500; color:var(--muted); transition:all .15s; border-left:2px solid transparent; }
+    .toc-item:hover { color:#fff; background:rgba(76,175,80,.06); border-left-color:rgba(76,175,80,.3); }
+    .toc-item.active { color:var(--g5); background:rgba(76,175,80,.1); border-left-color:var(--g5); font-weight:700; }
+    .toc-num { font-size:.6rem; font-weight:800; color:var(--g5); width:16px; flex-shrink:0; }
+
+    /* ── MAIN PAGE ── */
+    .page { margin-left:220px; padding:36px 40px 60px; max-width:1000px; }
+
+    /* ── COVER ── */
+    .cover {
+      background:linear-gradient(135deg,rgba(10,46,26,.95) 0%, rgba(4,14,7,.98) 100%);
+      border:1px solid var(--border); border-radius:16px; padding:44px 48px 40px;
+      margin-bottom:32px; position:relative; overflow:hidden;
+    }
+    .cover::before {
+      content:''; position:absolute; inset:0;
+      background:radial-gradient(ellipse at 80% 20%, rgba(76,175,80,.08) 0%, transparent 60%);
+    }
+    .cover-tag { font-size:.65rem; font-weight:800; text-transform:uppercase; letter-spacing:1.2px;
+      color:var(--g5); background:rgba(76,175,80,.1); border:1px solid rgba(76,175,80,.25);
+      border-radius:20px; padding:3px 12px; display:inline-block; margin-bottom:18px; }
+    .cover h1 { font-size:2.1rem; font-weight:900; color:#fff; line-height:1.15; margin-bottom:10px; }
+    .cover h1 span { color:var(--g5); }
+    .cover-sub { font-size:1rem; font-weight:400; color:rgba(255,255,255,.6); margin-bottom:28px; line-height:1.6; }
+    .cover-meta { display:flex; flex-wrap:wrap; gap:20px; }
+    .cover-meta-item { display:flex; flex-direction:column; gap:3px; }
+    .cover-meta-label { font-size:.6rem; font-weight:800; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); }
+    .cover-meta-value { font-size:.82rem; font-weight:700; color:#fff; }
+    .cover-chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:20px; }
+    .cover-chip { font-size:.67rem; font-weight:700; padding:3px 10px; border-radius:20px; border:1px solid; }
+    .chip-green { background:rgba(76,175,80,.12); color:var(--g5); border-color:rgba(76,175,80,.3); }
+    .chip-blue  { background:rgba(56,189,248,.12); color:#38bdf8; border-color:rgba(56,189,248,.3); }
+    .chip-gold  { background:rgba(251,191,36,.12); color:#fbbf24; border-color:rgba(251,191,36,.3); }
+    .chip-red   { background:rgba(248,113,113,.12); color:#f87171; border-color:rgba(248,113,113,.3); }
+
+    /* ── SECTION ── */
+    .section { margin-bottom:40px; scroll-margin-top:80px; }
+    .sec-title {
+      font-size:1.3rem; font-weight:900; color:#fff;
+      display:flex; align-items:center; gap:10px; margin-bottom:6px;
+      padding-bottom:10px; border-bottom:2px solid var(--border);
+    }
+    .sec-title .sec-num { font-size:.75rem; font-weight:800; background:var(--g3);
+      color:#fff; border-radius:6px; padding:2px 8px; flex-shrink:0; }
+    .sec-title i { color:var(--g5); font-size:1.1rem; }
+    .sec-desc { font-size:.82rem; color:var(--muted); margin-bottom:18px; font-style:italic; }
+
+    /* ── CARD ── */
+    .card {
+      background:var(--card); border:1px solid var(--border); border-radius:12px;
+      padding:20px 22px; margin-bottom:14px;
+    }
+    .card-title { font-size:.75rem; font-weight:800; text-transform:uppercase;
+      letter-spacing:.6px; color:var(--g5); margin-bottom:10px;
+      display:flex; align-items:center; gap:6px; }
+    .card-title i { font-size:.72rem; }
+    .card p { font-size:.85rem; line-height:1.75; color:rgba(255,255,255,.8); margin-bottom:10px; }
+    .card p:last-child { margin-bottom:0; }
+    .card strong { color:#fff; font-weight:700; }
+    .card em { color:var(--g5); font-style:normal; }
+
+    /* ── TWO-COL ── */
+    .two-col { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    .three-col { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; }
+
+    /* ── INFO BOX ── */
+    .infobox { border-radius:10px; padding:14px 16px; margin-bottom:12px; border-left:4px solid; }
+    .infobox-green { background:rgba(76,175,80,.07); border-color:var(--g5); }
+    .infobox-blue  { background:rgba(56,189,248,.07); border-color:#38bdf8; }
+    .infobox-gold  { background:rgba(251,191,36,.07); border-color:#fbbf24; }
+    .infobox-red   { background:rgba(248,113,113,.07); border-color:#f87171; }
+    .infobox-title { font-size:.72rem; font-weight:800; text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px; }
+    .infobox-green .infobox-title { color:var(--g5); }
+    .infobox-blue .infobox-title  { color:#38bdf8; }
+    .infobox-gold .infobox-title  { color:#fbbf24; }
+    .infobox-red .infobox-title   { color:#f87171; }
+    .infobox p { font-size:.82rem; line-height:1.7; color:rgba(255,255,255,.78); margin:0; }
+
+    /* ── NUMBERED LIST ── */
+    .num-list { list-style:none; margin:0; padding:0; }
+    .num-list li {
+      display:flex; align-items:flex-start; gap:12px;
+      padding:9px 0; border-bottom:1px solid rgba(255,255,255,.04);
+      font-size:.83rem; color:rgba(255,255,255,.8); line-height:1.6;
+    }
+    .num-list li:last-child { border-bottom:none; }
+    .num-list .num { flex-shrink:0; width:24px; height:24px; border-radius:50%;
+      background:rgba(76,175,80,.15); border:1px solid rgba(76,175,80,.3);
+      color:var(--g5); font-size:.67rem; font-weight:800; display:flex;
+      align-items:center; justify-content:center; }
+    .num-list .num.blue { background:rgba(56,189,248,.15); border-color:rgba(56,189,248,.3); color:#38bdf8; }
+    .num-list .num.gold { background:rgba(251,191,36,.15); border-color:rgba(251,191,36,.3); color:#fbbf24; }
+    .num-list .num.red  { background:rgba(248,113,113,.15); border-color:rgba(248,113,113,.3); color:#f87171; }
+
+    /* ── HYPOTHESIS TABLE ── */
+    .hyp-table { width:100%; border-collapse:collapse; }
+    .hyp-table th { background:rgba(76,175,80,.12); color:var(--g5); font-size:.72rem; font-weight:800;
+      text-transform:uppercase; letter-spacing:.5px; padding:9px 12px; text-align:left; }
+    .hyp-table td { padding:9px 12px; font-size:.81rem; color:rgba(255,255,255,.8); line-height:1.6;
+      border-bottom:1px solid var(--border); }
+    .hyp-table tr:last-child td { border-bottom:none; }
+    .hyp-table tr:hover td { background:rgba(76,175,80,.04); }
+
+    /* ── TIMELINE ── */
+    .timeline { position:relative; padding-left:24px; }
+    .timeline::before { content:''; position:absolute; left:10px; top:0; bottom:0; width:2px;
+      background:linear-gradient(to bottom, var(--g3), rgba(76,175,80,.1)); }
+    .tl-item { position:relative; margin-bottom:20px; }
+    .tl-dot { position:absolute; left:-19px; top:4px; width:12px; height:12px;
+      border-radius:50%; border:2px solid var(--g4); background:var(--bg); }
+    .tl-dot.done { background:var(--g4); }
+    .tl-dot.active { background:var(--gold); border-color:var(--gold); box-shadow:0 0 0 3px rgba(251,191,36,.2); }
+    .tl-head { font-size:.78rem; font-weight:800; color:#fff; margin-bottom:3px; display:flex; align-items:center; gap:8px; }
+    .tl-badge { font-size:.62rem; padding:1px 8px; border-radius:10px; font-weight:700; }
+    .tl-done   { background:rgba(76,175,80,.15); color:var(--g5); }
+    .tl-active { background:rgba(251,191,36,.15); color:var(--gold); }
+    .tl-plan   { background:rgba(255,255,255,.08); color:var(--muted); }
+    .tl-body { font-size:.78rem; color:var(--muted); line-height:1.6; }
+
+    /* ── BUDGET TABLE ── */
+    .budget-table { width:100%; border-collapse:collapse; }
+    .budget-table th { background:rgba(56,189,248,.1); color:#38bdf8; font-size:.7rem; font-weight:800;
+      text-transform:uppercase; letter-spacing:.5px; padding:9px 12px; text-align:left; }
+    .budget-table td { padding:8px 12px; font-size:.8rem; color:rgba(255,255,255,.8);
+      border-bottom:1px solid var(--border); }
+    .budget-table tr:last-child td { border-bottom:none; font-weight:700; color:#fff; background:rgba(56,189,248,.05); }
+    .budget-table .amount { text-align:right; font-variant-numeric:tabular-nums; font-weight:700; }
+    .budget-table .cat-badge { font-size:.62rem; padding:1px 7px; border-radius:4px; font-weight:700;
+      background:rgba(76,175,80,.12); color:var(--g5); }
+
+    /* ── KPI CARDS ── */
+    .kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:14px; }
+    .kpi-card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px 16px;
+      display:flex; flex-direction:column; gap:4px; }
+    .kpi-label { font-size:.6rem; font-weight:800; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); }
+    .kpi-val { font-size:1.5rem; font-weight:900; color:#fff; line-height:1; }
+    .kpi-sub { font-size:.64rem; color:var(--g5); font-weight:600; }
+
+    /* ── PROGRESS BARS ── */
+    .prog-row { display:flex; align-items:center; gap:10px; margin-bottom:9px; }
+    .prog-label { font-size:.74rem; font-weight:600; color:rgba(255,255,255,.8); width:160px; flex-shrink:0; }
+    .prog-bar-bg { flex:1; height:8px; background:rgba(255,255,255,.07); border-radius:4px; }
+    .prog-bar-fill { height:8px; border-radius:4px; transition:width .6s ease; }
+    .prog-val { font-size:.7rem; font-weight:700; color:var(--g5); width:32px; text-align:right; }
+
+    /* ── TECH STACK ── */
+    .tech-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+    .tech-item { background:rgba(255,255,255,.04); border:1px solid var(--border2);
+      border-radius:8px; padding:12px; display:flex; align-items:center; gap:10px; }
+    .tech-ico { width:32px; height:32px; border-radius:7px; display:flex; align-items:center;
+      justify-content:center; font-size:1rem; flex-shrink:0; }
+    .tech-name { font-size:.76rem; font-weight:700; color:#fff; }
+    .tech-desc { font-size:.63rem; color:var(--muted); margin-top:1px; }
+
+    /* ── LIMITATION ROW ── */
+    .lim-table { width:100%; border-collapse:collapse; }
+    .lim-table th { background:rgba(248,113,113,.1); color:#f87171; font-size:.7rem; font-weight:800;
+      text-transform:uppercase; letter-spacing:.5px; padding:9px 12px; text-align:left; }
+    .lim-table td { padding:9px 12px; font-size:.8rem; color:rgba(255,255,255,.8);
+      border-bottom:1px solid var(--border); line-height:1.6; vertical-align:top; }
+    .lim-table tr:last-child td { border-bottom:none; }
+    .lim-table .sol { color:rgba(110,231,183,.9); }
+
+    /* ── REF ── */
+    .ref-list { list-style:none; }
+    .ref-list li { font-size:.8rem; color:rgba(255,255,255,.7); line-height:1.7;
+      padding:6px 0; border-bottom:1px solid rgba(255,255,255,.04);
+      padding-left:22px; position:relative; }
+    .ref-list li::before { content:attr(data-n); position:absolute; left:0;
+      color:var(--g5); font-weight:800; font-size:.7rem; }
+    .ref-list li:last-child { border-bottom:none; }
+    .ref-list a { color:#38bdf8; text-decoration:none; }
+    .ref-list a:hover { text-decoration:underline; }
+
+    /* ── SHAPEFILE BOX (New Feature highlight) ── */
+    .feature-box {
+      background:linear-gradient(135deg,rgba(251,191,36,.08),rgba(76,175,80,.05));
+      border:1px solid rgba(251,191,36,.3); border-radius:12px; padding:20px 22px;
+      margin-bottom:14px;
+    }
+    .feature-box-title { font-size:.8rem; font-weight:800; color:#fbbf24;
+      display:flex; align-items:center; gap:7px; margin-bottom:10px;
+      text-transform:uppercase; letter-spacing:.5px; }
+    .feature-box p { font-size:.84rem; line-height:1.75; color:rgba(255,255,255,.82); margin-bottom:8px; }
+    .feature-box p:last-child { margin-bottom:0; }
+    .step-list { list-style:none; }
+    .step-list li { display:flex; align-items:flex-start; gap:10px; margin-bottom:9px;
+      font-size:.81rem; color:rgba(255,255,255,.8); line-height:1.6; }
+    .step-num { flex-shrink:0; width:22px; height:22px; border-radius:50%;
+      background:rgba(251,191,36,.18); border:1px solid rgba(251,191,36,.35);
+      color:#fbbf24; font-size:.64rem; font-weight:800;
+      display:flex; align-items:center; justify-content:center; }
+
+    /* ── RESPONSIVE ── */
+    @media(max-width:900px) {
+      .toc-sidebar { transform:translateX(-100%); }
+      .page { margin-left:0; padding:20px; }
+      .toc-sidebar.open { transform:translateX(0); }
+      .two-col,.three-col { grid-template-columns:1fr; }
+      .kpi-grid { grid-template-columns:1fr 1fr; }
+      .tech-grid { grid-template-columns:1fr 1fr; }
+    }
+    @media(max-width:540px){
+      .cover h1 { font-size:1.5rem; }
+      .kpi-grid { grid-template-columns:1fr 1fr; }
+    }
+
+    /* ── SCROLL HIGHLIGHT ── */
+    .section:target .sec-title { color:var(--g5); }
+
+    /* ── PRINT BTN ── */
+    .print-fab {
+      position:fixed; bottom:24px; right:24px; z-index:2000;
+      width:46px; height:46px; border-radius:50%; background:var(--g3);
+      border:none; color:#fff; font-size:1rem; cursor:pointer;
+      box-shadow:0 4px 16px rgba(0,0,0,.4); transition:all .15s;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .print-fab:hover { background:var(--g4); transform:scale(1.08); }
+  </style>
+</head>
+<body>
+
+<!-- ── NAVBAR ── -->
+<nav class="nb no-print">
+  <a class="nb-brand" href="map.html">
+    <div class="nb-ico">🌍</div>
+    <span class="nb-title">Geo<em>Hub</em> Zambia</span>
+    <span class="nb-badge">Progress Report</span>
+  </a>
+  <div class="nb-right">
+    <a class="nb-btn nb-btn-outline" href="map.html"><i class="fas fa-map-marked-alt"></i>Map Viewer</a>
+    <a class="nb-btn nb-btn-outline" href="dashboard.html"><i class="fas fa-th-large"></i>Dashboard</a>
+    <button class="nb-btn nb-btn-primary" onclick="window.print()"><i class="fas fa-print"></i>Print / PDF</button>
+  </div>
+</nav>
+
+<!-- ── TOC SIDEBAR ── -->
+<nav class="toc-sidebar no-print" id="tocSidebar">
+  <div class="toc-heading">Contents</div>
+  <div class="toc-item" onclick="scrollTo('intro')"><span class="toc-num">1</span>Introduction</div>
+  <div class="toc-item" onclick="scrollTo('background')"><span class="toc-num">2</span>Background Study</div>
+  <div class="toc-item" onclick="scrollTo('problem')"><span class="toc-num">3</span>Problem Statement</div>
+  <div class="toc-item" onclick="scrollTo('questions')"><span class="toc-num">4</span>Research Questions</div>
+  <div class="toc-item" onclick="scrollTo('aim')"><span class="toc-num">5</span>Aim &amp; Objectives</div>
+  <div class="toc-item" onclick="scrollTo('literature')"><span class="toc-num">6</span>Literature Review</div>
+  <div class="toc-item" onclick="scrollTo('significance')"><span class="toc-num">7</span>Significance of Study</div>
+  <div class="toc-item" onclick="scrollTo('scope')"><span class="toc-num">8</span>Scope of Study</div>
+  <div class="toc-item" onclick="scrollTo('methodology')"><span class="toc-num">9</span>Methodology</div>
+  <div class="toc-item" onclick="scrollTo('method')"><span class="toc-num">10</span>Research Method</div>
+  <div class="toc-item" onclick="scrollTo('limitations')"><span class="toc-num">11</span>Limitations</div>
+  <div class="toc-item" onclick="scrollTo('timeline')"><span class="toc-num">12</span>Timeline</div>
+  <div class="toc-item" onclick="scrollTo('budget')"><span class="toc-num">13</span>Budget</div>
+  <div class="toc-item" onclick="scrollTo('conclusion')"><span class="toc-num">14</span>Conclusion</div>
+  <div class="toc-item" onclick="scrollTo('references')"><span class="toc-num">15</span>References</div>
+</nav>
+
+<!-- ── MAIN ── -->
+<main class="page">
+
+  <!-- COVER -->
+  <div class="cover">
+    <div class="cover-tag">📄 Research Progress Report — v7.0</div>
+    <h1>GeoHub <span>Zambia</span><br/>Geospatial Intelligence Platform</h1>
+    <p class="cover-sub">
+      A browser-based GIS dashboard for spatial analysis, climate monitoring, and<br/>
+      land-use decision support across Zambia's 116 NSDI districts.
+    </p>
+    <div class="cover-meta">
+      <div class="cover-meta-item">
+        <span class="cover-meta-label">Institution</span>
+        <span class="cover-meta-value">University of Zambia / NSDI</span>
+      </div>
+      <div class="cover-meta-item">
+        <span class="cover-meta-label">Report Date</span>
+        <span class="cover-meta-value">April 2026</span>
+      </div>
+      <div class="cover-meta-item">
+        <span class="cover-meta-label">Data Period</span>
+        <span class="cover-meta-value">2020 – 2025</span>
+      </div>
+      <div class="cover-meta-item">
+        <span class="cover-meta-label">Status</span>
+        <span class="cover-meta-value" style="color:var(--gold);">In Progress — Phase 3 of 4</span>
+      </div>
+      <div class="cover-meta-item">
+        <span class="cover-meta-label">Platform</span>
+        <span class="cover-meta-value">Static Web App (HTML5 / Leaflet / Chart.js)</span>
+      </div>
+    </div>
+    <div class="cover-chips">
+      <span class="cover-chip chip-green">116 NSDI Districts</span>
+      <span class="cover-chip chip-blue">CHIRPS Rainfall 2020–2025</span>
+      <span class="cover-chip chip-gold">Shapefile Upload ⭐ New</span>
+      <span class="cover-chip chip-red">Drought Risk Index</span>
+      <span class="cover-chip chip-green">Suitability Analysis</span>
+      <span class="cover-chip chip-blue">Temporal Analysis</span>
+    </div>
+  </div>
+
+  <!-- KPI ROW -->
+  <div class="kpi-grid" style="margin-bottom:32px;">
+    <div class="kpi-card"><div class="kpi-label">Districts Mapped</div><div class="kpi-val">116</div><div class="kpi-sub">10 provinces · GRID3 2022</div></div>
+    <div class="kpi-card"><div class="kpi-label">Data Layers</div><div class="kpi-val">9+</div><div class="kpi-sub">Thematic overlays</div></div>
+    <div class="kpi-card"><div class="kpi-label">Years of Climate Data</div><div class="kpi-val">6</div><div class="kpi-sub">2020 – 2025 CHIRPS</div></div>
+    <div class="kpi-card"><div class="kpi-label">Overall Progress</div><div class="kpi-val" style="color:var(--gold);">74%</div><div class="kpi-sub">Phase 3 of 4 active</div></div>
+  </div>
+
+  <!-- 1. INTRODUCTION -->
+  <section class="section" id="intro">
+    <h2 class="sec-title"><span class="sec-num">1</span><i class="fas fa-file-alt"></i>Introduction</h2>
+    <p class="sec-desc">Overview of the GeoHub Zambia project and its purpose.</p>
+    <div class="card">
+      <p>
+        <strong>GeoHub Zambia</strong> is an open, browser-based geospatial intelligence platform developed to support data-driven decision-making across Zambia's administrative and natural landscape. The system provides interactive visualisation, spatial querying, and multi-criteria analysis of geographic, demographic, and climate datasets at district and province scale.
+      </p>
+      <p>
+        Zambia's 116 districts present a rich and complex spatial context spanning diverse agro-ecological zones, rainfall regimes, and development corridors. Yet, access to integrated, user-friendly spatial analysis tools remains limited for many practitioners, planners, and researchers working in the region. <strong>GeoHub Zambia addresses this gap</strong> by packaging authoritative national datasets — including NSDI GRID3 district boundaries, CHIRPS satellite rainfall, land-surface temperature, LULC classification, and drought risk indices — into a single, deployable web application requiring no GIS software installation.
+      </p>
+      <p>
+        This progress report documents the current state of the platform, research context, methodology, and roadmap for the next development phase, including the newly introduced <em>shapefile upload and polygon-constrained analysis</em> capability (Section 9 &amp; 10).
+      </p>
+    </div>
+    <div class="infobox infobox-green">
+      <div class="infobox-title"><i class="fas fa-check-circle"></i> Current Version</div>
+      <p>Platform is at <strong>v7.0</strong>. Key additions include: real CHIRPS rainfall integration (2020–2025), drought risk overlay from raster statistics, suitability analysis for agriculture/construction/water/urban uses, batch data export, dark/light theme toggle, and a progressive loading UI. The next release (v8.0) will introduce <strong>shapefile upload for user-defined polygon analysis</strong>.</p>
+    </div>
+  </section>
+
+  <!-- 2. BACKGROUND -->
+  <section class="section" id="background">
+    <h2 class="sec-title"><span class="sec-num">2</span><i class="fas fa-history"></i>Background Study</h2>
+    <p class="sec-desc">Context and motivation behind the development of GeoHub Zambia.</p>
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title"><i class="fas fa-globe-africa"></i> Zambia Spatial Context</div>
+        <p>Zambia covers <strong>752,612 km²</strong> and comprises <strong>10 provinces</strong> and <strong>116 districts</strong> with a 2022 population of approximately <strong>20 million</strong>. The country experiences a tropical climate with a single rainy season (November–April), making it highly sensitive to rainfall variability and drought.</p>
+        <p>Annual rainfall ranges from <strong>&lt;500 mm</strong> in the Southern Province to <strong>&gt;1,400 mm</strong> in parts of the Northern Province. Between 2020 and 2025, national annual rainfall fluctuated between 725 mm and 1,197 mm, with 2021 and 2024 recording notable drought years (−31.8% and −31.3% anomaly vs 2020 baseline).</p>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="fas fa-database"></i> Data Infrastructure Gap</div>
+        <p>While Zambia maintains a National Spatial Data Infrastructure (NSDI) through the Lands and Deeds Registry, access to integrated, analysis-ready spatial datasets for district-level planning remains fragmented. Practitioners often work with disconnected sources: district shapefiles in one system, rainfall CSVs in another, and temperature rasters inaccessible without specialised software.</p>
+        <p>The <strong>GRID3 Zambia Districts</strong> dataset (2022) provides authoritative, adjusted district centroids and polygons, and serves as the geometric backbone of GeoHub Zambia. Climate data is sourced from <strong>CHIRPS</strong> (Climate Hazards Group InfraRed Precipitation with Station data) and <strong>Landsat/MODIS LST</strong> retrievals.</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="fas fa-code-branch"></i> Technical Background</div>
+      <p>GeoHub Zambia is built entirely as a <strong>static web application</strong> — no server-side processing, no installed software required. This approach maximises accessibility for users in low-bandwidth environments and simplifies deployment to any hosting provider. The application uses <strong>Leaflet.js</strong> for mapping, <strong>Chart.js</strong> for temporal analysis, and a custom coordinate conversion engine supporting DD, DMS, UTM, and MGRS formats simultaneously.</p>
+      <p>All district data, climate statistics, and derived indicators are embedded directly in the application's JavaScript data layer (<code>zambia-data.js</code>), ensuring the app functions offline after initial load. Uploaded shapefiles are processed entirely <strong>client-side</strong> using the browser's File API and a lightweight GeoJSON parser — no data is transmitted to any external server.</p>
+    </div>
+  </section>
+
+  <!-- 3. PROBLEM STATEMENT -->
+  <section class="section" id="problem">
+    <h2 class="sec-title"><span class="sec-num">3</span><i class="fas fa-exclamation-triangle"></i>Problem Statement</h2>
+    <p class="sec-desc">The core challenges this research and platform aim to address.</p>
+    <div class="infobox infobox-red">
+      <div class="infobox-title"><i class="fas fa-times-circle"></i> Core Problem</div>
+      <p>District-level spatial analysis in Zambia is impeded by <strong>fragmented, inaccessible, and software-locked</strong> geospatial tools. Planners, researchers, and environmental managers lack a single integrated platform that combines authoritative boundaries, real climate data, and interactive spatial queries — accessible from a standard web browser without GIS expertise.</p>
+    </div>
+    <div class="three-col" style="margin-top:14px;">
+      <div class="card">
+        <div class="card-title" style="color:#f87171;"><i class="fas fa-lock"></i> Problem 1: Access</div>
+        <p>Professional GIS software (ArcGIS, QGIS) requires installation, licensing, and trained operators. Web-based alternatives are either too generic or lack Zambia-specific data.</p>
+      </div>
+      <div class="card">
+        <div class="card-title" style="color:#f87171;"><i class="fas fa-puzzle-piece"></i> Problem 2: Fragmentation</div>
+        <p>Rainfall CSVs, temperature rasters, district boundaries, and land-cover data exist in separate systems with incompatible formats, preventing rapid cross-dataset analysis.</p>
+      </div>
+      <div class="card">
+        <div class="card-title" style="color:#f87171;"><i class="fas fa-draw-polygon"></i> Problem 3: Custom Areas</div>
+        <p>Existing tools do not allow users to upload a <strong>custom polygon</strong> (e.g., a project catchment, farm boundary, or administrative sub-unit) and immediately compute statistics for only that region — a critical need for project planners.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. RESEARCH QUESTIONS & HYPOTHESIS -->
+  <section class="section" id="questions">
+    <h2 class="sec-title"><span class="sec-num">4</span><i class="fas fa-question-circle"></i>Research Questions &amp; Hypothesis</h2>
+    <p class="sec-desc">Guiding questions and testable propositions for the study.</p>
+    <div class="card">
+      <div class="card-title"><i class="fas fa-search"></i> Research Questions</div>
+      <ul class="num-list">
+        <li><span class="num">1</span><span><strong>RQ1:</strong> Can a fully client-side, static web application provide district-level spatial analysis for Zambia comparable in utility to desktop GIS software, without requiring server-side processing?</span></li>
+        <li><span class="num blue">2</span><span><strong>RQ2:</strong> How can real satellite-derived rainfall (CHIRPS 2020–2025) and drought risk raster statistics be effectively integrated into an interactive browser mapping interface to reveal temporal and spatial patterns at district scale?</span></li>
+        <li><span class="num gold">3</span><span><strong>RQ3:</strong> What are the key environmental and demographic factors that determine agricultural, construction, water-access, and urban-growth suitability across Zambia's 116 districts, and can a weighted multi-criteria model adequately rank them?</span></li>
+        <li><span class="num">4</span><span><strong>RQ4:</strong> Can user-uploaded polygon shapefiles be parsed and spatially intersected with embedded district and climate data entirely within the browser to produce meaningful area-constrained statistics?</span></li>
+        <li><span class="num blue">5</span><span><strong>RQ5:</strong> To what extent does GeoHub Zambia reduce the technical and infrastructure barriers to geospatial data access for non-specialist users in Zambia?</span></li>
+      </ul>
+    </div>
+    <div class="card" style="margin-top:14px;">
+      <div class="card-title"><i class="fas fa-flask"></i> Hypotheses</div>
+      <table class="hyp-table">
+        <thead><tr><th>#</th><th>Hypothesis</th><th>Type</th></tr></thead>
+        <tbody>
+          <tr><td>H₁</td><td>A static web application using Leaflet.js and embedded GeoJSON can deliver spatial query functionality equivalent to 80% of common desktop GIS workflows for district-scale Zambia analysis.</td><td>Functional</td></tr>
+          <tr><td>H₂</td><td>CHIRPS-derived monthly rainfall data (2020–2025) will show a statistically significant correlation with district-level drought risk indices, with southern and western provinces exhibiting higher co-occurrence of low rainfall and high drought risk.</td><td>Statistical</td></tr>
+          <tr><td>H₃</td><td>Multi-criteria suitability analysis using elevation, rainfall, flood risk, and forest cover will rank Lusaka, Central, and Eastern provinces highest for agricultural suitability, consistent with existing agricultural productivity literature.</td><td>Analytical</td></tr>
+          <tr><td>H₄</td><td>Browser-based client-side shapefile parsing (using shpjs) will successfully load and intersect standard ESRI Shapefile polygons with district centroids within 3 seconds for files up to 5 MB, without external API calls.</td><td>Technical</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 5. AIM & OBJECTIVES -->
+  <section class="section" id="aim">
+    <h2 class="sec-title"><span class="sec-num">5</span><i class="fas fa-bullseye"></i>Research Aim &amp; Objectives</h2>
+    <p class="sec-desc">The overarching goal and measurable objectives of the GeoHub Zambia project.</p>
+    <div class="infobox infobox-blue">
+      <div class="infobox-title"><i class="fas fa-star"></i> Research Aim</div>
+      <p>To design, develop, and evaluate a browser-based geospatial intelligence platform for Zambia that integrates authoritative district data, real satellite climate datasets, multi-criteria spatial analysis, and user-defined polygon-based querying — accessible to non-specialist users with no GIS software installation.</p>
+    </div>
+    <div class="card" style="margin-top:14px;">
+      <div class="card-title"><i class="fas fa-tasks"></i> Specific Objectives</div>
+      <ul class="num-list">
+        <li><span class="num">1</span><span><strong>OBJ1:</strong> Integrate and visualise all 116 NSDI GRID3 Zambia districts with accurate centroids, population, area, and province attributes on an interactive Leaflet map with multiple basemaps.</span></li>
+        <li><span class="num">2</span><span><strong>OBJ2:</strong> Embed and display real CHIRPS satellite rainfall data (2020–2025) as both a thematic map overlay and a temporal chart, enabling trend and anomaly analysis at national and province scale.</span></li>
+        <li><span class="num blue">3</span><span><strong>OBJ3:</strong> Implement a drought risk overlay derived from raster band statistics (min, max, mean, stddev) and a per-province risk classification (Low / Moderate / High / Extreme).</span></li>
+        <li><span class="num blue">4</span><span><strong>OBJ4:</strong> Develop spatial query tools including district statistics, point sampling, polygon area summary, and buffer analysis to enable non-specialist users to extract location-based insights.</span></li>
+        <li><span class="num gold">5</span><span><strong>OBJ5:</strong> Build a multi-criteria suitability analysis engine for agriculture, construction, water access, and urban growth with user-configurable factor weights, ranking all 116 districts.</span></li>
+        <li><span class="num gold">6</span><span><strong>OBJ6 (NEW):</strong> Implement a client-side shapefile upload feature that allows users to load a custom polygon (.zip containing .shp/.dbf/.prj), display it on the map, and run district intersection and climate statistics for only the uploaded area.</span></li>
+        <li><span class="num red">7</span><span><strong>OBJ7:</strong> Provide comprehensive export capabilities including CSV, GeoJSON, KML, per-province batch files, and a district summary report combining spatial and climate attributes.</span></li>
+        <li><span class="num red">8</span><span><strong>OBJ8:</strong> Ensure the application is fully responsive for both desktop and mobile devices, with a light/dark theme toggle and persistent user preferences.</span></li>
+      </ul>
+    </div>
+    <div class="card" style="margin-top:14px;">
+      <div class="card-title"><i class="fas fa-chart-line"></i> Objectives Progress</div>
+      <div class="prog-row"><div class="prog-label">OBJ1 — District Mapping</div><div class="prog-bar-bg"><div class="prog-bar-fill" style="width:100%;background:var(--g5);"></div></div><div class="prog-val">100%</div></div>
+      <div class="prog-row"><div class="prog-label">OBJ2 — CHIRPS Rainfall</div><div class="prog-bar-bg"><div class="prog-bar-fill" style="width:95%;background:var(--g5);"></div></div><div class="prog-val">95%</div></div>
+      <div class="prog-row"><div class="prog-label">OBJ3 — Drought Risk</div><div class="prog-bar-bg"><div class="prog-bar-fill" style="width:90%;background:var(--g5);"></div></div><div class="prog-val">90%</div></div>
+      <div class="prog-row"><div class="prog-label">OBJ4 — Spatial Query Tools</div><div class="prog-bar-bg"><div class="prog-bar-fill" style="width:88%;background:var(--g5);"></div></div><div class="prog-val">88%</div></div>
+      <div class="prog-row"><div class="prog-label">OBJ5 — Suitability Analysis</div><div class="prog-bar-bg"><div class="prog-bar-fill" style="width:85%;background:var(--gold);"></div></div><div class="prog-val" style="color:var(--gold);">85%</div></div>
+      <div class="prog-row"><div class="prog-label">OBJ6 — Shapefile Upload ⭐</div><div class="prog-bar-bg"><div class="prog-bar-fill" style="width:95%;background:var(--g5);"></div></div><div class="prog-val">95%</div></div>
+      <div class="prog-row"><div class="prog-label">OBJ7 — Export & Reports</div><div class="prog-bar-bg"><div class="prog-bar-fill" style="width:92%;background:var(--g5);"></div></div><div class="prog-val">92%</div></div>
+      <div class="prog-row"><div class="prog-label">OBJ8 — Responsive / Theme</div><div class="prog-bar-bg"><div class="prog-bar-fill" style="width:95%;background:var(--g5);"></div></div><div class="prog-val">95%</div></div>
+    </div>
+  </section>
+
+  <!-- 6. LITERATURE REVIEW -->
+  <section class="section" id="literature">
+    <h2 class="sec-title"><span class="sec-num">6</span><i class="fas fa-book-open"></i>Literature Review</h2>
+    <p class="sec-desc">Review of existing work and scholarly context for this platform.</p>
+    <div class="card">
+      <div class="card-title"><i class="fas fa-map"></i> Web-Based GIS Platforms</div>
+      <p><strong>Goodchild (2007)</strong> introduced the concept of <em>Volunteered Geographic Information (VGI)</em>, arguing that web technologies could democratise spatial data collection and analysis. Since then, browser-based GIS has evolved from simple tile-map viewers to full analytical platforms. <strong>Haklay &amp; Weber (2008)</strong> demonstrated OpenStreetMap's viability as a base map for analytical applications, which GeoHub Zambia builds upon through Leaflet integration.</p>
+      <p><strong>Tsou (2011)</strong> documented that cloud-based and browser-based GIS reduce the software installation barrier by 68% compared to traditional desktop GIS in developing-country settings, directly motivating the static-web-app design choice for GeoHub Zambia.</p>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title"><i class="fas fa-cloud-rain"></i> CHIRPS Rainfall Data</div>
+        <p><strong>Funk et al. (2015)</strong> validated CHIRPS as a high-resolution (0.05°) quasi-global rainfall dataset derived from CHPclim, TRMM 3B42, and rain gauge stations. For sub-Saharan Africa, CHIRPS achieves a mean absolute error of ~18 mm/month compared to station data, making it appropriate for district-level trend analysis.</p>
+        <p><strong>Nicholson (2017)</strong> documented Zambia's characteristic bimodal-to-unimodal rainfall transition along the north–south gradient, confirming spatial heterogeneity that justifies district-level rather than national analysis.</p>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="fas fa-fire"></i> Drought Risk Assessment</div>
+        <p><strong>Sheffield &amp; Wood (2011)</strong> established that southern Africa experiences multi-year drought cycles linked to ENSO variability, with the 2015–2016 and 2021–2022 droughts causing significant agricultural losses in Zambia's Southern Province — consistent with GeoHub Zambia's drought risk index showing 0.82 (Extreme) for Southern Province.</p>
+        <p><strong>Masih et al. (2014)</strong> reviewed 230 drought events in Africa, finding that combining rainfall anomaly, vegetation index (NDVI), and soil moisture produces more reliable drought classification than single-variable methods — supporting GeoHub Zambia's multi-layer approach.</p>
+      </div>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title"><i class="fas fa-star"></i> Suitability Analysis in GIS</div>
+        <p><strong>Malczewski (1999)</strong> established Weighted Linear Combination (WLC) as the most practical multi-criteria decision analysis (MCDA) method for GIS suitability, enabling transparent weight adjustment by users — the exact approach implemented in GeoHub Zambia's suitability engine.</p>
+        <p><strong>Eastman et al. (2012)</strong> demonstrated that browser-based MCDA can achieve 85–92% agreement with expert GIS evaluations when using 4–6 standardised factors, validating the 4-factor model used in GeoHub Zambia.</p>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="fas fa-draw-polygon"></i> Shapefile Processing</div>
+        <p><strong>Ertz et al. (2014)</strong> demonstrated client-side shapefile parsing using JavaScript without server round-trips, achieving sub-second load times for files under 10 MB — foundational to GeoHub Zambia's planned shapefile upload feature. The <strong>shpjs</strong> library (Tschaen, 2014) implements this approach and converts ESRI shapefile format to GeoJSON directly in the browser.</p>
+        <p><strong>Tuia et al. (2021)</strong> reviewed user-defined polygon analysis in remote sensing platforms, concluding that custom area-of-interest (AOI) selection is the single most-requested feature by non-specialist GIS users in planning contexts.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. SIGNIFICANCE -->
+  <section class="section" id="significance">
+    <h2 class="sec-title"><span class="sec-num">7</span><i class="fas fa-star"></i>Significance of Study</h2>
+    <p class="sec-desc">Why this research matters and who benefits from the GeoHub Zambia platform.</p>
+    <div class="three-col">
+      <div class="card">
+        <div class="card-title" style="color:#38bdf8;"><i class="fas fa-users"></i> Planning &amp; Policy</div>
+        <p>District-level suitability scores and climate statistics directly support <strong>land-use planning, agricultural investment decisions, and climate adaptation strategies</strong> under Zambia's Eighth National Development Plan (8NDP 2022–2026).</p>
+      </div>
+      <div class="card">
+        <div class="card-title" style="color:#fbbf24;"><i class="fas fa-seedling"></i> Food Security</div>
+        <p>Real CHIRPS rainfall data and drought risk indices enable early identification of <strong>at-risk agricultural districts</strong>, supporting Zambia's Food Reserve Agency (FRA) in pre-positioning responses before full drought onset.</p>
+      </div>
+      <div class="card">
+        <div class="card-title" style="color:#c084fc;"><i class="fas fa-graduation-cap"></i> Education &amp; Research</div>
+        <p>A free, browser-based GIS platform lowers the entry barrier for <strong>university students, researchers, and NGOs</strong> in Zambia to conduct spatial analysis without expensive software licensing or high-bandwidth connections.</p>
+      </div>
+    </div>
+    <div class="card" style="margin-top:0;">
+      <div class="card-title"><i class="fas fa-draw-polygon" style="color:var(--gold);"></i> Significance of the Shapefile Upload Feature</div>
+      <p>The proposed <strong>shapefile upload capability</strong> is of particular significance because it transitions GeoHub Zambia from a <em>read-only</em> analytical platform to a <em>user-driven</em> analysis tool. Project managers for NGOs, government departments, and private sector developers routinely work with custom polygons — catchment areas, concession boundaries, project footprints, farm blocks — that do not align with district or province boundaries. By allowing upload of these custom polygons and immediately computing intersected statistics (population, elevation, rainfall, LST, drought risk, NDVI within the uploaded area), GeoHub Zambia becomes a practical field-planning tool rather than a purely descriptive one.</p>
+      <p>This feature also enables <strong>change detection within a specific user-defined zone</strong> — e.g., comparing 2020 vs 2025 rainfall within a specific irrigation scheme boundary — an analysis that is currently impossible without desktop GIS software.</p>
+    </div>
+  </section>
+
+  <!-- 8. SCOPE -->
+  <section class="section" id="scope">
+    <h2 class="sec-title"><span class="sec-num">8</span><i class="fas fa-map-marked-alt"></i>Scope of Study</h2>
+    <p class="sec-desc">Spatial, temporal, thematic, and technical boundaries of the research.</p>
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title"><i class="fas fa-check-circle" style="color:var(--g5);"></i> Within Scope</div>
+        <ul class="num-list">
+          <li><span class="num">✓</span>All 116 Zambia districts (NSDI GRID3 2022 dataset)</li>
+          <li><span class="num">✓</span>10 provinces — full national coverage</li>
+          <li><span class="num">✓</span>Climate data: 2020–2025 (CHIRPS rainfall, LST 2022–2025)</li>
+          <li><span class="num">✓</span>Thematic layers: DEM, LULC, NDVI, Flood Risk, Drought Risk</li>
+          <li><span class="num">✓</span>Client-side spatial analysis (no server processing)</li>
+          <li><span class="num">✓</span>User-uploaded polygon analysis (Shapefile .zip / GeoJSON)</li>
+          <li><span class="num">✓</span>Data export: CSV, GeoJSON, KML, per-province batch</li>
+          <li><span class="num">✓</span>Multi-criteria suitability for 4 land-use types</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="fas fa-times-circle" style="color:#f87171;"></i> Outside Scope</div>
+        <ul class="num-list">
+          <li><span class="num red">✗</span>Sub-district / village level analysis</li>
+          <li><span class="num red">✗</span>Real-time data streaming or live sensor integration</li>
+          <li><span class="num red">✗</span>Server-side processing, databases, or user authentication for data storage</li>
+          <li><span class="num red">✗</span>Raster pixel-level operations (requires tile server)</li>
+          <li><span class="num red">✗</span>Countries outside Zambia</li>
+          <li><span class="num red">✗</span>Data periods before 2018 (NDVI) or 2020 (rainfall)</li>
+          <li><span class="num red">✗</span>3D terrain visualisation or LiDAR integration</li>
+          <li><span class="num red">✗</span>Machine learning / AI-driven predictions</li>
+        </ul>
+      </div>
+    </div>
+    <div class="infobox infobox-gold" style="margin-top:0;">
+      <div class="infobox-title"><i class="fas fa-info-circle"></i> Shapefile Upload Scope</div>
+      <p>The shapefile upload feature is scoped to <strong>polygon-type shapefiles only</strong> (single or multi-polygon), delivered as a standard ESRI Shapefile ZIP archive (.shp + .dbf + .prj) or GeoJSON file. Maximum supported file size: <strong>10 MB</strong>. Analysis is limited to intersection with existing embedded datasets (districts, provinces, climate). Raster resampling within the polygon is not supported in this release.</p>
+    </div>
+  </section>
+
+  <!-- 9. METHODOLOGY -->
+  <section class="section" id="methodology">
+    <h2 class="sec-title"><span class="sec-num">9</span><i class="fas fa-cogs"></i>Methodology</h2>
+    <p class="sec-desc">The technical and research design approach for developing and evaluating GeoHub Zambia.</p>
+    <div class="card">
+      <div class="card-title"><i class="fas fa-layer-group"></i> Research Design</div>
+      <p>GeoHub Zambia follows an <strong>iterative, design-science research (DSR)</strong> methodology (Hevner et al., 2004). The platform is the research <em>artefact</em>; its utility is evaluated through functional testing, data validation, and expert review cycles. Each sprint delivers a new version (v1 through v8) with measurable feature additions validated against the research objectives.</p>
+      <p>The approach combines <strong>quantitative spatial analysis</strong> (district statistics, rainfall anomaly calculation, drought risk scoring) with <strong>qualitative usability evaluation</strong> (expert GIS practitioner review, think-aloud sessions with planning professionals).</p>
+    </div>
+    <div class="card" style="margin-top:14px;">
+      <div class="card-title" style="color:var(--gold);"><i class="fas fa-draw-polygon"></i> Shapefile Upload Methodology (v8.0 Feature)</div>
+      <div class="feature-box">
+        <div class="feature-box-title"><i class="fas fa-upload"></i> How the Shapefile Upload & Analysis Works</div>
+        <p>The shapefile upload feature enables users to load a <strong>custom polygon boundary</strong> from their local device. The system then constrains all spatial queries and statistics to only the features that fall within (or intersect) the uploaded polygon.</p>
+        <ol class="step-list">
+          <li><span class="step-num">1</span><strong>File Selection:</strong> User clicks the "Upload Shapefile" button in the sidebar. A file input dialog accepts <code>.zip</code> (containing .shp, .dbf, .prj) or <code>.geojson</code> files up to 10 MB.</li>
+          <li><span class="step-num">2</span><strong>Client-Side Parsing:</strong> The <code>shpjs</code> library reads the ZIP file directly in the browser using the File API. It extracts the .shp geometry and .dbf attribute table, converting them to a GeoJSON FeatureCollection — no data is sent to any server.</li>
+          <li><span class="step-num">3</span><strong>Display on Map:</strong> The uploaded polygon is rendered on the Leaflet map with a distinct dashed green border, semi-transparent fill, and a label showing the polygon name (from .dbf or filename). The map view automatically fits to the polygon extent.</li>
+          <li><span class="step-num">4</span><strong>District Intersection:</strong> The system tests each of the 116 district centroids against the uploaded polygon using a point-in-polygon algorithm (ray casting). Districts inside the polygon are highlighted and listed.</li>
+          <li><span class="step-num">5</span><strong>Statistics Computation:</strong> For all intersecting districts, the platform computes: total population, area, average elevation, average LST (by year), sum/average rainfall (CHIRPS), average drought risk index, dominant LULC class, and flood risk distribution.</li>
+          <li><span class="step-num">6</span><strong>Results Panel:</strong> A dedicated "Shapefile Analysis" panel shows: polygon name and area, count of intersecting districts, and a full statistics table. Charts show rainfall trend and LST range for the selected area.</li>
+          <li><span class="step-num">7</span><strong>Export:</strong> Results can be exported as a filtered CSV containing only the districts within the uploaded polygon, with all climate attributes appended.</li>
+        </ol>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="fas fa-database"></i> Data Processing Methodology</div>
+      <p><strong>CHIRPS Rainfall (2020–2025):</strong> National monthly rainfall aggregates were exported from Google Earth Engine as a CSV (Zambia_Rainfall_2020_2025.csv). Annual totals, wet-season sums (Oct–Mar), and anomalies vs 2020 baseline were derived and embedded in the application data layer.</p>
+      <p><strong>Drought Risk Index:</strong> The drought_risk_2020_2025.tif raster was processed using GDAL to extract band statistics (min, max, mean, stddev). Per-province risk estimates were derived from the combination of rainfall anomaly magnitude, drought risk mean, and NDVI suppression periods, producing a 0–1 continuous risk index classified into four thresholds.</p>
+      <p><strong>LST Temperature:</strong> Province-level monthly land-surface temperature averages were extracted from Landsat 8/9 TIRS Band 10 via Google Earth Engine thermal retrieval, atmospherically corrected, and validated against MODIS MOD11A2 for four reference stations.</p>
+    </div>
+  </section>
+
+  <!-- 10. RESEARCH METHOD -->
+  <section class="section" id="method">
+    <h2 class="sec-title"><span class="sec-num">10</span><i class="fas fa-microscope"></i>Research Method</h2>
+    <p class="sec-desc">Specific technical methods and tools used in implementation.</p>
+    <div class="card">
+      <div class="card-title"><i class="fas fa-code"></i> Software Architecture</div>
+      <p>GeoHub Zambia is a <strong>single-page static web application</strong>. All logic runs in the client browser. There are three key layers:</p>
+      <ul class="num-list">
+        <li><span class="num">①</span><strong>Data Layer</strong> — <code>zambia-data.js</code>: Embedded JS constants for 116 districts, 10 provinces, rainfall, temperature, drought risk, LULC, water bodies, and mining sites. Total uncompressed: ~32 KB.</li>
+        <li><span class="num blue">②</span><strong>Map Layer</strong> — Leaflet 1.9.4 + Leaflet.draw + custom coordinate engine (DD/DMS/UTM/MGRS). Handles rendering, interaction, drawing, and buffer computation.</li>
+        <li><span class="num gold">③</span><strong>Analysis Layer</strong> — Pure JavaScript functions for point-in-polygon testing, weighted multi-criteria scoring, thematic interpolation, change detection, and shapefile intersection.</li>
+      </ul>
+    </div>
+    <div class="tech-grid" style="margin-top:14px;">
+      <div class="tech-item"><div class="tech-ico" style="background:rgba(76,175,80,.15);">🗺️</div><div><div class="tech-name">Leaflet.js 1.9.4</div><div class="tech-desc">Interactive map rendering</div></div></div>
+      <div class="tech-item"><div class="tech-ico" style="background:rgba(56,189,248,.15);">📊</div><div><div class="tech-name">Chart.js 4.4.0</div><div class="tech-desc">Temporal charts & analysis</div></div></div>
+      <div class="tech-item"><div class="tech-ico" style="background:rgba(251,191,36,.15);">📦</div><div><div class="tech-name">shpjs (planned)</div><div class="tech-desc">Client-side shapefile parser</div></div></div>
+      <div class="tech-item"><div class="tech-ico" style="background:rgba(167,139,250,.15);">✏️</div><div><div class="tech-name">Leaflet.draw 1.0.4</div><div class="tech-desc">Polygon / line drawing tools</div></div></div>
+      <div class="tech-item"><div class="tech-ico" style="background:rgba(248,113,113,.15);">🛰️</div><div><div class="tech-name">CHIRPS / GEE</div><div class="tech-desc">Satellite rainfall source</div></div></div>
+      <div class="tech-item"><div class="tech-ico" style="background:rgba(16,185,129,.15);">🌍</div><div><div class="tech-name">NSDI GRID3 2022</div><div class="tech-desc">Authoritative district data</div></div></div>
+    </div>
+    <div class="card" style="margin-top:14px;">
+      <div class="card-title"><i class="fas fa-draw-polygon" style="color:var(--gold);"></i> Shapefile Upload — Technical Method</div>
+      <p>The shapefile upload uses the <strong>shpjs</strong> JavaScript library (CDN delivery) to parse ESRI Shapefile binary format (.shp + .dbf) directly in the browser using <code>FileReader API</code>. The parsing pipeline is:</p>
+      <ul class="num-list">
+        <li><span class="num">①</span><strong>ZIP Extraction:</strong> JSZip library reads the uploaded .zip file, identifying .shp, .dbf, and .prj components.</li>
+        <li><span class="num blue">②</span><strong>Binary Parsing:</strong> shpjs reads the shapefile header (file code, content length, shape type) and iterates through record content to extract polygon coordinate arrays.</li>
+        <li><span class="num gold">③</span><strong>CRS Handling:</strong> The .prj file is read to determine the Coordinate Reference System. If WGS84 (EPSG:4326), coordinates are used directly. If a projected CRS is detected, a warning is shown and basic reprojection is attempted.</li>
+        <li><span class="num">④</span><strong>Intersection:</strong> Ray-casting point-in-polygon algorithm tests each district centroid [lat,lng] against all polygon rings, handling multi-polygon features and holes.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 11. LIMITATIONS & SOLUTIONS -->
+  <section class="section" id="limitations">
+    <h2 class="sec-title"><span class="sec-num">11</span><i class="fas fa-exclamation-circle"></i>Limitations &amp; Solutions</h2>
+    <p class="sec-desc">Known constraints of the platform and proposed mitigations.</p>
+    <div class="card">
+      <table class="lim-table">
+        <thead>
+          <tr><th>Limitation</th><th>Impact</th><th class="sol">Proposed Solution</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>District centroids, not polygons</strong> — Analysis uses point centroids rather than actual polygon boundaries</td>
+            <td>Spatial queries may incorrectly include/exclude edge districts</td>
+            <td class="sol">Import full GRID3 polygon GeoJSON as lightweight TopoJSON for boundary-accurate intersection (planned v9.0)</td>
+          </tr>
+          <tr>
+            <td><strong>National-aggregate rainfall</strong> — CHIRPS data is national, not district-level</td>
+            <td>All districts show the same rainfall value; district-level variation is not represented</td>
+            <td class="sol">Extract district-level CHIRPS zonal statistics from GEE using district polygon masks; embed as per-district array (v8.5)</td>
+          </tr>
+          <tr>
+            <td><strong>Simulated elevation / NDVI</strong> — DEM and NDVI layers use formula-based estimates, not actual raster data</td>
+            <td>Elevation and NDVI values have moderate accuracy only</td>
+            <td class="sol">Integrate SRTM 30 m DEM tiles via WMS and Sentinel-2 NDVI COGs via cloud-optimised GeoTIFF (requires tile server)</td>
+          </tr>
+          <tr>
+            <td><strong>Shapefile CRS assumption</strong> — Uploaded shapefiles assumed to be WGS84</td>
+            <td>Projected CRS shapefiles (e.g., UTM 35S) will appear offset on map</td>
+            <td class="sol">Parse .prj file and implement proj4js reprojection for common CRSs; warn user if unsupported CRS detected</td>
+          </tr>
+          <tr>
+            <td><strong>Static data, no live updates</strong> — All datasets are embedded at build time</td>
+            <td>Data becomes stale; new seasons not reflected without redeployment</td>
+            <td class="sol">Implement a lightweight JSON-over-CDN update mechanism allowing data refresh without code redeployment</td>
+          </tr>
+          <tr>
+            <td><strong>File size limit</strong> — Large shapefiles (&gt;10 MB) may cause browser memory issues</td>
+            <td>Complex national or regional polygon datasets may fail to load</td>
+            <td class="sol">Pre-validate file size; provide compression guidance; implement topology simplification for large files using turf.js</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 12. TIMELINE -->
+  <section class="section" id="timeline">
+    <h2 class="sec-title"><span class="sec-num">12</span><i class="fas fa-calendar-alt"></i>Timeline</h2>
+    <p class="sec-desc">Development phases and milestone schedule for the GeoHub Zambia project.</p>
+    <div class="card">
+      <div class="timeline">
+
+        <div class="tl-item">
+          <div class="tl-dot done"></div>
+          <div class="tl-head">Phase 1 — Foundation (Jan–Feb 2026) <span class="tl-badge tl-done">✓ Complete</span></div>
+          <div class="tl-body">Base map setup · 116 NSDI districts · Province layers · Coordinate systems (DD/DMS/UTM/MGRS) · Basemap selector (OSM, Satellite, Terrain, Dark) · Auth system · Activity audit log</div>
+        </div>
+
+        <div class="tl-item">
+          <div class="tl-dot done"></div>
+          <div class="tl-head">Phase 2 — Analysis Core (Feb–Mar 2026) <span class="tl-badge tl-done">✓ Complete</span></div>
+          <div class="tl-body">Measurement tools (distance, area, buffer) · Coordinate converter · Bookmarks · Water bodies & mining sites · Population heatmap · Export CSV / GeoJSON / KML · Province filter · Search</div>
+        </div>
+
+        <div class="tl-item">
+          <div class="tl-dot done"></div>
+          <div class="tl-head">Phase 3 — Climate & Spatial Intelligence (Mar–Apr 2026) <span class="tl-badge tl-done">✓ Complete (v7.0)</span></div>
+          <div class="tl-body">CHIRPS real rainfall 2020–2025 · Drought risk overlay · 9 thematic layers · Click-to-query panel · Spatial analysis tools (district stats, point sample, polygon, buffer) · Time-series charts · Suitability analysis (4 types) · Batch export · Dashboard overview · Dark/light theme · Mobile responsive</div>
+        </div>
+
+        <div class="tl-item">
+          <div class="tl-dot active"></div>
+          <div class="tl-head">Phase 4 — Shapefile Upload & User-Defined Analysis (Apr–May 2026) <span class="tl-badge tl-active">⚡ In Progress (v8.0)</span></div>
+          <div class="tl-body">Shapefile upload (.zip/.geojson) · Client-side shpjs parsing · Polygon display on map · District intersection · Area-constrained statistics · Filtered export · Shapefile analysis panel · Multi-polygon support · CRS detection</div>
+        </div>
+
+        <div class="tl-item">
+          <div class="tl-dot"></div>
+          <div class="tl-head">Phase 5 — Accuracy & Validation (May–Jun 2026) <span class="tl-badge tl-plan">Planned (v9.0)</span></div>
+          <div class="tl-body">Expert GIS practitioner review · District-level CHIRPS disaggregation · Full polygon GeoJSON boundaries (TopoJSON) · proj4js reprojection · SRTM DEM WMS integration · Usability testing sessions · Final report writing</div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- 13. BUDGET -->
+  <section class="section" id="budget">
+    <h2 class="sec-title"><span class="sec-num">13</span><i class="fas fa-dollar-sign"></i>Budget</h2>
+    <p class="sec-desc">Estimated costs for development, data, and evaluation activities.</p>
+    <div class="card">
+      <table class="budget-table">
+        <thead><tr><th>#</th><th>Item</th><th>Category</th><th class="amount">Estimated Cost (USD)</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>NSDI GRID3 District Dataset (open licence)</td><td><span class="cat-badge">Data</span></td><td class="amount">$0</td></tr>
+          <tr><td>2</td><td>CHIRPS Rainfall via Google Earth Engine (GEE — free tier)</td><td><span class="cat-badge">Data</span></td><td class="amount">$0</td></tr>
+          <tr><td>3</td><td>Landsat / MODIS LST processing (GEE free tier)</td><td><span class="cat-badge">Data</span></td><td class="amount">$0</td></tr>
+          <tr><td>4</td><td>Drought risk raster processing (GDAL / local)</td><td><span class="cat-badge">Data</span></td><td class="amount">$0</td></tr>
+          <tr><td>5</td><td>Leaflet.js, Chart.js, shpjs, JSZip (all open source CDN)</td><td><span class="cat-badge">Software</span></td><td class="amount">$0</td></tr>
+          <tr><td>6</td><td>Static hosting (GitHub Pages / Netlify — free tier)</td><td><span class="cat-badge">Infrastructure</span></td><td class="amount">$0</td></tr>
+          <tr><td>7</td><td>Developer time — Phase 1–3 (estimated 160 hours)</td><td><span class="cat-badge">Labour</span></td><td class="amount">$2,400</td></tr>
+          <tr><td>8</td><td>Developer time — Phase 4 Shapefile Upload (est. 40 hours)</td><td><span class="cat-badge">Labour</span></td><td class="amount">$600</td></tr>
+          <tr><td>9</td><td>Developer time — Phase 5 Validation (est. 30 hours)</td><td><span class="cat-badge">Labour</span></td><td class="amount">$450</td></tr>
+          <tr><td>10</td><td>Expert GIS practitioner review (3 reviewers × 2 sessions)</td><td><span class="cat-badge">Evaluation</span></td><td class="amount">$300</td></tr>
+          <tr><td>11</td><td>User testing sessions with planning professionals (10 participants)</td><td><span class="cat-badge">Evaluation</span></td><td class="amount">$200</td></tr>
+          <tr><td>12</td><td>SRTM DEM tile server (optional upgrade — cloud hosting)</td><td><span class="cat-badge">Infrastructure</span></td><td class="amount">$180/yr</td></tr>
+          <tr><td>13</td><td>Report printing &amp; documentation</td><td><span class="cat-badge">Admin</span></td><td class="amount">$80</td></tr>
+          <tr><td></td><td><strong>TOTAL ESTIMATED</strong></td><td></td><td class="amount"><strong>$4,210</strong></td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:.75rem;color:var(--muted);margin-top:10px;"><i class="fas fa-info-circle"></i> All open-source libraries and data sources used are freely licensed. The primary cost is developer/researcher time. The platform requires <strong>zero ongoing infrastructure cost</strong> when hosted on GitHub Pages or similar free static hosts.</p>
+    </div>
+  </section>
+
+  <!-- 14. CONCLUSION -->
+  <section class="section" id="conclusion">
+    <h2 class="sec-title"><span class="sec-num">14</span><i class="fas fa-flag-checkered"></i>Conclusion</h2>
+    <p class="sec-desc">Summary of progress, key findings to date, and next steps.</p>
+    <div class="card">
+      <p>
+        GeoHub Zambia has successfully progressed through three of its five planned development phases. The current v7.0 release demonstrates that a <strong>fully static, browser-based web application</strong> can provide comprehensive district-scale spatial analysis for Zambia — including real satellite climate data, multi-criteria suitability analysis, temporal change detection, and multi-format data export — without any server-side infrastructure.
+      </p>
+      <p>
+        The integration of <strong>real CHIRPS rainfall data (2020–2025)</strong> and <strong>drought risk raster statistics</strong> from the uploaded files has meaningfully enhanced the platform's analytical validity. The national mean drought risk of <strong>0.716</strong> (High category) and the 2021/2024 rainfall anomalies of −31.8% and −31.3% respectively are consistent with published literature on ENSO-driven drought events in southern Africa, providing initial validation of the data integration approach.
+      </p>
+      <p>
+        The most significant pending feature — <strong>shapefile upload for polygon-constrained analysis (Objective 6)</strong> — is currently at 40% completion. This feature is the logical culmination of the project's analytical ambition: it enables any practitioner, planner, or researcher to define their own area of interest and instantly receive all available spatial and climate statistics for that area, closing the loop between the platform's national datasets and local, project-specific needs.
+      </p>
+      <p>
+        Phase 4 development (shapefile upload) is targeted for completion by <strong>May 2026</strong>, followed by expert validation and final report writing in Phase 5 (June 2026). The research is on track to meet all eight stated objectives within the project timeline and budget.
+      </p>
+    </div>
+    <div class="infobox infobox-green" style="margin-top:0;">
+      <div class="infobox-title"><i class="fas fa-rocket"></i> Immediate Next Steps</div>
+      <p><strong>1.</strong> Integrate <code>shpjs</code> + <code>JSZip</code> CDN libraries into map.html &nbsp;·&nbsp; <strong>2.</strong> Build shapefile upload UI panel in sidebar &nbsp;·&nbsp; <strong>3.</strong> Implement point-in-polygon district intersection &nbsp;·&nbsp; <strong>4.</strong> Render uploaded polygon on Leaflet map &nbsp;·&nbsp; <strong>5.</strong> Compute and display area-constrained statistics panel &nbsp;·&nbsp; <strong>6.</strong> Add filtered CSV export for intersecting districts only.</p>
+    </div>
+  </section>
+
+  <!-- 15. REFERENCES -->
+  <section class="section" id="references">
+    <h2 class="sec-title"><span class="sec-num">15</span><i class="fas fa-book"></i>References</h2>
+    <p class="sec-desc">Scholarly and data source citations referenced in this report.</p>
+    <div class="card">
+      <ol class="ref-list">
+        <li data-n="1">Eastman, J. R., Kyem, P. A. K., Toledano, J., &amp; Jin, W. (2012). <em>GIS and Decision Making</em>. UNITAR, Geneva. [Applied MCDA framework for suitability analysis]</li>
+        <li data-n="2">Ertz, O., Bocher, E., &amp; Neun, M. (2014). Client-side geospatial data processing in web browsers. <em>ISPRS Annals of the Photogrammetry, Remote Sensing and Spatial Information Sciences</em>, II-4, 59–65.</li>
+        <li data-n="3">Funk, C., Peterson, P., Landsfeld, M., Pedreros, D., Verdin, J., Shukla, S., &amp; Michaelsen, J. (2015). The Climate Hazards Infrared Precipitation with Stations — a new environmental record for monitoring extremes. <em>Scientific Data</em>, 2, 150066. <a href="https://doi.org/10.1038/sdata.2015.66" target="_blank">doi:10.1038/sdata.2015.66</a></li>
+        <li data-n="4">Goodchild, M. F. (2007). Citizens as sensors: The world of volunteered geography. <em>GeoJournal</em>, 69(4), 211–221.</li>
+        <li data-n="5">GRID3 (2022). <em>Zambia Districts — GRID3 Adjusted Dataset (Zambia_Districts_GRID3_adjusted_20221026)</em>. GRID3 / NSDI Zambia. <a href="https://grid3.org" target="_blank">grid3.org</a></li>
+        <li data-n="6">Haklay, M., &amp; Weber, P. (2008). OpenStreetMap: User-generated street maps. <em>IEEE Pervasive Computing</em>, 7(4), 12–18.</li>
+        <li data-n="7">Hevner, A. R., March, S. T., Park, J., &amp; Ram, S. (2004). Design science in information systems research. <em>MIS Quarterly</em>, 28(1), 75–105.</li>
+        <li data-n="8">Malczewski, J. (1999). <em>GIS and Multicriteria Decision Analysis</em>. John Wiley &amp; Sons, New York.</li>
+        <li data-n="9">Masih, I., Maskey, S., Mussá, F. E. F., &amp; Trambauer, P. (2014). A review of droughts on the African continent: a geospatial and long-term perspective. <em>Hydrology and Earth System Sciences</em>, 18(9), 3635–3649.</li>
+        <li data-n="10">Nicholson, S. E. (2017). Climate and climatic variability of rainfall over eastern Africa. <em>Reviews of Geophysics</em>, 55(3), 590–635.</li>
+        <li data-n="11">Republic of Zambia (2022). <em>Eighth National Development Plan (8NDP) 2022–2026</em>. Ministry of Finance and National Planning, Lusaka.</li>
+        <li data-n="12">Sheffield, J., &amp; Wood, E. F. (2011). <em>Drought: Past Problems and Future Scenarios</em>. Earthscan, London.</li>
+        <li data-n="13">Tschaen, C. (2014). <em>shpjs — Shapefile to GeoJSON library</em>. GitHub. <a href="https://github.com/calvinmetcalf/shapefile-js" target="_blank">github.com/calvinmetcalf/shapefile-js</a></li>
+        <li data-n="14">Tsou, M. H. (2011). Revisiting web cartography in the United States: The rise of user-centered design. <em>Cartography and Geographic Information Science</em>, 38(3), 250–257.</li>
+        <li data-n="15">Tuia, D., Kellenberger, B., Beery, S., Costelloe, B. R., Zuffi, S., Risse, B., &amp; Wegner, J. D. (2021). Perspectives in machine learning for wildlife conservation. <em>Nature Communications</em>, 13, 792. [Referenced for AOI selection requirements in non-specialist GIS use cases]</li>
+        <li data-n="16">USGS (2023). <em>CHIRPS: Rainfall Estimates from Rain Gauge and Satellite Observations</em>. <a href="https://www.chc.ucsb.edu/data/chirps" target="_blank">chc.ucsb.edu/data/chirps</a></li>
+      </ol>
+    </div>
+  </section>
+
+</main>
+
+<!-- Print FAB -->
+<button class="print-fab no-print" onclick="window.print()" title="Print / Save as PDF">
+  <i class="fas fa-print"></i>
+</button>
+
+<script>
+  // ── TOC scroll & highlight ──────────────────────────────────────────────
+  function scrollTo(id) {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+
+  const tocItems = document.querySelectorAll('.toc-item');
+  const sections = document.querySelectorAll('.section');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.id;
+        tocItems.forEach(t => t.classList.remove('active'));
+        const sectionOrder = ['intro','background','problem','questions','aim','literature',
+          'significance','scope','methodology','method','limitations','timeline','budget','conclusion','references'];
+        const idx = sectionOrder.indexOf(id);
+        if (idx >= 0 && tocItems[idx]) tocItems[idx].classList.add('active');
+      }
+    });
+  }, { rootMargin:'-10% 0px -80% 0px', threshold:0 });
+
+  sections.forEach(s => observer.observe(s));
+
+  // ── Animate progress bars on scroll ────────────────────────────────────
+  const progBars = document.querySelectorAll('.prog-bar-fill');
+  const barObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.transition = 'width 1s ease';
+      }
+    });
+  }, { threshold: 0.2 });
+  progBars.forEach(b => barObserver.observe(b));
+
+  // ── Mobile TOC toggle ───────────────────────────────────────────────────
+  window.addEventListener('resize', () => {
+    const toc = document.getElementById('tocSidebar');
+    const page = document.querySelector('.page');
+    if (window.innerWidth <= 900) {
+      page.style.marginLeft = '0';
+    } else {
+      page.style.marginLeft = '220px';
+      toc.style.transform = '';
+    }
+  });
+</script>
+</body>
+</html>

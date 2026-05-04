@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GeoHub Zambia – Data Upload</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css"/>
+  <script src="js/auth.js"></script>
+  <script src="js/zambia-data.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --g1:#040e07;--g2:#0a2e1a;--g3:#1a6b35;--g4:#2d9e5f;--g5:#4CAF50;
+      --white:#fff;--bg:#f1f5f1;--text:#111827;--muted:#6b7280;
+      --border:#e5e7eb;--card:#fff;
+      --sh:0 1px 3px rgba(0,0,0,.06),0 2px 8px rgba(0,0,0,.04);
+      --sh2:0 4px 20px rgba(0,0,0,.08);--r:14px;--nb:62px;
+    }
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+    .nb{position:fixed;top:0;left:0;right:0;height:var(--nb);background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;z-index:200;box-shadow:var(--sh);}
+    .nb-brand{display:flex;align-items:center;gap:10px;text-decoration:none;}
+    .nb-brand .ico{width:36px;height:36px;background:linear-gradient(135deg,var(--g3),var(--g4));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;}
+    .nb-brand h1{font-size:1.15rem;font-weight:900;color:var(--text);}
+    .nb-brand h1 em{color:var(--g3);font-style:normal;}
+    .nb-links{display:flex;align-items:center;gap:1px;margin-left:28px;flex:1;}
+    .nb-lnk{padding:6px 11px;border-radius:7px;font-size:.83rem;font-weight:500;color:var(--muted);text-decoration:none;display:flex;align-items:center;gap:5px;transition:background .15s,color .15s;}
+    .nb-lnk:hover{background:#f3f4f6;color:var(--text);}
+    .nb-lnk.on{background:#f0fdf4;color:var(--g3);font-weight:700;position:relative;}
+    .nb-lnk.on::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:2.5px;background:var(--g5);border-radius:2px 2px 0 0;}
+    .nb-right{display:flex;align-items:center;gap:8px;margin-left:auto;}
+    .nb-av{width:30px;height:30px;background:linear-gradient(135deg,var(--g3),var(--g4));border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:.72rem;}
+    .nb-uname{font-size:.82rem;font-weight:600;color:var(--text);}
+    .btn-out{padding:6px 12px;background:none;border:1.5px solid var(--border);border-radius:7px;font-family:'Inter',sans-serif;font-size:.78rem;font-weight:600;color:var(--muted);cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s;}
+    .btn-out:hover{background:#fef2f2;border-color:#fca5a5;color:#dc2626;}
+    .main{margin-top:var(--nb);padding:24px 28px 60px;max-width:1100px;margin-left:auto;margin-right:auto;}
+    .pg-hd{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;}
+    .pg-hd-l h2{font-size:1.45rem;font-weight:900;}
+    .pg-hd-l p{font-size:.83rem;color:var(--muted);margin-top:3px;}
+    .card{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:22px 24px;box-shadow:var(--sh);}
+    .card-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+    .card-hd h3{font-size:.97rem;font-weight:800;}
+    .card-hd p{font-size:.75rem;color:var(--muted);margin-top:2px;}
+    .btn-sm{padding:8px 14px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;border:1.5px solid transparent;font-family:'Inter',sans-serif;display:inline-flex;align-items:center;gap:6px;transition:all .15s;}
+    .btn-primary{background:var(--g3);color:#fff;border-color:var(--g3);}
+    .btn-primary:hover{background:var(--g2);}
+    .btn-outline{background:#fff;color:var(--text);border-color:var(--border);}
+    .btn-outline:hover{background:#f9fafb;}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;}
+
+    /* Drop zone */
+    .drop-zone{
+      border:2.5px dashed var(--border);border-radius:16px;
+      padding:48px 32px;text-align:center;cursor:pointer;
+      transition:all .2s;background:#fafafa;margin-bottom:18px;
+    }
+    .drop-zone:hover,.drop-zone.over{border-color:var(--g4);background:#f0fdf4;}
+    .drop-zone i{font-size:3rem;color:var(--g4);margin-bottom:16px;display:block;}
+    .drop-zone h3{font-size:1.1rem;font-weight:800;color:var(--text);margin-bottom:6px;}
+    .drop-zone p{font-size:.84rem;color:var(--muted);}
+    .drop-zone input[type=file]{display:none;}
+    .fmt-pills{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;margin-top:14px;}
+    .fmt-pill{font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:20px;
+      background:#f0fdf4;color:var(--g3);border:1px solid #bbf7d0;}
+
+    /* File list */
+    .file-item{display:flex;align-items:center;gap:12px;padding:11px 14px;
+      background:#f9fafb;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;}
+    .file-ico{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;
+      justify-content:center;font-size:.95rem;flex-shrink:0;}
+    .file-name{font-size:.85rem;font-weight:700;color:var(--text);}
+    .file-meta{font-size:.73rem;color:var(--muted);}
+    .file-status{font-size:.72rem;font-weight:700;padding:2px 9px;border-radius:20px;margin-left:auto;}
+    .fs-ok{background:#f0fdf4;color:var(--g3);border:1px solid #bbf7d0;}
+    .fs-err{background:#fef2f2;color:#dc2626;border:1px solid #fecaca;}
+    .fs-proc{background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;}
+    .prog-bar{height:4px;background:#e5e7eb;border-radius:2px;margin-top:6px;overflow:hidden;}
+    .prog-fill{height:4px;background:var(--g4);border-radius:2px;transition:width .3s;}
+    .rm-btn{background:none;border:none;color:var(--muted);cursor:pointer;padding:4px;font-size:.85rem;flex-shrink:0;}
+    .rm-btn:hover{color:#dc2626;}
+
+    /* CSV preview table */
+    .preview-tbl{width:100%;border-collapse:collapse;font-size:.78rem;}
+    .preview-tbl th{padding:7px 10px;background:#f9fafb;border-bottom:2px solid var(--border);font-weight:800;text-align:left;color:var(--muted);text-transform:uppercase;font-size:.68rem;}
+    .preview-tbl td{padding:7px 10px;border-bottom:1px solid #f3f4f6;}
+    .preview-tbl tr:hover td{background:#f9fafb;}
+
+    /* Sample datasets */
+    .ds-dl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+    .ds-dl{background:#f9fafb;border:1px solid var(--border);border-radius:10px;padding:14px 16px;
+      display:flex;align-items:flex-start;gap:12px;transition:all .15s;}
+    .ds-dl:hover{border-color:var(--g4);background:#f0fdf4;}
+    .ds-dl-ico{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
+    .ds-dl h4{font-size:.83rem;font-weight:800;color:var(--text);}
+    .ds-dl p{font-size:.73rem;color:var(--muted);margin-top:2px;line-height:1.4;}
+    .ds-dl .dl-btn{margin-top:8px;font-size:.72rem;color:var(--g3);font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;background:none;border:none;padding:0;font-family:'Inter',sans-serif;}
+    .ds-dl .dl-btn:hover{text-decoration:underline;}
+
+    #toast{position:fixed;bottom:24px;right:24px;z-index:9999;background:var(--g3);color:#fff;padding:11px 17px;border-radius:10px;font-size:.82rem;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.2);display:none;align-items:center;gap:8px;}
+    #toast.err{background:#dc2626;}
+  </style>
+</head>
+<body>
+<nav class="nb">
+  <a class="nb-brand" href="dashboard.html"><div class="ico">🌍</div><h1>Geo<em>Hub</em></h1></a>
+  <div class="nb-links">
+    <a class="nb-lnk" href="dashboard.html"><i class="fas fa-th-large"></i>Dashboard</a>
+    <a class="nb-lnk" href="map.html"><i class="fas fa-map-marked-alt"></i>Map Viewer</a>
+    <a class="nb-lnk" href="analytics.html"><i class="fas fa-chart-bar"></i>Analytics</a>
+    <a class="nb-lnk on" href="data.html"><i class="fas fa-cloud-upload-alt"></i>Data Upload</a>
+    <a class="nb-lnk" href="settings.html"><i class="fas fa-cog"></i>Settings</a>
+    <span id="adminLink" style="display:none;"><a class="nb-lnk" href="admin.html"><i class="fas fa-user-shield"></i>Admin</a></span>
+  </div>
+  <div class="nb-right">
+    <div class="nb-av" id="nbAv">?</div>
+    <span class="nb-uname" id="nbName">—</span>
+    <button class="btn-out" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i>Sign Out</button>
+  </div>
+</nav>
+
+<main class="main">
+  <div class="pg-hd">
+    <div class="pg-hd-l">
+      <h2>☁️ Data Upload</h2>
+      <p>Upload and manage geospatial datasets for Zambia</p>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn-sm btn-outline" onclick="clearAllFiles()"><i class="fas fa-trash-alt"></i>Clear All</button>
+      <button class="btn-sm btn-primary" id="uploadAllBtn" onclick="uploadAll()" disabled><i class="fas fa-cloud-upload-alt"></i>Upload All</button>
+    </div>
+  </div>
+
+  <!-- Drop zone -->
+  <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+    <input type="file" id="fileInput" multiple accept=".csv,.geojson,.json,.kml,.zip,.shp,.xml,.gpx" onchange="handleFiles(this.files)"/>
+    <i class="fas fa-cloud-upload-alt"></i>
+    <h3>Drop files here or click to browse</h3>
+    <p>Supports GeoJSON, CSV, KML, SHP (ZIP), GPX, XML formats</p>
+    <div class="fmt-pills">
+      <span class="fmt-pill">.geojson</span>
+      <span class="fmt-pill">.csv</span>
+      <span class="fmt-pill">.kml</span>
+      <span class="fmt-pill">.shp (zip)</span>
+      <span class="fmt-pill">.gpx</span>
+      <span class="fmt-pill">.xml</span>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <!-- File list -->
+    <div>
+      <div class="card-hd" style="margin-bottom:10px;">
+        <h3>Queued Files <span id="fileCount" style="font-size:.75rem;font-weight:500;color:var(--muted);margin-left:6px;">(0 files)</span></h3>
+      </div>
+      <div id="fileList">
+        <div style="text-align:center;padding:24px;color:var(--muted);font-size:.84rem;">
+          <i class="fas fa-inbox" style="font-size:2rem;display:block;margin-bottom:8px;opacity:.4;"></i>
+          No files queued yet
+        </div>
+      </div>
+    </div>
+
+    <!-- CSV Preview -->
+    <div>
+      <div class="card-hd" style="margin-bottom:10px;">
+        <h3>Data Preview</h3>
+        <button class="btn-sm btn-outline" id="previewBtn" onclick="previewSelected()" disabled style="font-size:.74rem;padding:5px 10px;">Preview</button>
+      </div>
+      <div id="previewArea" style="background:#f9fafb;border:1px solid var(--border);border-radius:10px;padding:14px;min-height:200px;overflow-x:auto;">
+        <p style="color:var(--muted);font-size:.82rem;text-align:center;margin-top:40px;">Select a CSV or GeoJSON file to preview data</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Upload progress -->
+  <div class="card" style="margin-bottom:18px;display:none;" id="uploadProgress">
+    <div class="card-hd"><h3>Upload Progress</h3></div>
+    <div id="progressList"></div>
+  </div>
+
+  <!-- Sample datasets -->
+  <div class="card">
+    <div class="card-hd">
+      <div><h3>Downloadable Sample Datasets</h3><p>Reference NSDI data to test uploads</p></div>
+    </div>
+    <div class="ds-dl-grid">
+      <div class="ds-dl">
+        <div class="ds-dl-ico" style="background:#f0fdf4;"><i class="fas fa-border-all" style="color:var(--g3);"></i></div>
+        <div>
+          <h4>NSDI Districts (CSV)</h4>
+          <p>All 116 Zambia districts with coordinates, province, area, population</p>
+          <button class="dl-btn" onclick="downloadSampleDistricts()"><i class="fas fa-download"></i>Download CSV</button>
+        </div>
+      </div>
+      <div class="ds-dl">
+        <div class="ds-dl-ico" style="background:#eff6ff;"><i class="fas fa-tree" style="color:#2563eb;"></i></div>
+        <div>
+          <h4>Forest Cover (CSV)</h4>
+          <p>Annual forest change data 2018–2024 from FAO</p>
+          <button class="dl-btn" onclick="downloadSampleForest()"><i class="fas fa-download"></i>Download CSV</button>
+        </div>
+      </div>
+      <div class="ds-dl">
+        <div class="ds-dl-ico" style="background:#fffbeb;"><i class="fas fa-water" style="color:#d97706;"></i></div>
+        <div>
+          <h4>Water Bodies (GeoJSON)</h4>
+          <p>Major Zambian lakes and wetlands with attributes</p>
+          <button class="dl-btn" onclick="downloadSampleWater()"><i class="fas fa-download"></i>Download GeoJSON</button>
+        </div>
+      </div>
+      <div class="ds-dl">
+        <div class="ds-dl-ico" style="background:#faf5ff;"><i class="fas fa-cloud-rain" style="color:#7c3aed;"></i></div>
+        <div>
+          <h4>Rainfall (CSV)</h4>
+          <p>Monthly CHIRPS rainfall for 4 Zambia stations</p>
+          <button class="dl-btn" onclick="downloadSampleRainfall()"><i class="fas fa-download"></i>Download CSV</button>
+        </div>
+      </div>
+      <div class="ds-dl">
+        <div class="ds-dl-ico" style="background:#f0fdfa;"><i class="fas fa-industry" style="color:#0d9488;"></i></div>
+        <div>
+          <h4>Mining Sites (GeoJSON)</h4>
+          <p>Active copper and gold mines from ZDA 2023</p>
+          <button class="dl-btn" onclick="downloadSampleMining()"><i class="fas fa-download"></i>Download GeoJSON</button>
+        </div>
+      </div>
+      <div class="ds-dl">
+        <div class="ds-dl-ico" style="background:#fff7ed;"><i class="fas fa-layer-group" style="color:#ea580c;"></i></div>
+        <div>
+          <h4>Provinces Summary (CSV)</h4>
+          <p>Province land cover, population, forest % data</p>
+          <button class="dl-btn" onclick="downloadSampleProvinces()"><i class="fas fa-download"></i>Download CSV</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div id="toast"></div>
+
+<script>
+// ── Auth ──────────────────────────────────────────────────────────────────
+const session = GeoHubAuth.requireAuth('index.html');
+document.getElementById('nbAv').textContent   = session.avatar;
+document.getElementById('nbName').textContent = session.name;
+if (session.role === 'admin') document.getElementById('adminLink').style.display = 'inline';
+function doLogout(){ GeoHubAuth.logout(); window.location.href = 'index.html'; }
+
+// ── File state ─────────────────────────────────────────────────────────────
+let uploadedFiles = [];
+let selectedFileIdx = -1;
+
+// ── Drag & drop ────────────────────────────────────────────────────────────
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('over'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('over');
+  handleFiles(e.dataTransfer.files);
+});
+
+function handleFiles(files) {
+  Array.from(files).forEach(f => {
+    if (uploadedFiles.find(x => x.name === f.name && x.size === f.size)) {
+      showToast(`"${f.name}" already added`, true); return;
+    }
+    uploadedFiles.push({ file: f, name: f.name, size: f.size, type: getFileType(f.name), status: 'ready', progress: 0 });
+  });
+  renderFileList();
+  document.getElementById('uploadAllBtn').disabled = uploadedFiles.length === 0;
+  GeoHubAuth.addAuditLog('FILE_ADD', `Added ${files.length} file(s) to upload queue`, session.id);
+}
+
+function getFileType(name) {
+  const ext = name.split('.').pop().toLowerCase();
+  const map = { csv: 'CSV', geojson: 'GeoJSON', json: 'GeoJSON', kml: 'KML', zip: 'SHP (ZIP)', shp: 'SHP', xml: 'XML', gpx: 'GPX' };
+  return map[ext] || ext.toUpperCase();
+}
+
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1048576) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/1048576).toFixed(1) + ' MB';
+}
+
+// ── Render file list ───────────────────────────────────────────────────────
+function renderFileList() {
+  const list = document.getElementById('fileList');
+  document.getElementById('fileCount').textContent = `(${uploadedFiles.length} file${uploadedFiles.length !== 1 ? 's' : ''})`;
+  if (!uploadedFiles.length) {
+    list.innerHTML = `<div style="text-align:center;padding:24px;color:var(--muted);font-size:.84rem;"><i class="fas fa-inbox" style="font-size:2rem;display:block;margin-bottom:8px;opacity:.4;"></i>No files queued yet</div>`;
+    document.getElementById('previewBtn').disabled = true;
+    return;
+  }
+  const typeIcons = { CSV:'fas fa-file-csv,#1a6b35,#f0fdf4', GeoJSON:'fas fa-map,#2563eb,#eff6ff', KML:'fas fa-globe,#d97706,#fffbeb', 'SHP (ZIP)':'fas fa-archive,#7c3aed,#faf5ff', XML:'fas fa-code,#6b7280,#f3f4f6', GPX:'fas fa-route,#0d9488,#f0fdfa' };
+  list.innerHTML = uploadedFiles.map((f, i) => {
+    const [ico, color, bg] = (typeIcons[f.type] || 'fas fa-file,#6b7280,#f3f4f6').split(',');
+    const statusClass = { ready:'fs-proc', uploading:'fs-proc', done:'fs-ok', error:'fs-err' }[f.status];
+    const statusLabel = { ready:'Ready', uploading:'Uploading…', done:'Uploaded', error:'Error' }[f.status];
+    return `<div class="file-item" id="fi-${i}" onclick="selectFile(${i})" style="cursor:pointer;${selectedFileIdx===i ? 'border-color:var(--g4);background:#f0fdf4;' : ''}">
+      <div class="file-ico" style="background:${bg};color:${color};"><i class="${ico}"></i></div>
+      <div style="flex:1;min-width:0;">
+        <div class="file-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.name}</div>
+        <div class="file-meta">${formatSize(f.size)} · ${f.type}</div>
+        ${f.status === 'uploading' ? `<div class="prog-bar"><div class="prog-fill" id="pfill-${i}" style="width:${f.progress}%;"></div></div>` : ''}
+      </div>
+      <span class="file-status ${statusClass}">${statusLabel}</span>
+      <button class="rm-btn" onclick="removeFile(${i},event)" title="Remove"><i class="fas fa-times"></i></button>
+    </div>`;
+  }).join('');
+  document.getElementById('previewBtn').disabled = selectedFileIdx < 0;
+}
+
+function selectFile(i) {
+  selectedFileIdx = i;
+  document.getElementById('previewBtn').disabled = false;
+  renderFileList();
+  previewSelected();
+}
+function removeFile(i, e) {
+  e.stopPropagation();
+  uploadedFiles.splice(i, 1);
+  if (selectedFileIdx >= uploadedFiles.length) selectedFileIdx = -1;
+  renderFileList();
+  document.getElementById('uploadAllBtn').disabled = uploadedFiles.length === 0;
+}
+function clearAllFiles() {
+  uploadedFiles = []; selectedFileIdx = -1;
+  renderFileList();
+  document.getElementById('uploadAllBtn').disabled = true;
+  document.getElementById('previewArea').innerHTML = '<p style="color:var(--muted);font-size:.82rem;text-align:center;margin-top:40px;">Select a CSV or GeoJSON file to preview data</p>';
+}
+
+// ── Preview ─────────────────────────────────────────────────────────────────
+function previewSelected() {
+  if (selectedFileIdx < 0) return;
+  const f = uploadedFiles[selectedFileIdx];
+  if (!f) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const content = e.target.result;
+    const area = document.getElementById('previewArea');
+    if (f.type === 'CSV') {
+      const lines = content.split('\n').filter(l => l.trim()).slice(0, 11);
+      if (!lines.length) { area.innerHTML = '<p style="color:var(--muted);">Empty file</p>'; return; }
+      const headers = lines[0].split(',');
+      const rows = lines.slice(1);
+      area.innerHTML = `
+        <div style="font-size:.75rem;color:var(--muted);margin-bottom:8px;">Showing first 10 rows of <strong>${f.name}</strong></div>
+        <div style="overflow-x:auto;">
+          <table class="preview-tbl">
+            <thead><tr>${headers.map(h => `<th>${h.trim()}</th>`).join('')}</tr></thead>
+            <tbody>${rows.map(r => `<tr>${r.split(',').map(c => `<td>${c.trim()}</td>`).join('')}</tr>`).join('')}</tbody>
+          </table>
+        </div>
+        <div style="margin-top:8px;font-size:.72rem;color:var(--muted);">${headers.length} columns detected</div>`;
+    } else if (f.type === 'GeoJSON') {
+      try {
+        const gj = JSON.parse(content);
+        const count = gj.features ? gj.features.length : 0;
+        const first = gj.features && gj.features[0] ? gj.features[0].properties : {};
+        area.innerHTML = `
+          <div style="font-size:.75rem;color:var(--muted);margin-bottom:8px;"><strong>${f.name}</strong> · ${count} features</div>
+          <pre style="font-size:.72rem;background:#f3f4f6;padding:10px;border-radius:8px;overflow-x:auto;max-height:200px;">${JSON.stringify(gj.features ? gj.features[0] : gj, null, 2).slice(0, 1000)}…</pre>`;
+      } catch { area.innerHTML = '<p style="color:#dc2626;font-size:.82rem;">Invalid GeoJSON format</p>'; }
+    } else {
+      area.innerHTML = `<div style="font-size:.82rem;color:var(--muted);">Preview not available for ${f.type} files.<br><br><code style="font-size:.72rem;background:#f3f4f6;padding:6px 10px;border-radius:6px;">${content.slice(0, 300)}…</code></div>`;
+    }
+  };
+  reader.readAsText(f.file);
+}
+
+// ── Upload all (simulated) ─────────────────────────────────────────────────
+function uploadAll() {
+  if (!uploadedFiles.length) return;
+  const progCard = document.getElementById('uploadProgress');
+  const progList = document.getElementById('progressList');
+  progCard.style.display = 'block';
+  progList.innerHTML = '';
+
+  const toUpload = uploadedFiles.filter(f => f.status === 'ready');
+  if (!toUpload.length) { showToast('All files already uploaded'); return; }
+
+  toUpload.forEach((f, idx) => {
+    f.status = 'uploading';
+    progList.insertAdjacentHTML('beforeend', `
+      <div style="margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;font-size:.8rem;font-weight:600;margin-bottom:4px;">
+          <span>${f.name}</span><span id="pct-${idx}">0%</span>
+        </div>
+        <div class="prog-bar" style="height:8px;"><div class="prog-fill" id="pf-${idx}" style="width:0%;height:8px;"></div></div>
+      </div>`);
+    simulateUpload(f, idx);
+  });
+  renderFileList();
+  GeoHubAuth.addAuditLog('UPLOAD', `Uploading ${toUpload.length} file(s)`, session.id);
+}
+
+function simulateUpload(fileObj, idx) {
+  let p = 0;
+  const bar = document.getElementById(`pf-${idx}`);
+  const pct = document.getElementById(`pct-${idx}`);
+  const interval = setInterval(() => {
+    p += Math.random() * 15 + 5;
+    if (p >= 100) {
+      p = 100; clearInterval(interval);
+      fileObj.status = 'done'; fileObj.progress = 100;
+      if (pct) pct.textContent = '100%';
+      if (bar) { bar.style.width = '100%'; bar.style.background = '#16a34a'; }
+      renderFileList();
+      const allDone = uploadedFiles.every(f => f.status === 'done' || f.status === 'error');
+      if (allDone) showToast(`${uploadedFiles.length} file(s) uploaded successfully`);
+      return;
+    }
+    fileObj.progress = Math.round(p);
+    if (bar) bar.style.width = p + '%';
+    if (pct) pct.textContent = Math.round(p) + '%';
+  }, 200);
+}
+
+// ── Download sample datasets ──────────────────────────────────────────────
+function dlCSV(rows, filename) {
+  const csv = rows.map(r => r.join(',')).join('\n');
+  const a = document.createElement('a'); a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = filename; a.click();
+  showToast(`Downloaded ${filename}`);
+}
+function dlJSON(obj, filename) {
+  const a = document.createElement('a'); a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(obj, null, 2));
+  a.download = filename; a.click();
+  showToast(`Downloaded ${filename}`);
+}
+function downloadSampleDistricts() {
+  const h = ['ID','District','Province','Province_Code','Latitude','Longitude','Area_km2','Population','Region'];
+  dlCSV([h,...ZAMBIA_DISTRICTS.map(d=>[d.id,d.district,d.province,d.prov_code,d.lat,d.lng,d.area_km2,d.pop,d.region])], 'zambia_districts_NSDI2022.csv');
+}
+function downloadSampleForest() {
+  const h = ['Year','Total_Cover_km2','Annual_Loss_km2','Annual_Gain_km2','Net_km2'];
+  dlCSV([h,...FOREST_TREND.years.map((y,i)=>[y,FOREST_TREND.total_km2[i],FOREST_TREND.loss_km2[i],FOREST_TREND.gain_km2[i],FOREST_TREND.gain_km2[i]-FOREST_TREND.loss_km2[i]])], 'zambia_forest_cover_FAO.csv');
+}
+function downloadSampleWater() {
+  dlJSON({
+    type:'FeatureCollection',
+    features: WATER_BODIES.map(w => ({
+      type:'Feature',
+      geometry:{type:'Point',coordinates:[w.lng,w.lat]},
+      properties:{name:w.name,area_km2:w.area_km2,type:w.type,depth_m:w.depth_m,shared_with:w.shared_with}
+    }))
+  }, 'zambia_water_bodies.geojson');
+}
+function downloadSampleRainfall() {
+  const h = ['Month','Lusaka_mm','Ndola_mm','Livingstone_mm','Chipata_mm'];
+  dlCSV([h,...RAINFALL_MONTHLY.months.map((m,i)=>[m,RAINFALL_MONTHLY.lusaka[i],RAINFALL_MONTHLY.ndola[i],RAINFALL_MONTHLY.livingstone[i],RAINFALL_MONTHLY.chipata[i]])], 'zambia_rainfall_CHIRPS2023.csv');
+}
+function downloadSampleMining() {
+  dlJSON({
+    type:'FeatureCollection',
+    features: MINING_SITES.map(m => ({
+      type:'Feature',
+      geometry:{type:'Point',coordinates:[m.lng,m.lat]},
+      properties:{name:m.name,company:m.company,type:m.type,production_t_per_yr:m.production_t}
+    }))
+  }, 'zambia_mining_sites_ZDA2023.geojson');
+}
+function downloadSampleProvinces() {
+  const h = ['Province','Capital','Districts','Area_km2','Population','Forest_pct','Urban_pct','Water_pct','Agri_pct','Bare_pct'];
+  dlCSV([h,...ZAMBIA_PROVINCES.map(p=>[p.name,p.capital,p.districts,p.area_km2,p.pop,p.forest_pct,p.urban_pct,p.water_pct,p.agri_pct,p.bare_pct])], 'zambia_provinces_summary.csv');
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────
+function showToast(msg, isErr=false) {
+  const t = document.getElementById('toast');
+  t.className = isErr ? 'err' : '';
+  t.innerHTML = `<i class="fas fa-${isErr?'exclamation-circle':'check-circle'}"></i>${msg}`;
+  t.style.display = 'flex'; clearTimeout(t._t);
+  t._t = setTimeout(() => t.style.display = 'none', 2800);
+}
+</script>
+</body>
+</html>

@@ -7538,10 +7538,16 @@ try {
   };
 
   window.loadGEELayer = async function(dataset) {
+    // Prevent running from file:// protocol
+    if (window.location.protocol === 'file:') {
+      showToast('⚠️ Please run the Flask server and access the map at http://localhost:5000/map', 'warn');
+      return;
+    }
+
     const year  = document.getElementById('geeYear').value;
     const btn   = document.getElementById('gee-' + dataset);
 
-    // Toggle off if same dataset is clicked again
+    // Toggle off if same dataset
     if (activeDataset === dataset) {
       window.removeGEELayer();
       return;
@@ -7553,7 +7559,9 @@ try {
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Loading…</span>';
 
     try {
-      const res  = await fetch(`/map?dataset=${dataset}&year=${year}`);
+      const res  = await fetch(`/api/map?dataset=${dataset}&year=${year}`);
+
+      // Parse JSON response
       const data = await res.json();
 
       if (data.error) throw new Error(data.error);
@@ -7561,25 +7569,21 @@ try {
       // Remove previous GEE layer
       if (geeLayer) { map.removeLayer(geeLayer); geeLayer = null; }
 
-      let tileUrl;
-      if (data.tile_url) {
-        // LULC returns tile_url directly
-        tileUrl = data.tile_url;
-      } else if (data.mapid && data.token) {
-        // Other datasets use old EE format
-        tileUrl = `https://earthengine.googleapis.com/map/${data.mapid}/{z}/{x}/{y}?token=${data.token}`;
-      } else {
-        throw new Error('No tile URL returned from server');
-      }
+      if (!data.tile_url) throw new Error('No tile URL returned from server');
+      const tileUrl = data.tile_url;
 
+      // Create tile layer
       geeLayer = L.tileLayer(tileUrl, {
         attribution: 'Google Earth Engine',
         opacity: 0.8,
-        maxZoom: 14
+        maxZoom: 14,
+        bounds: L.latLngBounds([-18.08, 21.96], [-8.18, 33.70])
       });
+
       geeLayer.addTo(map);
       activeDataset = dataset;
 
+      // Update button label
       const info = DATASET_LABELS[dataset];
       btn.innerHTML = `<i class="${info.icon}"></i><span>${info.label.split(' ')[0]}</span>`;
       showToast(`✅ ${info.label} (${year}) loaded`, 'success');

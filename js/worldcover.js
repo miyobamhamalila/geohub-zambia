@@ -21,5 +21,6 @@ var colorMap = new ColorMapVisualizer({
     100: [0x64, 0xFF, 0xFF],  // Moss/lichen - blue-cyan
 });
 
-// Evaluate the color map for each pixel
-return colorMap.process(B01); // Using B01 as placeholder - in real script would use appropriate bands
+// Evaluate the color map for each pixel using the classification data
+// For WorldCover, the data is a single-band classification layer
+return colorMap.process(data);

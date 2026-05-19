@@ -373,5 +373,73 @@ window.GeoHubData = {
   droughtRisk:       DROUGHT_RISK_STATS,
   landCover:         LAND_COVER_NATIONAL,
   waterBodies:       WATER_BODIES,
-  miningSites:       MINING_SITES
+  miningSites:       MINING_SITES,
+  // GEE Layer Scales for visualizers
+  geeScales: {
+    worldcover: {
+      10: { label: "Tree cover",             color: "#006400" },
+      20: { label: "Shrubland",              color: "#009600" },
+      30: { label: "Grassland",              color: "#00C800" },
+      40: { label: "Cropland",               color: "#00D800" },
+      50: { label: "Built up",               color: "#00E800" },
+      60: { label: "Bare/sparse vegetation", color: "#00F800" },
+      70: { label: "Snow/Ice",               color: "#00FF00" },
+      80: { label: "Water bodies",           color: "#00FF64" },
+      90: { label: "Wetlands",               color: "#00FFC8" },
+      95: { label: "Mangroves",              color: "#00FFFF" },
+      100: { label: "Moss/lichen",          color: "#64FFFF" }
+    },
+    lulc: {
+      1: { label: "Evergreen Needleleaf Forest", color: "#05450a" },
+      2: { label: "Evergreen Broadleaf Forest",  color: "#086a10" },
+      3: { label: "Deciduous Needleleaf Forest", color: "#54a708" },
+      4: { label: "Deciduous Broadleaf Forest",  color: "#78d203" },
+      5: { label: "Mixed Forests",                color: "#009900" },
+      6: { label: "Closed Shrublands",            color: "#c6b044" },
+      7: { label: "Open Shrublands",              color: "#dcd159" },
+      8: { label: "Woody Savannas",               color: "#dade48" },
+      9: { label: "Savannas",                     color: "#fbff13" },
+      10: { label: "Grasslands",                  color: "#b6ff05" },
+      11: { label: "Permanent Wetlands",          color: "#27ff87" },
+      12: { label: "Croplands",                   color: "#c24f44" },
+      13: { label: "Urban/Built-up",              color: "#a5a5a5" },
+      14: { label: "Snow/Ice",                    color: "#ff6d4c" },
+      15: { label: "Barren/Sparsely Vegetated",   color: "#69fff8" },
+      16: { label: "Unclassified",                color: "#f9ffa4" },
+      17: { label: "Water Bodies",                color: "#1c0dff" }
+    },
+    ndvi: {
+      type: "continuous",
+      min: 0.1,
+      max: 0.8,
+      palette: ["#ce7e45","#df923d","#f1b555","#fcd163","#99b718","#74a901","#66a000","#529400","#3e8601","#207401","#056201","#004c00"],
+      label: "NDVI Vegetation Index"
+    },
+    chirps: {
+      type: "continuous",
+      min: 0,
+      max: 2000,
+      palette: ["#fff7fb","#d0d1e6","#a6bddb","#74a9cf","#3690c0","#0570b0","#034e7b"],
+      label: "Annual Precipitation (mm)"
+    },
+    lst: {
+      type: "continuous",
+      min: 15,
+      max: 50,
+      palette: ["#040274","#040281","#0502a3","#0502b8","#0602ff","#235cb1","#307ef3","#269db1","#30c8e2","#32d3ef","#3be285","#3ff38f","#86e26f","#3ae237","#b5e22e","#d6e21f","#fff705","#ffd611","#ffb613","#ff8b13","#ff6e08","#ff500d","#ff0000","#de0101","#c21301","#a71001","#911003"],
+      label: "Land Surface Temperature (°C)"
+    },
+    drought: {
+      type: "continuous",
+      min: 0,
+      max: 100,
+      palette: ["#a50026","#d73027","#f46d43","#fdae61","#fee08b","#ffffbf","#d9ef8b","#a6d96a","#66bd63","#1a9850","#006837"],
+      label: "Vegetation Condition Index (%)"
+    },
+    flood: {
+      type: "binary",
+      0: { label: "No Water", color: "#000000", opacity: 0 },
+      1: { label: "Water", color: "#1a75ff" }
+    }
+  }
 };

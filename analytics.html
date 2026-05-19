@@ -103,6 +103,32 @@
     .mine-bar{height:4px;border-radius:2px;background:#fed7aa;margin-top:5px;}
     .mine-bar-fill{height:4px;border-radius:2px;background:#ea580c;}
 
+    /* District table + search */
+    .dist-sec-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
+    .dist-sec-hd h2{font-size:1.2rem;font-weight:900;}
+    .dist-sec-hd p{font-size:.78rem;color:var(--muted);margin-top:2px;}
+    .dist-search-wrap{position:relative;flex:1;max-width:320px;}
+    .dist-search-ico{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:.75rem;pointer-events:none;}
+    .dist-search-inp{width:100%;padding:7px 10px 7px 30px;border:1.5px solid var(--border);border-radius:8px;font-family:'Inter',sans-serif;font-size:.82rem;color:var(--text);background:#fff;outline:none;transition:border-color .15s;}
+    .dist-search-inp:focus{border-color:var(--g3);}
+    .dist-search-inp::placeholder{color:#9ca3af;}
+    .dist-tbl-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+    .dist-tbl-hdr span{font-size:.73rem;color:var(--muted);font-weight:600;}
+    .dist-filter-pills{display:flex;gap:5px;flex-wrap:wrap;}
+    .dist-pill{padding:3px 9px;border-radius:20px;font-size:.67rem;font-weight:700;cursor:pointer;border:1.5px solid var(--border);color:var(--muted);background:#fff;transition:all .15s;}
+    .dist-pill:hover{border-color:var(--g3);color:var(--g3);}
+    .dist-pill.active{background:#f0fdf4;border-color:var(--g3);color:var(--g3);}
+    .dist-table{width:100%;border-collapse:collapse;font-size:.78rem;}
+    .dist-table th{padding:9px 12px;background:#f9fafb;border-bottom:2px solid var(--border);font-size:.68rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;text-align:left;cursor:pointer;white-space:nowrap;}
+    .dist-table th:hover{background:#f3f4f6;}
+    .dist-table th.sorted-asc::after{content:' ▲';color:var(--g3);font-size:.62rem;}
+    .dist-table th.sorted-desc::after{content:' ▼';color:var(--g3);font-size:.62rem;}
+    .dist-table td{padding:8px 12px;border-bottom:1px solid #f3f4f6;vertical-align:middle;white-space:nowrap;}
+    .dist-table tr:hover td{background:#f8fdf9;}
+    .dist-table tr:last-child td{border-bottom:none;}
+    .dist-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:5px;font-size:.62rem;font-weight:700;}
+    .dist-dot-sm{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+
     /* Radar-like ring */
     .defor-gauge{display:flex;align-items:center;gap:20px;}
     .gauge-wrap{position:relative;width:120px;height:120px;flex-shrink:0;}
@@ -184,13 +210,13 @@
   </div>
 
   <!-- Stats row -->
-  <div class="stats4">
+  <div class="stats4" style="margin-bottom:22px;">
     <div class="stat-c">
       <div class="stat-ico" style="background:#f0fdf4;"><i class="fas fa-tree" style="color:var(--g3);"></i></div>
       <div>
         <div class="stat-v">435,000</div>
         <div class="stat-l">Forest Cover km² (2024)</div>
-        <div class="stat-delta dn"><i class="fas fa-arrow-down"></i>12% since 2018</div>
+        <div class="stat-delta dn"><i class="fas fa-arrow-down"></i> 12% since 2018</div>
       </div>
     </div>
     <div class="stat-c">
@@ -198,7 +224,7 @@
       <div>
         <div class="stat-v">880 mm</div>
         <div class="stat-l">Avg Annual Rainfall — Lusaka</div>
-        <div class="stat-delta up"><i class="fas fa-arrow-up"></i>Normal range ±5%</div>
+        <div class="stat-delta up"><i class="fas fa-arrow-up"></i> Normal range ±5%</div>
       </div>
     </div>
     <div class="stat-c">
@@ -206,7 +232,7 @@
       <div>
         <div class="stat-v">756K t</div>
         <div class="stat-l">Total Copper Production/yr</div>
-        <div class="stat-delta up"><i class="fas fa-arrow-up"></i>6 active mines</div>
+        <div class="stat-delta up"><i class="fas fa-arrow-up"></i> 6 active mines</div>
       </div>
     </div>
     <div class="stat-c">
@@ -214,13 +240,13 @@
       <div>
         <div class="stat-v">20.0M</div>
         <div class="stat-l">National Population (2022)</div>
-        <div class="stat-delta up"><i class="fas fa-arrow-up"></i>+3.1% growth rate</div>
+        <div class="stat-delta up"><i class="fas fa-arrow-up"></i> +3.1% growth rate</div>
       </div>
     </div>
   </div>
 
-  <!-- Charts row 1: Forest + Rainfall -->
-  <div class="charts2">
+  <!-- Charts row 1: Forest cover trend + Monthly rainfall -->
+  <div class="charts2" style="margin-bottom:18px;">
     <div class="chart-card">
       <div class="chart-hd">
         <div><h3>Forest Cover Trend 2018–2024</h3><p>Annual estimates — Zambia Forestry Dept / FAO</p></div>
@@ -237,8 +263,8 @@
     </div>
   </div>
 
-  <!-- Charts row 2: Land cover + Population -->
-  <div class="charts2">
+  <!-- Charts row 2: Land cover + Population by province -->
+  <div class="charts2" style="margin-bottom:18px;">
     <div class="chart-card">
       <div class="chart-hd">
         <div><h3>National Land Cover 2024</h3><p>LCCS Classification — 752,612 km² total</p></div>
@@ -255,8 +281,8 @@
     </div>
   </div>
 
-  <!-- NEW Charts row 3: Stacked bar (rainfall all stations) + Scatter (pop density vs forest) -->
-  <div class="charts2">
+  <!-- Charts row 3: Rainfall stacked + Pop density vs forest -->
+  <div class="charts2" style="margin-bottom:18px;">
     <div class="chart-card">
       <div class="chart-hd">
         <div><h3>Rainfall Comparison — All Stations 2023</h3><p>Monthly mm — Lusaka, Ndola, Livingstone, Chipata</p></div>
@@ -273,9 +299,8 @@
     </div>
   </div>
 
-  <!-- NEW Charts row 4: Deforestation gauge + Forest gain/loss bar -->
+  <!-- Charts row 4: Deforestation gauge + Forest gain/loss bar -->
   <div class="charts3" style="align-items:stretch;">
-    <!-- Deforestation gauge -->
     <div class="chart-card">
       <div class="chart-hd">
         <div><h3>Deforestation Rate</h3><p>Annual avg vs national target (2024)</p></div>
@@ -302,8 +327,6 @@
         </div>
       </div>
     </div>
-
-    <!-- Forest change bar -->
     <div class="chart-card" style="grid-column:span 2;">
       <div class="chart-hd">
         <div><h3>Annual Forest Loss &amp; Gain 2018–2024</h3><p>Net change trajectory — FAO / Zambia Forestry Dept</p></div>
@@ -311,41 +334,234 @@
       </div>
       <div class="chart-wrap"><canvas id="forestBarChart"></canvas></div>
     </div>
+</div>
+
+<!-- Province Overview Table -->
+<div class="chart-card" style="margin-bottom:18px;">
+  <div class="chart-hd">
+    <div><h3>Province Overview</h3><p>NSDI 2022 — Population, area and land cover by province</p></div>
+    <span class="chart-tag tag-g">NSDI 2022</span>
+  </div>
+  <div style="overflow-x:auto;">
+    <table class="prov-table" id="provTable">
+      <thead>
+        <tr>
+          <th onclick="sortTable('name')">#</th>
+          <th onclick="sortTable('name')">Province</th>
+          <th onclick="sortTable('capital')">Capital</th>
+          <th onclick="sortTable('districts')">Districts</th>
+          <th onclick="sortTable('area_km2')">Area km²</th>
+          <th onclick="sortTable('pop')">Population</th>
+          <th onclick="sortTable('forest_pct')">Forest %</th>
+          <th onclick="sortTable('urban_pct')">Urban %</th>
+          <th onclick="sortTable('pop')">Density /km²</th>
+        </tr>
+      </thead>
+      <tbody id="provTableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Mining Operations -->
+<div class="chart-card" style="margin-bottom:18px;">
+  <div class="chart-hd">
+    <div><h3>Major Mining Operations</h3><p>Zambia Development Agency 2023 — Copper/gold production</p></div>
+    <span class="chart-tag tag-p">ZDA 2023</span>
+  </div>
+  <div class="mine-grid" id="mineGrid"></div>
+</div>
+
+<!-- ══ DISTRICT ANALYTICS ═══════════════════════════════════════════════ -->
+<div class="dist-sec-hd" style="margin-bottom:4px;margin-top:14px;">
+    <div>
+      <h2><i class="fas fa-map-marker-alt" style="color:var(--g3);margin-right:6px;"></i>District Data</h2>
+      <p>NSDI GRID3 2022 — All 116 districts, Census 2022</p>
+    </div>
+    <div class="dist-search-wrap">
+      <i class="fas fa-search dist-search-ico"></i>
+      <input class="dist-search-inp" type="text" id="distSearch" placeholder="Search districts, provinces…" oninput="filterDistTable(this.value)"/>
+    </div>
   </div>
 
-  <!-- Province comparison table -->
+  <!-- District stats row -->
+  <div class="stats4" style="margin-bottom:22px;">
+    <div class="stat-c">
+      <div class="stat-ico" style="background:#f0fdf4;"><i class="fas fa-map" style="color:var(--g3);"></i></div>
+      <div><div class="stat-v" id="distTotalDist">116</div><div class="stat-l">Total Districts</div></div>
+    </div>
+    <div class="stat-c">
+      <div class="stat-ico" style="background:#eff6ff;"><i class="fas fa-users" style="color:#2563eb;"></i></div>
+      <div><div class="stat-v" id="distTotalPop">20.0M</div><div class="stat-l">National Population (2022)</div><div class="stat-delta up"><i class="fas fa-arrow-up"></i>+3.1% growth</div></div>
+    </div>
+    <div class="stat-c">
+      <div class="stat-ico" style="background:#fff7ed;"><i class="fas fa-border-all" style="color:#ea580c;"></i></div>
+      <div><div class="stat-v" id="distTotalArea">752K</div><div class="stat-l">Total Area km²</div></div>
+    </div>
+    <div class="stat-c">
+      <div class="stat-ico" style="background:#faf5ff;"><i class="fas fa-flag" style="color:#7c3aed;"></i></div>
+      <div><div class="stat-v" id="distProvCount">10</div><div class="stat-l">Provinces</div></div>
+    </div>
+  </div>
+
+  <!-- District Charts row 1: Top 10 by population + Top 10 by area -->
+  <div class="charts2" style="margin-bottom:18px;">
+    <div class="chart-card">
+      <div class="chart-hd">
+        <div><h3>Top 10 Districts by Population</h3><p>Census 2022 — Highest population districts</p></div>
+        <span class="chart-tag tag-p">Census 2022</span>
+      </div>
+      <div class="chart-wrap"><canvas id="distPopChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-hd">
+        <div><h3>Top 10 Districts by Area</h3><p>NSDI GRID3 2022 — Largest districts km²</p></div>
+        <span class="chart-tag tag-a">NSDI GRID3 2022</span>
+      </div>
+      <div class="chart-wrap"><canvas id="distAreaChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- District Charts row 2: Population density scatter + Pop/area scatter by province -->
+  <div class="charts2" style="margin-bottom:18px;">
+    <div class="chart-card">
+      <div class="chart-hd">
+        <div><h3>District Population Density</h3><p>People per km² — all 116 districts</p></div>
+        <span class="chart-tag tag-p">Census 2022</span>
+      </div>
+      <div class="chart-wrap-sm"><canvas id="distDensChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-hd">
+        <div><h3>District Population vs Area</h3><p>Each dot = one district — sized by population</p></div>
+        <span class="chart-tag tag-p">NSDI 2022</span>
+      </div>
+      <div class="chart-wrap-sm"><canvas id="distPopAreaChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Full District Table -->
   <div class="chart-card" style="margin-bottom:18px;">
     <div class="chart-hd">
-      <div><h3>Province Comparison Table</h3><p>NSDI 2022 — Click column headers to sort</p></div>
-      <button class="btn-sm btn-outline" onclick="exportProvCSV()" style="font-size:.72rem;padding:5px 10px;"><i class="fas fa-download"></i>CSV</button>
+      <div><h3>All Districts — Full List</h3><p>116 districts · NSDI GRID3 2022 · Click column headers to sort · Filter by province</p></div>
+      <div class="dist-filter-pills" id="distFilterPills">
+        <button class="dist-pill active" onclick="filterDistProvince('',this)">All</button>
+      </div>
+    </div>
+    <div class="dist-tbl-hdr">
+      <span id="distTableCount">Showing 116 districts</span>
     </div>
     <div style="overflow-x:auto;">
-      <table class="prov-table" id="provTable">
+      <table class="dist-table" id="distTable">
         <thead>
           <tr>
-            <th onclick="sortTable('name')">#</th>
-            <th onclick="sortTable('name')">Province</th>
-            <th onclick="sortTable('capital')">Capital</th>
-            <th onclick="sortTable('districts')">Districts</th>
-            <th onclick="sortTable('area_km2')">Area km²</th>
-            <th onclick="sortTable('pop')">Population</th>
-            <th onclick="sortTable('forest_pct')">Forest %</th>
-            <th onclick="sortTable('urban_pct')">Urban %</th>
-            <th>Pop Density</th>
+            <th class="dist-sort" data-col="id" onclick="sortDistTable('id')">ID</th>
+            <th class="dist-sort" data-col="district" onclick="sortDistTable('district')">District</th>
+            <th class="dist-sort" data-col="province" onclick="sortDistTable('province')">Province</th>
+            <th class="dist-sort sorted-desc" data-col="pop" onclick="sortDistTable('pop')">Population</th>
+            <th class="dist-sort" data-col="area_km2" onclick="sortDistTable('area_km2')">Area km²</th>
+            <th class="dist-sort" data-col="density" onclick="sortDistTable('density')">Density /km²</th>
+            <th>Pop Share</th>
           </tr>
         </thead>
-        <tbody id="provTableBody"></tbody>
+        <tbody id="distTableBody"></tbody>
       </table>
     </div>
   </div>
 
-  <!-- Mining section -->
+  <!-- ══ GEE LAYER DATA ════════════════════════════════════════════════════ -->
+  <div class="dist-sec-hd" style="margin-bottom:14px;margin-top:14px;">
+    <div>
+      <h2><i class="fas fa-satellite" style="color:#7c3aed;margin-right:6px;"></i>GEE Layer Data</h2>
+      <p>Google Earth Engine — CHIRPS rainfall · MODIS LST · VCI drought · LULC · NDVI · WorldCover</p>
+    </div>
+  </div>
+
+  <div class="stats4" style="margin-bottom:18px;">
+    <div class="stat-c">
+      <div class="stat-ico" style="background:#eff6ff;"><i class="fas fa-cloud-rain" style="color:#2563eb;"></i></div>
+      <div>
+        <div class="stat-v">1,064 mm</div>
+        <div class="stat-l">Avg Annual Rainfall (2020–2024)</div>
+        <div class="stat-delta dn"><i class="fas fa-arrow-down"></i>2024 was driest yr</div>
+      </div>
+    </div>
+    <div class="stat-c">
+      <div class="stat-ico" style="background:#fff7ed;"><i class="fas fa-thermometer-half" style="color:#ea580c;"></i></div>
+      <div>
+        <div class="stat-v">30.4°C</div>
+        <div class="stat-l">National Avg LST (2024)</div>
+        <div class="stat-delta up"><i class="fas fa-arrow-up"></i>+1.1°C vs 2022</div>
+      </div>
+    </div>
+    <div class="stat-c">
+      <div class="stat-ico" style="background:#fef2f2;"><i class="fas fa-exclamation-triangle" style="color:#dc2626;"></i></div>
+      <div>
+        <div class="stat-v">0.72</div>
+        <div class="stat-l">National Mean Drought Risk (VCI)</div>
+        <div class="stat-delta dn"><i class="fas fa-arrow-up"></i>High risk zone</div>
+      </div>
+    </div>
+    <div class="stat-c">
+      <div class="stat-ico" style="background:#f0fdf4;"><i class="fas fa-layer-group" style="color:var(--g3);"></i></div>
+      <div>
+        <div class="stat-v">752,612 km²</div>
+        <div class="stat-l">Total Land Area</div>
+        <div class="stat-delta up"><i class="fas fa-check"></i>116 districts covered</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GEE Charts row 1: Annual Rainfall + LST annual trend -->
+  <div class="charts2" style="margin-bottom:18px;">
+    <div class="chart-card">
+      <div class="chart-hd">
+        <div><h3>National Annual Rainfall 2020–2025</h3><p>CHIRPS national aggregate — total mm per year</p></div>
+        <span class="chart-tag tag-b">CHIRPS/GEE</span>
+      </div>
+      <div class="chart-wrap"><canvas id="geeRainChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-hd">
+        <div><h3>Annual Mean LST by Province (2022–2025)</h3><p>MODIS MOD11A2 land surface temp °C — peak dry season values</p></div>
+        <span class="chart-tag tag-a">MODIS LST/GEE</span>
+      </div>
+      <div class="chart-wrap-sm"><canvas id="geeLstChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- GEE Charts row 2: Drought risk by province + Monthly rainfall 2024 -->
+  <div class="charts2" style="margin-bottom:18px;">
+    <div class="chart-card">
+      <div class="chart-hd">
+        <div><h3>Drought Risk (VCI) by Province</h3><p>Vegetation Condition Index — 0 low / 100 high (2020–2025 mean)</p></div>
+        <span class="chart-tag tag-r">Drought/GEE</span>
+      </div>
+      <div class="chart-wrap-sm"><canvas id="geeDroughtChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-hd">
+        <div><h3>Monthly Rainfall 2024 (CHIRPS)</h3><p>National aggregate — seasonal distribution</p></div>
+        <span class="chart-tag tag-b">CHIRPS/GEE</span>
+      </div>
+      <div class="chart-wrap-sm"><canvas id="geeRainMonthlyChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- GEE data info table -->
   <div class="chart-card" style="margin-bottom:18px;">
     <div class="chart-hd">
-      <div><h3>Mining Operations — Copperbelt</h3><p>Zambia Development Agency 2023 Survey</p></div>
-      <span class="chart-tag tag-a">ZDA 2023</span>
+      <div><h3>GEE Layer Scale &amp; Metadata</h3><p>Colour palettes, unit ranges, and data sources for each Earth Engine layer displayed on the map</p></div>
     </div>
-    <div class="mine-grid" id="mineGrid"></div>
+    <div style="overflow-x:auto;">
+      <table class="prov-table" id="geeMetaTable">
+        <thead>
+          <tr>
+            <th>Dataset</th><th>Units</th><th>Min</th><th>Max</th><th>Colour Palette (sample)</th><th>Source</th>
+          </tr>
+        </thead>
+        <tbody id="geeMetaBody"></tbody>
+      </table>
+    </div>
   </div>
 
   <!-- Forest loss table -->
@@ -579,6 +795,311 @@ function buildMineCards() {
       <p style="font-size:.7rem;">${m.type}</p>
       <div class="mine-bar"><div class="mine-bar-fill" style="width:${Math.round(m.production_t/maxP*100)}%;"></div></div>
     </div>`).join('');
+  }
+}
+
+// ── District charts ───────────────────────────────────────────────────────────
+let distPopChart, distAreaChart, distDensChart, distPopAreaChart;
+let distSortCol = 'pop', distSortDir = -1;
+let distFilterProv = '';
+
+function buildDistPopChart() {
+  if (distPopChart) distPopChart.destroy();
+  const data = [...ZAMBIA_DISTRICTS]
+    .sort((a,b)=>b.pop-a.pop).slice(0,10);
+  distPopChart = new Chart(document.getElementById('distPopChart'), {
+    type:'bar',
+    data:{ labels:data.map(d=>d.district), datasets:[{
+      label:'Population (2022)', data:data.map(d=>d.pop),
+      backgroundColor:data.map(d=>{
+        const hue = ZAMBIA_PROVINCES.find(p=>p.name===d.province)?.color || '#1a6b35';
+        return hue+'bb';
+      }),
+      borderColor:data.map(d=>ZAMBIA_PROVINCES.find(p=>p.name===d.province)?.color||'#1a6b35'),
+      borderWidth:1.5, borderRadius:5
+    }]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>` ${ctx.parsed.y.toLocaleString()} people`}}},
+      scales:{ y:{grid:{color:GRID_COLOR},ticks:{font:FONT,callback:v=>(v/1000).toFixed(0)+'K'},title:{display:true,text:'Population',font:FONT}},
+        x:{grid:{display:false},ticks:{font:FONT,maxRotation:40}}}}
+  });
+}
+
+function buildDistAreaChart() {
+  if (distAreaChart) distAreaChart.destroy();
+  const data = [...ZAMBIA_DISTRICTS]
+    .sort((a,b)=>b.area_km2-a.area_km2).slice(0,10);
+  distAreaChart = new Chart(document.getElementById('distAreaChart'), {
+    type:'bar',
+    data:{ labels:data.map(d=>d.district), datasets:[{
+      label:'Area km²', data:data.map(d=>d.area_km2),
+      backgroundColor:data.map(d=>{
+        const hue = ZAMBIA_PROVINCES.find(p=>p.name===d.province)?.color || '#1a6b35';
+        return hue+'bb';
+      }),
+      borderColor:data.map(d=>ZAMBIA_PROVINCES.find(p=>p.name===d.province)?.color||'#1a6b35'),
+      borderWidth:1.5, borderRadius:5
+    }]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>` ${ctx.parsed.y.toLocaleString()} km²`}}},
+      scales:{ y:{grid:{color:GRID_COLOR},ticks:{font:FONT,callback:v=>(v/1000).toFixed(0)+'K'},title:{display:true,text:'Area km²',font:FONT}},
+        x:{grid:{display:false},ticks:{font:FONT,maxRotation:40}}}}
+  });
+}
+
+function buildDistDensChart() {
+  if (distDensChart) distDensChart.destroy();
+  const sorted = [...ZAMBIA_DISTRICTS]
+    .sort((a,b)=>(b.pop/b.area_km2) - (a.pop/a.area_km2));
+  distDensChart = new Chart(document.getElementById('distDensChart'), {
+    type:'bar',
+    data:{ labels:sorted.map(d=>d.district), datasets:[{
+      label:'Density (pop/km²)', data:sorted.map(d=>+((d.pop/d.area_km2).toFixed(1))),
+      backgroundColor: sorted.map(d=>{
+        const dens = d.pop/d.area_km2;
+        const h = Math.min(210, Math.max(140, 210 - dens/100));
+        return `hsla(${h},70%,55%,0.8)`;
+      }),
+      borderWidth:0, borderRadius:4
+    }]},
+    options:{ indexAxis:'y',
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>` ${ctx.parsed.x} people/km²`}}},
+      scales:{ x:{grid:{color:GRID_COLOR},ticks:{font:FONT},title:{display:true,text:'People per km²',font:FONT}},
+        y:{grid:{display:false},ticks:{font:FONT,font:{size:9}},maxTicksLimit:20}}}
+  });
+}
+
+function buildDistPopAreaChart() {
+  if (distPopAreaChart) distPopAreaChart.destroy();
+  const data = ZAMBIA_DISTRICTS.map(d=>({
+    x: d.area_km2,
+    y: d.pop,
+    r: Math.max(3, Math.min(14, Math.sqrt(d.pop/80000))),
+    label: d.district,
+    name: d.province,
+    color: ZAMBIA_PROVINCES.find(p=>p.name===d.province)?.color || '#1a6b35'
+  }));
+  distPopAreaChart = new Chart(document.getElementById('distPopAreaChart'), {
+    type:'bubble',
+    data:{ datasets: data.map(d=>({
+      label: `${d.label} (${d.name})`,
+      data:[{x:d.x, y:d.y, r:d.r}],
+      backgroundColor: d.color+'99',
+      borderColor: d.color,
+      borderWidth:1,
+      hoverBorderWidth:2
+    }))},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false},
+        tooltip:{callbacks:{
+          label:ctx=>{
+            const fd = data.find(d2=>d2.x===ctx.raw.x&&d2.y===ctx.raw.y);
+            return fd ? [`${fd.label}, ${fd.name}`, `${fd.y.toLocaleString()} people`, `${fd.x.toLocaleString()} km²`] : [ctx.dataset.label];
+          }
+        }}},
+      scales:{ x:{grid:{color:GRID_COLOR},ticks:{font:FONT},title:{display:true,text:'Area km²',font:FONT},type:'linear'},
+        y:{grid:{color:GRID_COLOR},ticks:{font:FONT,callback:v=>(v/1000).toFixed(0)+'K'},title:{display:true,text:'Population',font:FONT}}}}
+  });
+}
+
+// ── District table ────────────────────────────────────────────────────────────
+function buildDistFilterPills() {
+  const provs = [...ZAMBIA_PROVINCES].sort((a,b)=>a.name.localeCompare(b.name));
+  document.getElementById('distFilterPills').innerHTML =
+    '<button class="dist-pill active" onclick="filterDistProvince(\'\',this)">All</button>' +
+    provs.map(p=>`<button class="dist-pill" onclick="filterDistProvince('${p.name}',this)">${p.name}</button>`).join('');
+}
+
+function filterDistProvince(prov, btn) {
+  distFilterProv = prov.trim();
+  document.querySelectorAll('.dist-pill').forEach(p=>p.classList.remove('active'));
+  btn?.classList.add('active');
+  renderDistTable();
+}
+
+function filterDistTable(query) {
+  renderDistTable(query.toLowerCase().trim());
+}
+
+function sortDistTable(col) {
+  if(distSortCol===col) distSortDir*=-1; else{distSortCol=col;distSortDir=-1;}
+  document.querySelectorAll('.dist-sort').forEach(th=>{
+    th.classList.remove('sorted-asc','sorted-desc');
+    th.classList.add(distSortCol===th.dataset.col ? (distSortDir===-1?'sorted-desc':'sorted-asc') : '');
+  });
+  renderDistTable();
+}
+
+function renderDistTable(search) {
+  const maxPop = Math.max(...ZAMBIA_DISTRICTS.map(d=>d.pop));
+  let rows = [...ZAMBIA_DISTRICTS];
+  if(search) rows=rows.filter(d=>d.district.toLowerCase().includes(search)||d.province.toLowerCase().includes(search)||d.id.toLowerCase().includes(search));
+  if(distFilterProv) rows=rows.filter(d=>d.province===distFilterProv);
+  rows.sort((a,b)=>{
+    let va=a[distSortCol], vb=b[distSortCol];
+    if(typeof va==='string') return va.localeCompare(vb)*distSortDir;
+    return (va-vb)*distSortDir;
+  });
+  document.getElementById('distTableCount').textContent=`Showing ${rows.length} district${rows.length!==1?'s':''}`;
+  document.getElementById('distTableBody').innerHTML=rows.map(d=>{
+    const pColor=ZAMBIA_PROVINCES.find(p=>p.name===d.province)?.color||'#1a6b35';
+    const dens=(d.pop/d.area_km2).toFixed(1);
+    const pct=d.pop/maxPop*100;
+    const pctBar=`<div style="width:${pct.toFixed(1)}%;height:5px;background:${pColor};border-radius:3px;flex-shrink:0;"></div>`;
+    return`<tr>
+      <td style="font-weight:700;font-family:'Courier New',monospace;color:var(--muted);font-size:.7rem;">${escHtml(d.id)}</td>
+      <td style="font-weight:700;">${escHtml(d.district)}</td>
+      <td><span class="dist-badge"><span class="dist-dot-sm" style="background:${pColor};"></span>${escHtml(d.province)}</span></td>
+      <td style="font-weight:700;">${d.pop.toLocaleString()}</td>
+      <td>${d.area_km2.toLocaleString()}</td>
+      <td>${dens}</td>
+      <td><div class="bar-cell" style="gap:5px;"><div class="bar-bg" style="height:5px;">${pctBar}</div><span style="font-size:.7rem;color:var(--muted);font-weight:600;">${pct.toFixed(1)}%</span></div></td>
+    </tr>`;
+  }).join('');
+}
+function escHtml(s){var d=document.createElement('div');d.appendChild(document.createTextNode(String(s??'')));return d.innerHTML;}
+
+// ── GEE Charts ──────────────────────────────────────────────────────────────
+let geeRainChart, geeLstChart, geeDroughtChart, geeRainMonthlyChart;
+
+function buildGeeRainChart() {
+  if (geeRainChart) geeRainChart.destroy();
+  const ann = ZAMBIA_RAINFALL_2020_2025.annual_totals;
+  const years = ZAMBIA_RAINFALL_2020_2025.years;
+  const vals  = years.map(y=>ann[y]);
+  const avg   = vals.reduce((a,b)=>a+b,0)/vals.length;
+  const colors = years.map(y=>ann[y] < avg ? '#2563ebcc':'#1a6b35cc');
+  geeRainChart = new Chart(document.getElementById('geeRainChart'), {
+    type:'bar',
+    data:{ labels:years.map(String), datasets:[
+      { label:'Annual Rainfall mm', data:vals, backgroundColor:colors, borderRadius:5, borderWidth:0 }
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>` ${ctx.parsed.y.toLocaleString()} mm`}}},
+      scales:{ y:{grid:{color:GRID_COLOR},ticks:{font:FONT,callback:v=>v+'mm'},title:{display:true,text:'Rainfall (mm)',font:FONT}},
+        x:{grid:{display:false},ticks:{font:FONT}}}}
+  });
+}
+
+function buildGeeLstChart() {
+  if (geeLstChart) geeLstChart.destroy();
+  const mean = ZAMBIA_TEMPERATURE.annual_means;
+  const years = ZAMBIA_TEMPERATURE.years;
+  const months= ZAMBIA_TEMPERATURE.months;
+  const provs = ZAMBIA_PROVINCES;
+  const palettes = {
+    2022: provs.slice(0,5).map(p=>p.color+'55'),
+    2023: provs.slice(5,10).map(p=>p.color+'55'),
+    2024: provs.slice(0,5).map(p=>p.color+'aa'),
+    2025: provs.slice(5,10).map(p=>p.color+'aa'),
+  };
+  const datasets = provs.map(p=>({
+    label: p.name,
+    data: years.map(y=>mean[y][p.name]),
+    borderColor: p.color,
+    backgroundColor: p.color+'22',
+    fill:false, tension:0.3, pointRadius:4, borderWidth:2
+  }));
+  const pGroups = provs.reduce((acc,p,i)=>{const g=Math.floor(i/5);if(!acc[g])acc[g]=[];acc[g].push(p);return acc;},{});
+  const datasets2024 = ZAMBIA_PROVINCES.map(p=>({
+    label: p.name+' 2024',
+    data: [ZAMBIA_TEMPERATURE.annual_means[2024][p.name]],
+    borderColor: p.color,
+    backgroundColor: p.color+'aa',
+    borderWidth:2, radius:5, pointHoverRadius:7
+  }));
+  // Show only 2024 as bold bars
+  const barData = ZAMBIA_PROVINCES.map(p=>ZAMBIA_TEMPERATURE.annual_means[2024][p.name]);
+  const barColors = ZAMBIA_PROVINCES.map(p=>p.color+'cc');
+  geeLstChart = new Chart(document.getElementById('geeLstChart'), {
+    type:'bar',
+    data:{ labels:ZAMBIA_PROVINCES.map(p=>p.name), datasets:[
+      { label:'Mean LST 2024 (°C)', data:barData, backgroundColor:barColors, borderRadius:5, borderWidth:0 }
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>` ${ctx.parsed.y.toFixed(1)} °C`}}},
+      scales:{ y:{grid:{color:GRID_COLOR},ticks:{font:FONT,callback:v=>v+'°C'},title:{display:true,text:'LST °C',font:FONT},min:24,max:36},
+        x:{grid:{display:false},ticks:{font:FONT,maxRotation:40}}}}
+  });
+}
+
+function buildGeeDroughtChart() {
+  if (geeDroughtChart) geeDroughtChart.destroy();
+  const dr = DROUGHT_RISK_STATS.by_province;
+  const provs = Object.entries(dr).sort((a,b)=>b[1]-a[1]);
+  const pColor = provs.map(([name])=>ZAMBIA_PROVINCES.find(p=>p.name===name)?.color||'#dc2626');
+  const vColor = provs.map(([,v])=>v>=0.72?'#dc2626aa':v>=0.55?'#f9731688':'#1a6b3566');
+  geeDroughtChart = new Chart(document.getElementById('geeDroughtChart'), {
+    type:'bar',
+    data:{ labels:provs.map(([n])=>n), datasets:[{
+      label:'Drought Risk (VCI 0-100)', data:provs.map(([,v])=>+v.toFixed(2)),
+      backgroundColor:vColor, borderRadius:5, borderWidth:1.5, borderColor:pColor
+    }]},
+    options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>` Drought risk: ${(ctx.parsed.x*100).toFixed(0)}% exposure`}}},
+      scales:{ x:{grid:{color:GRID_COLOR},ticks:{font:FONT,callback:v=>(v*100).toFixed(0)+'%'},title:{display:true,text:'VCI (0=Low 100=Extreme)',font:FONT},min:0,max:1},
+        y:{grid:{display:false},ticks:{font:FONT}}}
+    }
+  });
+}
+
+function buildGeeRainMonthlyChart() {
+  if (geeRainMonthlyChart) geeRainMonthlyChart.destroy();
+  const r2024 = ZAMBIA_RAINFALL_2020_2025.data[2024];
+  const months = ZAMBIA_RAINFALL_2020_2025.months;
+  const r2023 = ZAMBIA_RAINFALL_2020_2025.data[2023];
+  const r2022 = ZAMBIA_RAINFALL_2020_2025.data[2022];
+  geeRainMonthlyChart = new Chart(document.getElementById('geeRainMonthlyChart'), {
+    type:'bar',
+    data:{ labels:months, datasets:[
+      { label:'2024', data:r2024, backgroundColor:'rgba(26,107,53,.8)',  borderRadius:4, stack:'1' },
+      { label:'2023', data:r2023, backgroundColor:'rgba(37,99,235,.7)',  borderRadius:4, stack:'',   hidden:true },
+      { label:'2022', data:r2022, backgroundColor:'rgba(217,119,6,.7)',  borderRadius:4, stack:'',   hidden:true },
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{position:'bottom',labels:{font:FONT,boxWidth:10}},
+        tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)} mm`}}},
+      scales:{ x:{grid:{display:false},ticks:{font:FONT}},
+        y:{grid:{color:GRID_COLOR},ticks:{font:FONT,callback:v=>v.toFixed(0)+'mm'},title:{display:true,text:'mm/month',font:FONT}}}}
+  });
+}
+
+// GEE metadata table ──────────────────────────────────────────────────────────
+function buildGeeMetaTable() {
+  const GEE_DATASETS = [
+    { dataset:'LULC (Land Use/Land Cover)', units:'class', min:'1', max:'17',
+      swatches:'#05450a #086a10 #54a708 #78d203 #009900 #c6b044 #dcd159 #dade48 #fbff13 #b6ff05', source:'MODIS MCD12Q1 / GEE' },
+    { dataset:'NDVI (Vegetation Index)',   units:'index', min:'0.1', max:'0.8',
+      swatches:'#ce7e45 #df923d #f1b555 #fcd163 #99b718 #74a901 #66a000 #529400 #3e8601 #207401', source:'MODIS MOD13A2 / GEE' },
+    { dataset:'Rainfall (CHIRPS)',         units:'mm/yr', min:'0', max:'2000',
+      swatches:'#fff7fb #d0d1e6 #a6bddb #74a9cf #3690c0 #0570b0 #034e7b',                            source:'UCSB-CHG CHIRPS Daily / GEE' },
+    { dataset:'Land Surface Temp (LST)',   units:'°C',    min:'15', max:'50',
+      swatches:'#040274 #0502ff #307ef3 #30c8e2 #3be285 #b5e22e #fff705 #ffd611 #ffb613 #ff0000',   source:'MODIS MOD11A2 / GEE' },
+    { dataset:'Drought Risk (VCI)',        units:'0–100', min:'0', max:'100',
+      swatches:'#a50026 #d73027 #f46d43 #fdae61 #fee08b #ffffbf #d9ef8b #a6d96a #1a9850 #006837', source:'MODIS NDVI VCI / GEE' },
+    { dataset:'Flood / Surface Water',    units:'binary', min:'1', max:'1',
+      swatches:'#1a75ff',                                                                          source:'JRC GSW Yearly History / GEE' },
+  ];
+  document.getElementById('geeMetaBody').innerHTML = GEE_DATASETS.map(d=>`
+    <tr>
+      <td style="font-weight:700;">${d.dataset}</td>
+      <td><span class="dist-badge"><span class="dist-dot-sm" style="background:#6b7280;"></span>${d.units}</span></td>
+      <td style="font-family:'Courier New',monospace;font-size:.72rem;">${d.min}</td>
+      <td style="font-family:'Courier New',monospace;font-size:.72rem;">${d.max}</td>
+      <td>
+        <div style="display:flex;gap:3px;align-items:center;">
+          ${d.swatches.split(' ').map(s=>`<div style="width:16px;height:10px;border-radius:2px;background:${s};flex-shrink:0;" title="${s}"></div>`).join('')}
+        </div>
+      </td>
+      <td style="font-size:.72rem;color:var(--muted);">${d.source}</td>
+    </tr>`).join('');
 }
 
 // ── Forest table ────────────────────────────────────────────────────────────
@@ -671,10 +1192,22 @@ updateCharts();
 buildRainStackedChart();
 buildScatterChart();
 buildForestBarChart();
-buildProvTable();
 renderProvTable();
 buildMineCards();
-buildForestTable();
+  // District charts + table
+  buildDistFilterPills();
+  buildDistPopChart();
+  buildDistAreaChart();
+  buildDistDensChart();
+  buildDistPopAreaChart();
+  renderDistTable();
+  // GEE layer charts
+  buildGeeRainChart();
+  buildGeeLstChart();
+  buildGeeDroughtChart();
+  buildGeeRainMonthlyChart();
+  buildGeeMetaTable();
+  buildForestTable();
 animateGauge();
 GeoHubAuth.addAuditLog('ANALYTICS_VIEW','Viewed Analytics page v3.0',session.id);
 </script>

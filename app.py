@@ -263,6 +263,55 @@ def get_flood_tile_url(year):
     return map_id['tile_fetcher'].url_format
 
 
+DATASET_INFO = {
+    'lulc':    {'units': '',  'palette': ['05450a','086a10','54a708','78d203','009900','c6b044','dcd159','dade48','fbff13','b6ff05','27ff87','c24f44','a5a5a5','ff6d4c','69fff8','f9ffa4','1c0dff'], 'min': 1,  'max': 17},
+    'ndvi':    {'units': '',  'palette': ['ce7e45','df923d','f1b555','fcd163','99b718','74a901','66a000','529400','3e8601','207401','056201','004c00'],                              'min': 0.1,'max': 0.8},
+    'chirps':  {'units': 'mm', 'palette': ['fff7fb','d0d1e6','a6bddb','74a9cf','3690c0','0570b0','034e7b'],                                                 'min': 0,  'max': 2000},
+    'lst':     {'units': '°C', 'palette': ['040274','040281','0502a3','0502b8','0602ff','235cb1','307ef3','269db1','30c8e2','32d3ef','3be285','3ff38f','86e26f','3ae237','b5e22e','d6e21f','fff705','ffd611','ffb613','ff8b13','ff6e08','ff500d','ff000d','de0101','c21301','a71001','911003'], 'min': 15, 'max': 50},
+    'drought': {'units': 'VCI', 'palette': ['a50026','d73027','f46d43','fdae61','fee08b','ffffbf','d9ef8b','a6d96a','66bd63','1a9850','006837'],                    'min': 0,  'max': 100},
+    'flood':   {'units': 'water', 'palette': ['1a75ff'],                                                                                                         'min': 1,  'max': 1},
+}
+GEE_LABELS = {
+    'lulc':    'Land Use / Land Cover',
+    'ndvi':    'NDVI (Vegetation)',
+    'chirps':  'Rainfall (CHIRPS)',
+    'lst':     'Land Surface Temp',
+    'drought': 'Drought Risk (VCI)',
+    'flood':   'Flood / Surface Water',
+}
+GEE_UNITS = {
+    'lulc':    '',
+    'ndvi':    '',
+    'chirps':  'mm',
+    'lst':     '°C',
+    'drought': 'VCI',
+    'flood':   'Water',
+}
+GEE_PALETTES = {
+    'lulc':    ['05450a','086a10','54a708','78d203','009900','c6b044','dcd159','dade48','fbff13','b6ff05','27ff87','c24f44','a5a5a5','ff6d4c','69fff8','f9ffa4','1c0dff'],
+    'ndvi':    ['ce7e45','df923d','f1b555','fcd163','99b718','74a901','66a000','529400','3e8601','207401','056201','004c00'],
+    'chirps':  ['fff7fb','d0d1e6','a6bddb','74a9cf','3690c0','0570b0','034e7b'],
+    'lst':     ['040274','040281','0502a3','0502b8','0602ff','235cb1','307ef3','269db1','30c8e2','32d3ef','3be285','3ff38f','86e26f','3ae237','b5e22e','d6e21f','fff705','ffd611','ffb613','ff8b13','ff6e08','ff500d','ff000d','de0101','c21301','a71001','911003'],
+    'drought': ['a50026','d73027','f46d43','fdae61','fee08b','ffffbf','d9ef8b','a6d96a','66bd63','1a9850','006837'],
+    'flood':   ['1a75ff'],
+}
+GEE_MIN = {
+    'lulc':    1,
+    'ndvi':    0.1,
+    'chirps':  0,
+    'lst':     15,
+    'drought': 0,
+    'flood':   1,
+}
+GEE_MAX = {
+    'lulc':    17,
+    'ndvi':    0.8,
+    'chirps':  2000,
+    'lst':     50,
+    'drought': 100,
+    'flood':   1,
+}
+
 @app.route('/api/map')
 def get_map():
     dataset = request.args.get('dataset')
@@ -273,42 +322,66 @@ def get_map():
             tile_url_template = get_lulc_tile_url(year)
             # Return our proxy URL with placeholders
             proxy_url = f"/api/tile?dataset=lulc&year={year}&z={{z}}&x={{x}}&y={{y}}"
-            return jsonify({'tile_url': proxy_url, 'dataset': 'lulc', 'year': year})
+            return jsonify({
+                'tile_url': proxy_url, 'dataset': 'lulc', 'year': year,
+                'label': 'Land Use / Land Cover', 'units': '',
+                'palette': GEE_PALETTES['lulc'], 'min': GEE_MIN['lulc'], 'max': GEE_MAX['lulc'],
+            })
         except Exception as e:
             return jsonify({'error': str(e)}), 500
 
     elif dataset == 'ndvi':
         try:
             proxy_url = f"/api/tile?dataset=ndvi&year={year}&z={{z}}&x={{x}}&y={{y}}"
-            return jsonify({'tile_url': proxy_url, 'dataset': 'ndvi', 'year': year})
+            return jsonify({
+                'tile_url': proxy_url, 'dataset': 'ndvi', 'year': year,
+                'label': 'NDVI (Vegetation)', 'units': '',
+                'palette': GEE_PALETTES['ndvi'], 'min': GEE_MIN['ndvi'], 'max': GEE_MAX['ndvi'],
+            })
         except Exception as e:
             return jsonify({'error': str(e)}), 500
 
     elif dataset == 'chirps':
         try:
             proxy_url = f"/api/tile?dataset=chirps&year={year}&z={{z}}&x={{x}}&y={{y}}"
-            return jsonify({'tile_url': proxy_url, 'dataset': 'chirps', 'year': year})
+            return jsonify({
+                'tile_url': proxy_url, 'dataset': 'chirps', 'year': year,
+                'label': 'Rainfall (CHIRPS)', 'units': 'mm',
+                'palette': GEE_PALETTES['chirps'], 'min': GEE_MIN['chirps'], 'max': GEE_MAX['chirps'],
+            })
         except Exception as e:
             return jsonify({'error': str(e)}), 500
 
     elif dataset == 'lst':
         try:
             proxy_url = f"/api/tile?dataset=lst&year={year}&z={{z}}&x={{x}}&y={{y}}"
-            return jsonify({'tile_url': proxy_url, 'dataset': 'lst', 'year': year})
+            return jsonify({
+                'tile_url': proxy_url, 'dataset': 'lst', 'year': year,
+                'label': 'Land Surface Temp', 'units': '°C',
+                'palette': GEE_PALETTES['lst'], 'min': GEE_MIN['lst'], 'max': GEE_MAX['lst'],
+            })
         except Exception as e:
             return jsonify({'error': str(e)}), 500
 
     elif dataset == 'drought':
         try:
             proxy_url = f"/api/tile?dataset=drought&year={year}&z={{z}}&x={{x}}&y={{y}}"
-            return jsonify({'tile_url': proxy_url, 'dataset': 'drought', 'year': year})
+            return jsonify({
+                'tile_url': proxy_url, 'dataset': 'drought', 'year': year,
+                'label': 'Drought Risk (VCI)', 'units': 'VCI',
+                'palette': GEE_PALETTES['drought'], 'min': GEE_MIN['drought'], 'max': GEE_MAX['drought'],
+            })
         except Exception as e:
             return jsonify({'error': str(e)}), 500
 
     elif dataset == 'flood':
         try:
             proxy_url = f"/api/tile?dataset=flood&year={year}&z={{z}}&x={{x}}&y={{y}}"
-            return jsonify({'tile_url': proxy_url, 'dataset': 'flood', 'year': year})
+            return jsonify({
+                'tile_url': proxy_url, 'dataset': 'flood', 'year': year,
+                'label': 'Flood / Surface Water', 'units': 'Water',
+                'palette': GEE_PALETTES['flood'], 'min': GEE_MIN['flood'], 'max': GEE_MAX['flood'],
+            })
         except Exception as e:
             return jsonify({'error': str(e)}), 500
 

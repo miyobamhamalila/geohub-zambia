@@ -47,6 +47,8 @@
     body.light-theme .bm-lbl{background:rgba(0,0,0,.04);border-color:#c5d9c7;}
     body.light-theme #mapLoader{background:#f0f4f1;}
     body.light-theme #dashOverlay{background:rgba(255,255,255,.97)!important;border-color:#c5d9c7!important;}
+    body.light-theme #geeScale{background:rgba(255,255,255,.95);border-color:#c5d9c7;}
+    body.light-theme #geeScale h4{color:#1a6b35;}
     html,body{height:100%;font-family:'Inter',sans-serif;overflow:hidden;}
 
     /* ── NAVBAR ── */
@@ -359,6 +361,22 @@
     .leg-row{display:flex;align-items:center;gap:6px;margin-bottom:4px;}
     .leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
     .leg-label{font-size:.68rem;color:rgba(255,255,255,.8);}
+
+    /* ── GEE DATA SCALE BAR (colour gradient + value labels) ── */
+    #geeScale{position:fixed;right:12px;bottom:84px;z-index:400;
+      background:rgba(9,28,13,.94);border:1px solid var(--border);border-radius:9px;
+      padding:9px 13px 9px;backdrop-filter:blur(8px);display:none;min-width:200px;
+      transition:right .25s ease;
+    }
+    body.sidebar-collapsed #geeScale{right:12px;}
+    #geeScale h4{font-size:.63rem;font-weight:800;color:var(--g5);text-transform:uppercase;
+      letter-spacing:.5px;margin-bottom:6px;display:flex;align-items:center;gap:5px;}
+    #geeScale h4 i{font-size:.6rem;}
+    .gee-scale-grad{height:12px;border-radius:4px;margin-bottom:3px;
+      background:linear-gradient(to right);}
+    .gee-scale-ticks{display:flex;justify-content:space-between;font-size:.59rem;font-weight:600;
+      color:rgba(0,0,0,.8);}
+    .gee-scale-axis{margin-bottom:9px;}
 
     /* ── SIDEBAR TOGGLE BUTTON (floating when collapsed) ── */
     #sidebarToggleBtn{
@@ -1863,6 +1881,13 @@
 
 <!-- MAP LEGEND -->
 <div id="mapLegend"></div>
+
+<!-- GEE DATA COLOUR SCALE BAR -->
+<div id="geeScale">
+  <h4><i class="fas fa-ruler-combined"></i>Rainfall (CHIRPS)</h4>
+  <div class="gee-scale-grad"></div>
+  <div class="gee-scale-ticks"><span>0 mm</span><span>2000 mm</span></div>
+</div>
 
 <!-- ── COORDINATE HUB (all-formats floating panel) ── -->
 <div id="coordHub">
@@ -7583,6 +7608,9 @@ try {
       geeLayer.addTo(map);
       activeDataset = dataset;
 
+      // ── Show GEE colour/value scale bar ──
+      showGEEScale(data);
+
       // Update button label
       const info = DATASET_LABELS[dataset];
       btn.innerHTML = `<i class="${info.icon}"></i><span>${info.label.split(' ')[0]}</span>`;
@@ -7601,6 +7629,7 @@ try {
     if (geeLayer) { map.removeLayer(geeLayer); geeLayer = null; }
     activeDataset = null;
     document.querySelectorAll('[id^="gee-"]').forEach(b => b.classList.remove('active'));
+    document.getElementById('geeScale').style.display = 'none';
     // Restore original button labels
     const icons = { lulc:'fas fa-layer-group', ndvi:'fas fa-leaf', chirps:'fas fa-cloud-rain',
                     lst:'fas fa-thermometer-half', drought:'fas fa-exclamation-triangle', flood:'fas fa-water' };
@@ -7612,6 +7641,41 @@ try {
     showToast('GEE layer removed', 'info');
   };
 })();
+
+// ── GEE Colour Scale helper ────────────────────────────────────────────────
+function showGEEScale(data) {
+  var palette   = data.palette || [];
+  var valMin    = typeof data.min  === 'number' ? data.min  : null;
+  var valMax    = typeof data.max  === 'number' ? data.max  : null;
+  var label     = data.label || 'GEE Layer';
+  var units     = data.units || '';
+
+  var hex    = palette.length > 0 ? palette : ['#aaa'];
+  var gradient = hex.map(function(h, i) { return h; }).join(', ');
+  var cssGrad  = 'linear-gradient(to right,' + gradient + ')';
+
+  var minStr = (valMin !== null) ? strVal(valMin) + ' ' + units : hex[0] || '';
+  var maxStr = (valMax !== null) ? strVal(valMax) + ' ' + units : hex[hex.length - 1] || '';
+
+  var scaleEl = document.getElementById('geeScale');
+  var gradEl  = scaleEl.querySelector('.gee-scale-grad');
+  scaleEl.style.display = 'block';
+  scaleEl.querySelector('h4').innerHTML = '<i class="fas fa-ruler-combined"></i>' + escHtml(label);
+  gradEl.style.background = cssGrad;
+  scaleEl.querySelector('.gee-scale-ticks').innerHTML = escHtml(minStr) + escHtml(maxStr);
+}
+
+function strVal(v) {
+  if (v === (v|0)) return String(v);
+  if (Math.abs(v) < 0.01 && v !== 0) return v.toExponential(1);
+  return (+v.toFixed(2)).toString();
+}
+
+function escHtml(s) {
+  var d = document.createElement('div');
+  d.appendChild(document.createTextNode(s || ''));
+  return d.innerHTML;
+}
 
 </script>
 </body>

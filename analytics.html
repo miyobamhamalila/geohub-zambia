@@ -1188,28 +1188,30 @@ function showToast(msg) {
 pd.sort((a,b)=>b.pop-a.pop);
 
 // ── INIT ────────────────────────────────────────────────────────────────────
-updateCharts();
-buildRainStackedChart();
-buildScatterChart();
-buildForestBarChart();
-renderProvTable();
-buildMineCards();
-  // District charts + table
-  buildDistFilterPills();
-  buildDistPopChart();
-  buildDistAreaChart();
-  buildDistDensChart();
-  buildDistPopAreaChart();
+try { updateCharts(); } catch(e) { console.error('updateCharts error:', e); }
+try { buildRainStackedChart(); } catch(e) { console.error('buildRainStackedChart error:', e); }
+try { buildScatterChart(); } catch(e) { console.error('buildScatterChart error:', e); }
+try { buildForestBarChart(); } catch(e) { console.error('buildForestBarChart error:', e); }
+try { renderProvTable(); } catch(e) { console.error('renderProvTable error:', e); }
+try { buildMineCards(); } catch(e) { console.error('buildMineCards error:', e); }
+try { buildDistFilterPills(); console.log('distFilterPills OK, ZAMBIA_PROVINCES:', ZAMBIA_PROVINCES.length); } catch(e) { console.error('buildDistFilterPills error:', e); }
+try { buildDistPopChart(); } catch(e) { console.error('buildDistPopChart error:', e); }
+try { buildDistAreaChart(); } catch(e) { console.error('buildDistAreaChart error:', e); }
+try { buildDistDensChart(); } catch(e) { console.error('buildDistDensChart error:', e); }
+try { buildDistPopAreaChart(); } catch(e) { console.error('buildDistPopAreaChart error:', e); }
+try {
+  console.log('renderDistTable: ZAMBIA_DISTRICTS count =', (typeof ZAMBIA_DISTRICTS !== 'undefined') ? ZAMBIA_DISTRICTS.length : 'UNDEFINED');
   renderDistTable();
-  // GEE layer charts
-  buildGeeRainChart();
-  buildGeeLstChart();
-  buildGeeDroughtChart();
-  buildGeeRainMonthlyChart();
-  buildGeeMetaTable();
-  buildForestTable();
-animateGauge();
-GeoHubAuth.addAuditLog('ANALYTICS_VIEW','Viewed Analytics page v3.0',session.id);
+  document.getElementById('distTableCount').textContent = 'Showing ' + (document.getElementById('distTableBody').children.length) + ' rows';
+} catch(e) { console.error('renderDistTable error:', e); }
+try { buildGeeRainChart(); } catch(e) { console.error('buildGeeRainChart error:', e); }
+try { buildGeeLstChart(); } catch(e) { console.error('buildGeeLstChart error:', e); }
+try { buildGeeDroughtChart(); } catch(e) { console.error('buildGeeDroughtChart error:', e); }
+try { buildGeeRainMonthlyChart(); } catch(e) { console.error('buildGeeRainMonthlyChart error:', e); }
+try { buildGeeMetaTable(); } catch(e) { console.error('buildGeeMetaTable error:', e); }
+try { buildForestTable(); } catch(e) { console.error('buildForestTable error:', e); }
+try { animateGauge(); } catch(e) { console.error('animateGauge error:', e); }
+try { GeoHubAuth.addAuditLog('ANALYTICS_VIEW','Viewed Analytics page v3.0',session.id); } catch(e) { console.error('auditLog error:', e); }
 </script>
 </body>
 </html>

@@ -2,6 +2,8 @@ from flask import Flask, render_template, jsonify, request, send_file, Response
 import ee
 import os
 import json
+import base64
+import tempfile
 import google.auth
 from google.oauth2 import service_account
 from google.auth.transport.requests import Request
@@ -15,12 +17,52 @@ app.config['TEMPLATES_AUTO_RELOAD'] = True
 # Initialize Earth Engine when the app starts
 def initialize_earth_engine():
     try:
-        creds_path = os.path.join(os.path.dirname(__file__), 'credentials.json')
-        service_account = 'geohub-zambia@gen-lang-client-0917578591.iam.gserviceaccount.com'
-        project_id = 'gen-lang-client-0917578591'
+        creds_path = None
+        service_account = os.getenv('SERVICE_ACCOUNT_EMAIL')
+        project_id = os.getenv('GEE_PROJECT_ID') or os.getenv('GOOGLE_CLOUD_PROJECT')
+        creds_env_b64 = os.getenv('GOOGLE_APPLICATION_CREDENTIALS_JSON_BASE64')
+        creds_env_json = os.getenv('GOOGLE_APPLICATION_CREDENTIALS_JSON')
+
+        # Load service account JSON from environment if provided
+        if creds_env_b64 or creds_env_json:
+            try:
+                if creds_env_b64:
+                    decoded_json = base64.b64decode(creds_env_b64)
+                else:
+                    decoded_json = creds_env_json.encode('utf-8')
+
+                service_account_info = json.loads(decoded_json)
+                if not service_account:
+                    service_account = service_account_info.get('client_email')
+                if not project_id:
+                    project_id = service_account_info.get('project_id')
+
+                creds_path = os.path.join(os.path.dirname(__file__), 'credentials.json')
+                with open(creds_path, 'wb') as f:
+                    f.write(decoded_json)
+                os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = creds_path
+                print('Loaded service account credentials from environment')
+            except Exception as e:
+                print('Failed to load service account JSON from environment:', str(e))
+
+        # If no env credentials, use existing credentials.json if available
+        if creds_path is None:
+            default_creds_path = os.path.join(os.path.dirname(__file__), 'credentials.json')
+            if os.path.exists(default_creds_path):
+                creds_path = default_creds_path
+                try:
+                    with open(creds_path, 'r', encoding='utf-8') as f:
+                        service_account_info = json.load(f)
+                        if not service_account:
+                            service_account = service_account_info.get('client_email')
+                        if not project_id:
+                            project_id = service_account_info.get('project_id')
+                except Exception:
+                    pass
+                os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = creds_path
 
         # Strategy 1: Service account with explicit project
-        if os.path.exists(creds_path):
+        if creds_path and service_account and project_id:
             try:
                 print('Trying EE init with service account + project...')
                 credentials = ee.ServiceAccountCredentials(service_account, creds_path)
@@ -32,7 +74,7 @@ def initialize_earth_engine():
             except Exception as e:
                 print('Strategy 1 failed:', str(e))
 
-        # Strategy 2: Default credentials (user's EE auth)
+        # Strategy 2: Default credentials (GOOGLE_APPLICATION_CREDENTIALS or user's auth)
         try:
             print('Trying EE init with default credentials...')
             ee.Initialize()
@@ -44,7 +86,7 @@ def initialize_earth_engine():
             print('Strategy 2 failed:', str(e))
 
         # Strategy 3: Service account without explicit project
-        if os.path.exists(creds_path):
+        if creds_path and service_account:
             try:
                 print('Trying EE init with service account only...')
                 credentials = ee.ServiceAccountCredentials(service_account, creds_path)

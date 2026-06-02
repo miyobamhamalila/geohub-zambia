@@ -16,92 +16,78 @@ app.config['TEMPLATES_AUTO_RELOAD'] = True
 
 # Initialize Earth Engine when the app starts
 def initialize_earth_engine():
-    try:
-        creds_path = None
-        service_account = os.getenv('SERVICE_ACCOUNT_EMAIL')
-        project_id = os.getenv('GEE_PROJECT_ID') or os.getenv('GOOGLE_CLOUD_PROJECT')
-        creds_env_b64 = os.getenv('GOOGLE_APPLICATION_CREDENTIALS_JSON_BASE64')
-        creds_env_json = os.getenv('GOOGLE_APPLICATION_CREDENTIALS_JSON')
+    """Initialize GEE using in-memory credentials (no temp files).
 
-        # Load service account JSON from environment if provided
-        if creds_env_b64 or creds_env_json:
+    Priority:
+      1. GOOGLE_APPLICATION_CREDENTIALS_JSON_BASE64  (base64-encoded JSON)
+      2. GOOGLE_APPLICATION_CREDENTIALS_JSON          (raw JSON string)
+      3. gee_key.json on disk                         (local dev fallback)
+      4. Application Default Credentials              (last resort)
+    """
+    EE_SCOPES = [
+        'https://www.googleapis.com/auth/earthengine',
+        'https://www.googleapis.com/auth/cloud-platform',
+    ]
+
+    service_account_email = os.getenv('SERVICE_ACCOUNT_EMAIL')
+    project_id = os.getenv('GEE_PROJECT_ID') or os.getenv('GOOGLE_CLOUD_PROJECT')
+    creds_env_b64 = os.getenv('GOOGLE_APPLICATION_CREDENTIALS_JSON_BASE64')
+    creds_env_json = os.getenv('GOOGLE_APPLICATION_CREDENTIALS_JSON')
+
+    service_account_info = None
+
+    # 1 & 2: Build credentials dict directly from env — no file writes
+    if creds_env_b64 or creds_env_json:
+        try:
+            raw = base64.b64decode(creds_env_b64) if creds_env_b64 else creds_env_json.encode('utf-8')
+            service_account_info = json.loads(raw)
+            if not service_account_email:
+                service_account_email = service_account_info.get('client_email')
+            if not project_id:
+                project_id = service_account_info.get('project_id')
+            print('Loaded service account info from environment variable')
+        except Exception as e:
+            print('Failed to parse service account JSON from env:', str(e))
+
+    # 3: Local key file fallback (gee_key.json)
+    if service_account_info is None:
+        key_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'gee_key.json')
+        if os.path.exists(key_path):
             try:
-                if creds_env_b64:
-                    decoded_json = base64.b64decode(creds_env_b64)
-                else:
-                    decoded_json = creds_env_json.encode('utf-8')
-
-                service_account_info = json.loads(decoded_json)
-                if not service_account:
-                    service_account = service_account_info.get('client_email')
+                with open(key_path, 'r', encoding='utf-8') as f:
+                    service_account_info = json.load(f)
+                if not service_account_email:
+                    service_account_email = service_account_info.get('client_email')
                 if not project_id:
                     project_id = service_account_info.get('project_id')
-
-                creds_path = os.path.join(os.path.dirname(__file__), 'credentials.json')
-                with open(creds_path, 'wb') as f:
-                    f.write(decoded_json)
-                os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = creds_path
-                print('Loaded service account credentials from environment')
+                print('Loaded service account info from gee_key.json')
             except Exception as e:
-                print('Failed to load service account JSON from environment:', str(e))
+                print('Failed to load gee_key.json:', str(e))
 
-        # If no env credentials, use existing credentials.json if available
-        if creds_path is None:
-            default_creds_path = os.path.join(os.path.dirname(__file__), 'credentials.json')
-            if os.path.exists(default_creds_path):
-                creds_path = default_creds_path
-                try:
-                    with open(creds_path, 'r', encoding='utf-8') as f:
-                        service_account_info = json.load(f)
-                        if not service_account:
-                            service_account = service_account_info.get('client_email')
-                        if not project_id:
-                            project_id = service_account_info.get('project_id')
-                except Exception:
-                    pass
-                os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = creds_path
-
-        # Strategy 1: Service account with explicit project
-        if creds_path and service_account and project_id:
-            try:
-                print('Trying EE init with service account + project...')
-                credentials = ee.ServiceAccountCredentials(service_account, creds_path)
-                ee.Initialize(credentials, project=project_id)
-                print('Earth Engine initialized (service account + project)')
-                test = ee.Number(1).getInfo()
-                print('EE test value:', test)
-                return
-            except Exception as e:
-                print('Strategy 1 failed:', str(e))
-
-        # Strategy 2: Default credentials (GOOGLE_APPLICATION_CREDENTIALS or user's auth)
+    # Initialize with in-memory google-auth credentials (works on Render)
+    if service_account_info:
         try:
-            print('Trying EE init with default credentials...')
-            ee.Initialize()
-            print('Earth Engine initialized (default credentials)')
-            test = ee.Number(1).getInfo()
-            print('EE test value:', test)
+            credentials = service_account.Credentials.from_service_account_info(
+                service_account_info, scopes=EE_SCOPES
+            )
+            ee.Initialize(credentials=credentials, project=project_id)
+            print('Earth Engine initialized (in-memory service account credentials)')
+            print('EE test value:', ee.Number(1).getInfo())
             return
         except Exception as e:
-            print('Strategy 2 failed:', str(e))
+            print('Service account init failed:', str(e))
 
-        # Strategy 3: Service account without explicit project
-        if creds_path and service_account:
-            try:
-                print('Trying EE init with service account only...')
-                credentials = ee.ServiceAccountCredentials(service_account, creds_path)
-                ee.Initialize(credentials)
-                print('Earth Engine initialized (service account only)')
-                test = ee.Number(1).getInfo()
-                print('EE test value:', test)
-                return
-            except Exception as e:
-                print('Strategy 3 failed:', str(e))
-
-        raise Exception('All EE initialization strategies failed')
+    # 4: Application Default Credentials (last resort)
+    try:
+        print('Trying EE init with Application Default Credentials...')
+        ee.Initialize(project=project_id)
+        print('Earth Engine initialized (Application Default Credentials)')
+        print('EE test value:', ee.Number(1).getInfo())
+        return
     except Exception as e:
-        print('Earth Engine initialization failed:', str(e))
-        raise
+        print('Application Default Credentials init failed:', str(e))
+
+    raise RuntimeError('All EE initialization strategies failed')
 
 # Initialize Earth Engine
 initialize_earth_engine()

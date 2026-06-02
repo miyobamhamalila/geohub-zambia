@@ -90,7 +90,11 @@ def initialize_earth_engine():
     raise RuntimeError('All EE initialization strategies failed')
 
 # Initialize Earth Engine
-initialize_earth_engine()
+try:
+    initialize_earth_engine()
+except Exception as e:
+    print(f'WARNING: Earth Engine failed to initialize at startup: {e}')
+    print('GEE-dependent endpoints will return errors until credentials are configured.')
 
 @app.route('/')
 def index():

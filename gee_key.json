@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "gen-lang-client-0917578591",
+  "private_key_id": "edf914433c1b7215f8404e68765585f7155c93d0",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQCuf4kckVlE680u\niV5XzW1aUZ9nSYuadQHbHmcOtBhUstPwM11ENPtYctU+O60d3H11XHxss7BqHt/q\nPs9B8nPmy21nywEq+eklnd9zWfcIitLYDww4aY82FR5ZvLFRdbvHPucMWi7GG26V\nksx9OJahMPy3jsp1TRcHwC0PJYzzdCJA5mK038abBgVQIEDC6HkP2h0ajdeQ6WNX\n0SknyOeZFFWIvAhUf5V6vazOw4gpuz/sz1r/xK4ezIn1I4G9Xp00XE7WU2/nMSNZ\nSHRYYoKtyRxUNBUOhc4hy46vJeijzFP5LOizhAm8YtMMEndRDfMf5qz6/umLAWuS\nDtcIHNsbAgMBAAECggEAK5BggTbSVBAQggk+eeop3k4ZXzZvuWhzxaoR7YxNtLuO\niN2x76jQhTTqAubwIc/drHKiB5tWtC+wFDGJGbw3bkukLTDzwjBxIfiHhCtWLpZF\n7DXZha3o2IYuNRYUKLOdZTFRinZrTf8kPQhQsAR0KprpxMPLzLwpv0Adn7Xuugp/\nRf8aq7na5E0JJGPML+fGn9DXjiMfIMxummYWiFdufo6sRIvFYcdr33mqUJos3BlS\n5Oscrnl8cXU0Qz8u1ZTsGTNVWQ4WgIJmjpnucthgfYLiomy3rr+tMCodnQQuM5lW\nXhPzQ70ziODkynHlQdwFRVV058OotZBMCFCkgX+lKQKBgQDWGlcK3q4WZUqEjGd0\nHbZPOno3P8N5xZ2qg4BxHsWYSE2ieP7c04cfJPtk7SlzD+Uiw9sq0MXp8H+4mcTV\nToH10ff4FYFkWnBFGd2Vm6uSwiEeYf2iCcTcJ8rrnM9e/1zsesurNGlslCh3FcLl\nz7Z+sL6D6aMMaC6V0X9SqARX+QKBgQDQpSpXqM+hQ9rB+vJ0m27hD2xwx7bz6GO1\np+BUzGglbBeiNvDL8SyyFy4gorwFLyTe4BaL3OE6H/0ye7ZC5rPCSVvPj70L8IBT\nSo7VLj+MmzAzP7ZJiE3Bu62CvHEqIb1NA2i8wxamq0C1hHDKYFC7jL2mqqF9uGNk\nMDAPiHQYswKBgQCNKNakowZyW5wS4iM/SmuttudnT9IIkkMObh8b9ebfLSSKb23R\nmGEpJo/dDgRbCWrQTgNNKlKil98NjcxZuqYytZng5gTmbj5BQPl4Lyei3f1J899u\nmzRA1reSOlP61TCl9Zwcp7SuUsyPHzjdneI7izpA7KSEhJfaTUK982rRuQKBgQCA\n8XIHlqYqrbqmIyZv9hdCM7v6vxJMDpSAkW1MOr8qUXERqQ6Lm1LaBQVW2fuE4KvS\nqX6FlU4EE/zwlBABrH3vVlLNJbHZjRphXzSCfwB7LvVM1tUbAIe9cPU8VKVDOnK5\nA6BY9+ApxLBK/byO9ZMvNT2HoPAIuEmEg1tQXi4RjQKBgQCoU7N9i0zZLCQFL53n\nGSheAkXHls8p69nQCqviqAlYAiz1ik644kWNumgsWFsYoQGkeYUv0F4wPNeBT4/3\n/7Cxh0XK56IVj6BfLmG6Jl01T/LNPoD2tZ+W5rlWBSoLB2APEUr540uXdJNfn9hR\nTPwcMDh2yKeh4IK+33Rsc4CK8Q==\n-----END PRIVATE KEY-----\n",
+  "client_email": "geohub-zambia@gen-lang-client-0917578591.iam.gserviceaccount.com",
+  "client_id": "110482449428076705225",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/geohub-zambia%40gen-lang-client-0917578591.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

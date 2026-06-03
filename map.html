@@ -2788,6 +2788,18 @@ const WMS_LAYERS = {
 // ── District markers ───────────────────────────────────────────────────────
 let districtMarkers = [];
 let districtOpacity = 0.85;
+let highlightLayer  = null;
+
+function clearHighlight() {
+  const gjLayer = LAYERS.districts.group;
+  if (gjLayer && gjLayer._layers) {
+    for (const key in gjLayer._layers) {
+      const lyr = gjLayer._layers[key];
+      lyr.setStyle({ color:'#fff', weight:1, fillOpacity: districtOpacity });
+    }
+  }
+  if (highlightLayer) { map.removeLayer(highlightLayer); highlightLayer = null; }
+}
 
 function getDistrictColor(d) {
   if (colourMode === 'province') return PROV_COLORS[d.province] || '#4CAF50';
@@ -2805,34 +2817,52 @@ function getDistrictColor(d) {
   return '#4CAF50';
 }
 
-function buildDistrictLayer() {
+async function buildDistrictLayer() {
   LAYERS.districts.group.clearLayers();
   districtMarkers = [];
-  ZAMBIA_DISTRICTS.forEach(d => {
-    const color = getDistrictColor(d);
-    const marker = L.circleMarker([d.lat, d.lng], {
-      radius: 7, fillColor: color, color: '#fff',
-      weight: 1.5, fillOpacity: districtOpacity, interactive: true
+  try {
+    const response = await fetch('districts-polygons.geojson');
+    if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+    const geojson = await response.json();
+    L.geoJSON(geojson, {
+      style: function(feature) {
+        const props = feature.properties;
+        const districtName = props.ADM2_NAME;
+        const provinceName = props.ADM1_NAME;
+        const distData = ZAMBIA_DISTRICTS.find(d => d.district === districtName && d.province === provinceName);
+        const color = distData ? getDistrictColor(distData) : '#4CAF50';
+        return { color: '#fff', weight: 1, fillColor: color, fillOpacity: districtOpacity };
+      },
+      onEachFeature: function(feature, layer) {
+        const props = feature.properties;
+        const districtName = props.ADM2_NAME;
+        const provinceName = props.ADM1_NAME;
+        const distData = ZAMBIA_DISTRICTS.find(d => d.district === districtName && d.province === provinceName);
+        if (distData) {
+          layer.districtData = distData;
+          districtMarkers.push({ marker: layer, data: distData });
+          const prov = ZAMBIA_PROVINCES.find(p => p.name === provinceName) || {};
+          layer.bindPopup(buildDistrictPopup(distData, getDistrictColor(distData), prov), { maxWidth: 270, className: 'ghz-popup' });
+          layer.on('mouseover', function() {
+            this.setStyle({ weight: 2, fillOpacity: 0.9 });
+            document.getElementById('cb-district').textContent = `${districtName}, ${provinceName}`;
+          });
+          layer.on('mouseout', function() {
+            this.setStyle({ weight: 1, fillOpacity: districtOpacity });
+          });
+          layer.on('click', function(e) {
+            showInfoPanel(distData, getDistrictColor(distData), prov);
+            showQueryPanel('district', distData, { province: distData.province });
+            GeoHubAuth.addAuditLog('MAP_CLICK', `District clicked: ${districtName}`, session.id);
+          });
+          LAYERS.districts.group.addLayer(layer);
+        }
+      }
     });
-    marker.districtData = d;
-    const prov = ZAMBIA_PROVINCES.find(p => p.name === d.province) || {};
-    marker.bindPopup(buildDistrictPopup(d, color, prov), { maxWidth: 270, className: 'ghz-popup' });
-    marker.on('mouseover', function() {
-      this.setStyle({ radius: 10, weight: 2.5, fillOpacity: 1 });
-      document.getElementById('cb-district').textContent = `${d.district}, ${d.province}`;
-    });
-    marker.on('mouseout', function() {
-      this.setStyle({ radius: 7, weight: 1.5, fillOpacity: districtOpacity });
-    });
-    marker.on('click', function() {
-      showInfoPanel(d, color, prov);
-      // Also trigger the full tabbed query panel (click-to-query)
-      showQueryPanel('district', d, { province: d.province });
-      GeoHubAuth.addAuditLog('MAP_CLICK', `District clicked: ${d.district}`, session.id);
-    });
-    marker.addTo(LAYERS.districts.group);
-    districtMarkers.push({ marker, data: d });
-  });
+  } catch (err) {
+    console.error('Failed to load district polygons', err);
+    showToast('Failed to load district polygons', 'error');
+  }
 }
 
 function buildDistrictPopup(d, color, prov) {
@@ -3104,10 +3134,17 @@ function setOpacity(key, val, slider) {
 }
 
 function filterByProvince(prov) {
-  districtMarkers.forEach(({ marker, data }) => {
-    const show = !prov || data.province === prov;
-    if (show) { if (!LAYERS.districts.group.hasLayer(marker)) marker.addTo(LAYERS.districts.group); }
-    else { LAYERS.districts.group.removeLayer(marker); }
+  LAYERS.districts.group.eachLayer(layer => {
+    const show = !prov || (layer.districtData && layer.districtData.province === prov);
+    if (show) {
+      if (!LAYERS.districts.group.hasLayer(layer)) {
+        LAYERS.districts.group.addLayer(layer);
+      }
+    } else {
+      if (LAYERS.districts.group.hasLayer(layer)) {
+        LAYERS.districts.group.removeLayer(layer);
+      }
+    }
   });
   if (prov) {
     const dists = ZAMBIA_DISTRICTS.filter(d => d.province === prov);
@@ -3121,7 +3158,12 @@ function recolourDistricts(mode, el) {
   colourMode = mode;
   document.querySelectorAll('.colour-tab').forEach(t => t.classList.remove('active'));
   if (el) el.classList.add('active');
-  districtMarkers.forEach(({ marker, data }) => marker.setStyle({ fillColor: getDistrictColor(data) }));
+  LAYERS.districts.group.eachLayer(layer => {
+    if (layer.districtData) {
+      const color = getDistrictColor(layer.districtData);
+      layer.setStyle({ fillColor: color, color: color, weight: 1, fillOpacity: districtOpacity });
+    }
+  });
   updateLegend();
   if (dynLegendOpen) { dynLegendActiveTab = 'district'; updateDynLegend(); }
   showToast(`Coloured by ${mode}`, 'info');
@@ -4025,6 +4067,26 @@ function flyToDistrict(id) {
   map.flyTo([d.lat,d.lng], 11, { duration:1.2 });
   document.getElementById('distSearch').value = d.district;
   document.getElementById('searchResults').style.display = 'none';
+
+  clearHighlight();
+  const gjLayer = LAYERS.districts.group;
+  if (gjLayer && gjLayer._layers) {
+    const targetName = String(d.district).toLowerCase();
+    const targetProv = String(d.province).toLowerCase();
+    for (const key in gjLayer._layers) {
+      const lyr = gjLayer._layers[key];
+      const p = lyr.feature && lyr.feature.properties;
+      if (p) {
+        if (String(p.ADM2_NAME).toLowerCase() === targetName && String(p.ADM1_NAME).toLowerCase() === targetProv) {
+          lyr.setStyle({ color:'#fbbf24', weight:4, fillColor:'#fbbf24', fillOpacity:0.15, dashArray:'6 3' });
+          lyr.bringToFront();
+        } else {
+          lyr.setStyle({ color:'rgba(255,255,255,0.08)', weight:1, fillColor:'#1a2e1a', fillOpacity:0.06 });
+        }
+      }
+    }
+  }
+
   const item = districtMarkers.find(m=>m.data.id===id);
   if (item) setTimeout(()=>item.marker.openPopup(),1400);
   const prov = ZAMBIA_PROVINCES.find(p=>p.name===d.province)||{};
@@ -6173,40 +6235,54 @@ function setLoad(pct, msg) {
   document.getElementById('loaderMsg').textContent = msg;
 }
 
-setLoad(10, 'Loading 116 districts…');
-buildDistrictLayer();
-setLoad(30, 'Building province layers…');
-buildProvinceLayer();
-setLoad(45, 'Loading water bodies…');
-buildWaterLayer();
-setLoad(55, 'Loading mining sites…');
-buildMiningLayer();
-setLoad(65, 'Building city markers…');
-buildCitiesLayer();
-setLoad(75, 'Generating layer controls…');
-buildLayerList();
-buildThematicLayerList();
-buildProvFilter();
-setLoad(85, 'Updating legend & tools…');
-updateLegend();
-renderCCInputs();
-renderSpatialConfig();
-setLoad(95, 'Finalising…');
+async function initMap() {
+  setLoad(10, 'Loading 116 districts…');
+  await buildDistrictLayer();
+  setLoad(30, 'Building province layers…');
+  buildProvinceLayer();
+  setLoad(45, 'Loading water bodies…');
+  buildWaterLayer();
+  setLoad(55, 'Loading mining sites…');
+  buildMiningLayer();
+  setLoad(65, 'Building city markers…');
+  buildCitiesLayer();
+  setLoad(75, 'Generating layer controls…');
+  buildLayerList();
+  buildThematicLayerList();
+  buildProvFilter();
+  setLoad(85, 'Updating legend & tools…');
+  updateLegend();
+  renderCCInputs();
+  renderSpatialConfig();
+  setLoad(95, 'Finalising…');
 
-// Initialise coordinate mode labels
-setCoordMode('dd', document.querySelector('#coordTabsMain [data-mode="dd"]'));
+  // Initialise coordinate mode labels
+  setCoordMode('dd', document.querySelector('#coordTabsMain [data-mode="dd"]'));
 
-GeoHubAuth.addAuditLog('MAP_VIEW','Opened Map Viewer v9.0 — Draw·Clip·Export + File Loader (SHP/GeoJSON/KML/TIF) + Attribute Table + Simulated labels removed',session.id);
+  GeoHubAuth.addAuditLog('MAP_VIEW','Opened Map Viewer v9.0 — Draw·Clip·Export + File Loader (SHP/GeoJSON/KML/TIF) + Attribute Table + Simplified labels removed',session.id);
 
-setTimeout(() => {
-  setLoad(100, 'Ready!');
   setTimeout(() => {
-    const ov = document.getElementById('mapLoader');
-    ov.style.opacity = '0';
-    setTimeout(()=>ov.style.display='none', 350);
-    showToast(`🌍 v9.0 • Draw·Clip·Export • File Loader (SHP/TIF) • Attribute Table`, 'success');
-  }, 300);
-}, 700);
+    setLoad(100, 'Ready!');
+    setTimeout(() => {
+      const ov = document.getElementById('mapLoader');
+      ov.style.opacity = '0';
+      setTimeout(()=>ov.style.display='none', 350);
+      showToast(`🌍 v9.0 • Draw·Clip·Export • File Loader (SHP/TIF) • Attribute Table`, 'success');
+    }, 300);
+  }, 700);
+}
+
+// Start init
+initMap();
+
+// Customise draw tooltips
+try {
+  L.drawLocal.draw.handlers.polyline.tooltip.start = 'Click to start measuring distance';
+  L.drawLocal.draw.handlers.polyline.tooltip.cont  = 'Click to continue — double-click to finish';
+  L.drawLocal.draw.handlers.polygon.tooltip.start  = 'Click to start drawing area';
+  L.drawLocal.draw.handlers.polygon.tooltip.cont   = 'Click to continue drawing';
+  L.drawLocal.draw.handlers.polygon.tooltip.end    = 'Click first point to close polygon';
+} catch(e){}
 
 // Customise draw tooltips
 try {

@@ -1,0 +1,3171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>GeoHub — Print Layout Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css"/>
+<style>
+/* ═══════════════════════════════════════════════════════
+   RESET & DESIGN TOKENS
+═══════════════════════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0a0d12;
+  --panel:#13171f;
+  --panel2:#181d27;
+  --card:#1e2535;
+  --border:#1f2633;
+  --border2:#2a3348;
+  --g1:#071510;--g2:#0d2a1a;--g3:#155233;--g4:#16a34a;--g5:#22c55e;--g6:#4ade80;
+  --accent:#7c3aed;--accent2:#8b5cf6;--accent3:#a78bfa;--accent4:#c4b5fd;
+  --teal:#0d9488;--teal2:#14b8a6;
+  --amber:#f59e0b;--amber2:#fbbf24;
+  --text:#e8edf5;--muted:#4a5568;--muted2:#718096;--muted3:#94a3b8;
+  --white:#fff;
+  --nb:50px;--lp:270px;--rp:248px;--tb:50px;--sb:30px;
+}
+html,body{height:100%;font-family:'Inter',sans-serif;overflow:hidden;background:var(--bg);color:var(--text);}
+
+/* ── Keyboard shortcut hint bar ── */
+#shortcutHint{
+  position:fixed;top:calc(var(--nb)+var(--tb)+6px);right:6px;
+  background:rgba(13,17,25,.92);border:1px solid var(--border2);
+  border-radius:8px;padding:6px 10px;z-index:8700;
+  display:flex;gap:10px;align-items:center;
+  font-size:.56rem;color:var(--muted2);font-family:'Inter',sans-serif;
+  backdrop-filter:blur(8px);animation:fadeIn .3s ease;
+  pointer-events:none;
+}
+#shortcutHint kbd{
+  display:inline-flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);
+  border-radius:3px;padding:1px 5px;font-size:.58rem;font-family:'Courier New',monospace;
+  color:var(--text);min-width:20px;
+}
+#shortcutHint.hidden{display:none;}
+
+/* ── Color Inspector / Eye Dropper widget ── */
+#colorInspector{
+  position:fixed;bottom:36px;right:calc(var(--rp) + 10px);
+  background:var(--panel2);border:1px solid var(--border2);
+  border-radius:9px;padding:8px 10px;z-index:8400;
+  display:none;gap:8px;align-items:center;
+  box-shadow:0 6px 24px rgba(0,0,0,.5);
+}
+#colorInspector.show{display:flex;}
+.ci-swatch{width:32px;height:32px;border-radius:6px;border:1px solid rgba(255,255,255,.15);flex-shrink:0;}
+.ci-info{display:flex;flex-direction:column;gap:2px;}
+.ci-hex{font-size:.68rem;font-weight:700;color:var(--text);font-family:'Courier New',monospace;}
+.ci-rgb{font-size:.58rem;color:var(--muted2);}
+
+/* ── Element Property Panel ── */
+#propPanel{
+  position:fixed;bottom:36px;left:calc(var(--lp) + 8px);
+  background:var(--panel2);border:1px solid var(--border2);
+  border-radius:10px;padding:10px 12px;z-index:8400;
+  display:none;flex-direction:column;gap:7px;
+  min-width:280px;max-width:320px;
+  box-shadow:0 8px 32px rgba(0,0,0,.5);
+  animation:slideUp .18s ease;
+}
+@keyframes slideUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+#propPanel.visible{display:flex;}
+.pp-hd{display:flex;align-items:center;justify-content:space-between;}
+.pp-title{font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--teal2);display:flex;align-items:center;gap:5px;}
+.pp-close{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.7rem;padding:2px 5px;border-radius:4px;transition:all .12s;}
+.pp-close:hover{background:rgba(255,255,255,.08);color:var(--text);}
+.pp-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.pp-field{display:flex;flex-direction:column;gap:3px;}
+.pp-label{font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--muted2);}
+.pp-inp{width:100%;padding:4px 7px;background:rgba(255,255,255,.06);border:1px solid var(--border2);border-radius:5px;color:var(--text);font-family:'Inter',sans-serif;font-size:.68rem;outline:none;}
+.pp-inp:focus{border-color:rgba(13,148,136,.5);}
+.pp-row{display:flex;gap:5px;}
+.pp-btn{flex:1;padding:5px;border-radius:5px;font-size:.63rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;border:1px solid var(--border2);background:rgba(255,255,255,.04);color:var(--muted3);transition:all .12s;}
+.pp-btn:hover{background:rgba(255,255,255,.09);color:var(--text);}
+.pp-btn.pp-btn-danger:hover{background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.3);color:#fca5a5;}
+.pp-sep{width:100%;height:1px;background:var(--border2);margin:3px 0;grid-column:span 2;}
+.pp-color-row{display:flex;align-items:center;gap:6px;grid-column:span 2;}
+.pp-color-box{width:22px;height:18px;border-radius:3px;border:1px solid rgba(255,255,255,.15);cursor:pointer;flex-shrink:0;}
+.pp-section-title{font-size:.52rem;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:rgba(13,148,136,.8);grid-column:span 2;margin-top:3px;}
+
+/* ── Ruler / guides ── */
+#rulerH,#rulerV{position:absolute;background:rgba(255,255,255,.04);z-index:8200;pointer-events:none;}
+#rulerH{top:0;left:0;right:0;height:16px;border-bottom:1px solid rgba(255,255,255,.08);}
+#rulerV{top:0;left:0;bottom:0;width:16px;border-right:1px solid rgba(255,255,255,.08);}
+.ruler-tick{position:absolute;background:rgba(255,255,255,.25);}
+.ruler-lbl{position:absolute;font-size:6px;color:rgba(255,255,255,.3);font-family:'Courier New',monospace;}
+
+/* ── Map colour theme picker ── */
+.map-theme-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:2px;}
+.theme-swatch{
+  height:22px;border-radius:5px;cursor:pointer;
+  border:2px solid transparent;transition:all .15s;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.5rem;font-weight:700;color:rgba(0,0,0,.5);
+}
+.theme-swatch:hover{transform:scale(1.08);}
+.theme-swatch.active{border-color:#fff;box-shadow:0 0 0 1px var(--g4);}
+
+/* ── North arrow style chooser ── */
+.na-style-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;}
+.na-opt{
+  display:flex;align-items:center;justify-content:center;
+  padding:5px;border-radius:6px;border:1.5px solid var(--border2);
+  background:rgba(255,255,255,.02);cursor:pointer;transition:all .15s;
+  color:#fff;
+}
+.na-opt:hover{background:rgba(255,255,255,.07);border-color:var(--border);}
+.na-opt.active{border-color:var(--teal2);background:rgba(13,148,136,.1);}
+.na-opt svg{width:28px;height:28px;}
+
+/* ── Alignment guides (appear during drag) ── */
+.align-guide{
+  position:absolute;pointer-events:none;z-index:8100;
+  background:rgba(13,148,136,.6);transition:opacity .1s;
+}
+.align-guide-h{width:100%;height:1px;left:0;}
+.align-guide-v{height:100%;width:1px;top:0;}
+
+/* ── Canvas zoom badge ── */
+#canvasZoomBadge{
+  position:absolute;bottom:12px;left:50%;transform:translateX(-50%);
+  background:rgba(13,17,25,.8);border:1px solid var(--border2);
+  border-radius:20px;padding:2px 10px;font-size:.6rem;font-weight:700;
+  color:var(--muted3);pointer-events:none;z-index:50;
+  backdrop-filter:blur(6px);
+}
+
+/* ── Snap indicator ── */
+#snapIndicator{
+  position:fixed;bottom:36px;right:270px;
+  background:rgba(13,148,136,.15);border:1px solid rgba(13,148,136,.3);
+  border-radius:6px;padding:3px 8px;
+  font-size:.6rem;font-weight:700;color:var(--teal2);
+  display:none;align-items:center;gap:4px;z-index:8600;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.18);}
+
+/* ═══════════════════════════════════════════════════════
+   NAVBAR
+═══════════════════════════════════════════════════════ */
+.nb{
+  position:fixed;top:0;left:0;right:0;height:var(--nb);
+  background:linear-gradient(90deg,#050b07 0%,#0c1219 60%,#0f1520 100%);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 12px;z-index:9000;gap:3px;
+}
+.nb-brand{display:flex;align-items:center;gap:8px;text-decoration:none;flex-shrink:0;margin-right:8px;}
+.nb-brand-ico{
+  width:30px;height:30px;
+  background:linear-gradient(135deg,var(--g3) 0%,var(--g4) 100%);
+  border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;
+  box-shadow:0 2px 8px rgba(22,163,74,.3);
+}
+.nb-brand h1{font-size:.92rem;font-weight:900;color:#fff;letter-spacing:-.3px;}
+.nb-brand h1 em{color:var(--g5);font-style:normal;}
+.nb-divider{width:1px;height:22px;background:var(--border2);margin:0 6px;flex-shrink:0;}
+.nb-links{display:flex;align-items:center;gap:1px;flex:1;}
+.nb-lnk{
+  padding:5px 9px;border-radius:6px;font-size:.73rem;font-weight:500;
+  color:rgba(255,255,255,.45);text-decoration:none;
+  display:flex;align-items:center;gap:5px;
+  transition:all .15s;cursor:pointer;border:none;background:none;
+  font-family:'Inter',sans-serif;white-space:nowrap;
+}
+.nb-lnk:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.85);}
+.nb-lnk.active{background:rgba(13,148,136,.18);color:var(--teal2);font-weight:700;}
+.nb-lnk i{font-size:.72rem;opacity:.8;}
+.nb-right{display:flex;align-items:center;gap:7px;margin-left:auto;flex-shrink:0;}
+.nb-badge{
+  padding:3px 8px;border-radius:5px;font-size:.6rem;font-weight:800;
+  text-transform:uppercase;letter-spacing:.6px;
+  background:rgba(124,58,237,.2);border:1px solid rgba(124,58,237,.3);
+  color:var(--accent3);
+}
+.nb-av{
+  width:28px;height:28px;border-radius:50%;
+  background:linear-gradient(135deg,var(--g3),var(--g4));
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-weight:800;font-size:.68rem;flex-shrink:0;
+  box-shadow:0 2px 6px rgba(22,163,74,.25);
+}
+.nb-uname{font-size:.73rem;font-weight:600;color:rgba(255,255,255,.65);}
+.nb-signout{
+  display:flex;align-items:center;gap:5px;padding:4px 9px;
+  border:1px solid rgba(255,255,255,.12);border-radius:6px;
+  color:rgba(255,255,255,.45);font-size:.7rem;font-weight:600;
+  cursor:pointer;background:none;font-family:'Inter',sans-serif;transition:all .15s;
+}
+.nb-signout:hover{border-color:rgba(248,113,113,.35);color:#fca5a5;}
+
+/* ═══════════════════════════════════════════════════════
+   TOP TOOLBAR
+═══════════════════════════════════════════════════════ */
+#toolbar{
+  position:fixed;top:var(--nb);left:0;right:0;height:var(--tb);
+  background:var(--panel);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 10px;gap:1px;z-index:8500;
+  overflow:hidden;
+}
+.tb-group{display:flex;align-items:center;gap:1px;}
+.tb-sep{width:1px;height:26px;background:var(--border2);margin:0 5px;flex-shrink:0;}
+.tb-btn{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  padding:4px 7px;border:1px solid transparent;border-radius:6px;
+  background:none;color:var(--muted3);cursor:pointer;transition:all .15s;
+  font-family:'Inter',sans-serif;min-width:46px;flex-shrink:0;
+}
+.tb-btn:hover{background:rgba(255,255,255,.06);border-color:var(--border2);color:var(--text);}
+.tb-btn.active{background:rgba(124,58,237,.14);border-color:rgba(124,58,237,.3);color:var(--accent3);}
+.tb-btn.danger:hover{background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.25);color:#fca5a5;}
+.tb-btn i{font-size:.79rem;}
+.tb-btn span{font-size:.52rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;}
+.tb-icon-only{
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border:1px solid transparent;border-radius:6px;
+  background:none;color:var(--muted3);cursor:pointer;transition:all .15s;
+  font-size:.82rem;flex-shrink:0;
+}
+.tb-icon-only:hover{background:rgba(255,255,255,.06);border-color:var(--border2);color:var(--text);}
+/* Export split button */
+.tb-export-wrap{position:relative;margin-left:auto;}
+.tb-export-split{
+  display:flex;align-items:stretch;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border:1px solid rgba(167,139,250,.25);border-radius:7px;overflow:hidden;
+  box-shadow:0 2px 14px rgba(124,58,237,.35);
+}
+.tb-exp-main{
+  display:flex;align-items:center;gap:6px;padding:6px 12px;
+  background:none;border:none;color:#fff;font-size:.74rem;font-weight:700;
+  cursor:pointer;font-family:'Inter',sans-serif;
+}
+.tb-exp-divider{width:1px;background:rgba(255,255,255,.22);flex-shrink:0;}
+.tb-exp-caret{
+  display:flex;align-items:center;padding:6px 8px;
+  background:none;border:none;
+  color:rgba(255,255,255,.75);font-size:.68rem;cursor:pointer;
+}
+.tb-export-split:hover{box-shadow:0 4px 22px rgba(124,58,237,.5);}
+.tb-exp-dropdown{
+  position:absolute;top:calc(100% + 6px);right:0;
+  background:var(--panel2);border:1px solid var(--border2);border-radius:9px;
+  padding:5px;min-width:185px;z-index:9500;display:none;
+  box-shadow:0 10px 40px rgba(0,0,0,.6);
+}
+.tb-exp-dropdown.show{display:block;animation:fadeIn .12s ease;}
+.tb-exp-item{
+  display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:6px;
+  cursor:pointer;transition:background .12s;
+}
+.tb-exp-item:hover{background:rgba(255,255,255,.07);}
+.tb-exp-item i{width:16px;text-align:center;font-size:.77rem;}
+.tb-exp-item span{font-size:.73rem;font-weight:600;color:var(--text);}
+
+/* ═══════════════════════════════════════════════════════
+   WORKSPACE (3-column grid)
+═══════════════════════════════════════════════════════ */
+.workspace{
+  position:fixed;
+  top:calc(var(--nb)+var(--tb));
+  bottom:var(--sb);left:0;right:0;
+  display:grid;
+  grid-template-columns:var(--lp) 1fr var(--rp);
+  overflow:hidden;
+}
+
+/* ═══════════════════════════════════════════════════════
+   LEFT PANEL
+═══════════════════════════════════════════════════════ */
+#leftPanel{
+  background:var(--panel);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.lp-header{
+  padding:10px 14px 8px;border-bottom:1px solid var(--border);flex-shrink:0;
+  display:flex;align-items:center;gap:7px;
+}
+.lp-header-ico{
+  width:24px;height:24px;border-radius:6px;
+  background:rgba(22,163,74,.15);border:1px solid rgba(22,163,74,.25);
+  display:flex;align-items:center;justify-content:center;font-size:.72rem;color:var(--g5);
+}
+.lp-header h3{font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--g5);}
+.lp-scroll{flex:1;overflow-y:auto;padding-bottom:10px;}
+
+/* Section collapsible */
+.lp-section{border-bottom:1px solid var(--border);}
+.lp-sec-hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 14px;cursor:pointer;user-select:none;
+  background:rgba(255,255,255,.015);transition:background .15s;
+  gap:8px;
+}
+.lp-sec-hdr:hover{background:rgba(255,255,255,.04);}
+.lp-sec-title{
+  font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:.9px;
+  color:rgba(167,139,250,.8);display:flex;align-items:center;gap:6px;flex:1;
+}
+.lp-sec-title i{font-size:.62rem;}
+.lp-sec-chev{color:var(--muted);font-size:.58rem;transition:transform .2s;flex-shrink:0;}
+.lp-sec-chev.open{transform:rotate(180deg);}
+.lp-sec-body{padding:10px 14px 12px;display:flex;flex-direction:column;gap:9px;}
+.lp-sec-body.hidden{display:none;}
+
+/* Form controls */
+.lp-field{display:flex;flex-direction:column;gap:4px;}
+.lp-field-row{display:flex;gap:7px;}
+.lp-field-row .lp-field{flex:1;}
+.lp-label{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted2);}
+.lp-inp{
+  width:100%;padding:6px 9px;
+  background:rgba(255,255,255,.055);
+  border:1px solid var(--border2);border-radius:6px;
+  color:var(--text);font-family:'Inter',sans-serif;font-size:.73rem;outline:none;
+  transition:border-color .15s,background .15s;
+}
+.lp-inp:focus{border-color:rgba(124,58,237,.5);background:rgba(255,255,255,.07);}
+.lp-inp option{background:#1c2028;}
+.lp-inp::placeholder{color:var(--muted);}
+.lp-inp[type="number"]{width:60px;flex-shrink:0;}
+.lp-textarea{
+  width:100%;padding:7px 9px;background:rgba(255,255,255,.055);
+  border:1px solid var(--border2);border-radius:6px;
+  color:var(--text);font-family:'Inter',sans-serif;font-size:.73rem;outline:none;
+  resize:none;line-height:1.5;transition:border-color .15s;
+}
+.lp-textarea:focus{border-color:rgba(124,58,237,.5);}
+.lp-btn{
+  width:100%;padding:7px 12px;border-radius:7px;
+  font-family:'Inter',sans-serif;font-size:.73rem;font-weight:700;
+  cursor:pointer;border:none;transition:all .15s;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.lp-btn-primary{
+  background:rgba(22,163,74,.15);border:1px solid rgba(22,163,74,.3);color:var(--g5);
+}
+.lp-btn-primary:hover{background:rgba(22,163,74,.28);border-color:rgba(22,163,74,.5);}
+.lp-btn-ghost{
+  background:rgba(255,255,255,.04);border:1px solid var(--border2);color:var(--muted3);
+}
+.lp-btn-ghost:hover{background:rgba(255,255,255,.09);color:var(--text);}
+.lp-helper{font-size:.62rem;color:var(--muted);line-height:1.5;}
+
+/* Orientation toggle */
+.orient-row{display:flex;gap:5px;}
+.orient-btn{
+  flex:1;padding:6px 4px;border:1px solid var(--border2);border-radius:6px;
+  background:rgba(255,255,255,.03);cursor:pointer;transition:all .15s;
+  display:flex;align-items:center;justify-content:center;gap:4px;
+  font-size:.65rem;font-weight:600;color:var(--muted2);font-family:'Inter',sans-serif;
+}
+.orient-btn:hover{background:rgba(255,255,255,.07);color:var(--text);}
+.orient-btn.active{background:rgba(22,163,74,.13);border-color:rgba(22,163,74,.3);color:var(--g5);}
+.orient-btn i{font-size:.68rem;}
+
+/* Color picker row */
+.color-row{display:flex;align-items:center;gap:7px;}
+.color-display{
+  width:28px;height:24px;border-radius:5px;cursor:pointer;
+  border:1px solid rgba(255,255,255,.12);flex-shrink:0;transition:transform .12s;
+}
+.color-display:hover{transform:scale(1.1);}
+.color-txt{font-size:.68rem;color:var(--muted3);}
+
+/* Slider */
+.slider-row{display:flex;align-items:center;gap:8px;}
+.lp-slider{
+  flex:1;-webkit-appearance:none;height:3px;border-radius:2px;
+  background:rgba(255,255,255,.1);outline:none;cursor:pointer;
+}
+.lp-slider::-webkit-slider-thumb{
+  -webkit-appearance:none;width:13px;height:13px;border-radius:50%;
+  background:var(--g5);cursor:pointer;border:2px solid rgba(255,255,255,.9);
+  box-shadow:0 0 0 2px rgba(34,197,94,.25);
+}
+.slider-val{font-size:.65rem;font-weight:700;color:var(--g5);min-width:34px;text-align:right;flex-shrink:0;}
+
+/* Toggle */
+.toggle-row{display:flex;align-items:center;gap:8px;}
+.toggle-row label{font-size:.7rem;color:var(--muted3);flex:1;cursor:pointer;}
+.sw{
+  width:30px;height:17px;border-radius:17px;
+  background:rgba(255,255,255,.1);
+  position:relative;cursor:pointer;flex-shrink:0;
+  border:1px solid rgba(255,255,255,.08);transition:background .2s;
+}
+.sw.on{background:var(--g4);border-color:rgba(34,197,94,.4);}
+.sw::after{
+  content:'';position:absolute;top:2px;left:2px;
+  width:11px;height:11px;border-radius:50%;background:#fff;
+  transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.4);
+}
+.sw.on::after{transform:translateX(13px);}
+
+/* Layer vis row */
+.layer-vis-row{
+  display:flex;align-items:center;gap:7px;padding:5px 0;
+  border-bottom:1px solid rgba(255,255,255,.03);
+}
+.layer-vis-row:last-child{border-bottom:none;}
+.layer-dot{width:11px;height:11px;border-radius:3px;flex-shrink:0;border:1px solid rgba(255,255,255,.12);}
+.layer-vis-name{font-size:.69rem;color:var(--text);flex:1;}
+.layer-vis-eye{
+  background:none;border:none;color:var(--muted);font-size:.68rem;
+  cursor:pointer;padding:2px 4px;border-radius:3px;transition:color .12s;
+}
+.layer-vis-eye:hover{color:var(--text);}
+.layer-vis-eye.hidden-eye{color:rgba(255,255,255,.18);}
+
+/* Font selector row */
+.font-row{display:flex;gap:5px;}
+.font-btn{
+  flex:1;padding:5px;border:1px solid var(--border2);border-radius:5px;
+  background:rgba(255,255,255,.03);cursor:pointer;transition:all .13s;
+  font-size:.65rem;font-weight:600;color:var(--muted2);font-family:'Inter',sans-serif;
+  display:flex;align-items:center;justify-content:center;gap:3px;
+}
+.font-btn:hover{background:rgba(255,255,255,.07);color:var(--text);}
+.font-btn.active{background:rgba(124,58,237,.13);border-color:rgba(124,58,237,.3);color:var(--accent3);}
+
+/* ═══════════════════════════════════════════════════════
+   CENTER CANVAS AREA
+═══════════════════════════════════════════════════════ */
+#canvasArea{
+  background:repeating-linear-gradient(
+    0deg, rgba(255,255,255,.012) 0px, rgba(255,255,255,.012) 1px, transparent 1px, transparent 20px
+  ),
+  repeating-linear-gradient(
+    90deg, rgba(255,255,255,.012) 0px, rgba(255,255,255,.012) 1px, transparent 1px, transparent 20px
+  ),
+  #0a0e17;
+  display:flex;align-items:flex-start;justify-content:center;
+  overflow:auto;padding:32px 24px 48px;
+  position:relative;
+}
+#canvasArea::-webkit-scrollbar{width:8px;height:8px;}
+#canvasArea::-webkit-scrollbar-track{background:#0a0e17;}
+#canvasArea::-webkit-scrollbar-thumb{background:#1e2535;border-radius:4px;}
+
+/* Canvas zoom label */
+#canvasZoomBadge{
+  position:absolute;bottom:8px;left:50%;transform:translateX(-50%);
+  background:rgba(0,0,0,.55);border:1px solid var(--border2);border-radius:5px;
+  padding:3px 10px;font-size:.62rem;font-weight:600;color:var(--muted3);
+  pointer-events:none;z-index:10;
+}
+
+/* THE WHITE A4 LAYOUT PAGE */
+#layoutPage{
+  background:#fff;
+  width:842px;height:595px;
+  position:relative;
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,.15),
+    0 8px 40px rgba(0,0,0,.55),
+    0 24px 80px rgba(0,0,0,.35);
+  flex-shrink:0;
+  transform-origin:top center;
+  transition:width .3s ease, height .3s ease;
+  overflow:hidden;
+}
+/* Outer border ring */
+#layoutPage::after{
+  content:'';position:absolute;inset:0;
+  border:1px solid #ccc;pointer-events:none;z-index:100;
+}
+/* Inner border ring */
+#layoutPage::before{
+  content:'';position:absolute;inset:7px;
+  border:0.5px solid #ddd;pointer-events:none;z-index:100;
+}
+
+/* ── Grid coordinate labels ── */
+.grid-label-lon{
+  position:absolute;font-size:7.5px;font-weight:500;
+  color:#666;font-family:'Courier New',monospace;pointer-events:none;
+  z-index:12;transform:translateX(-50%);
+}
+.grid-label-lat{
+  position:absolute;font-size:7.5px;font-weight:500;
+  color:#666;font-family:'Courier New',monospace;pointer-events:none;z-index:12;
+}
+
+/* ── MAP FRAME ── */
+#mapFrame{
+  position:absolute;left:26px;top:62px;
+  width:540px;height:502px;
+  border:1.5px solid #444;overflow:hidden;
+  cursor:move;user-select:none;
+}
+#mapFrame.no-border{border:none;}
+
+/* Coordinate grid lines */
+#mapGridSvg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:8;}
+
+/* Zambia SVG map */
+#zambiaSvg{position:absolute;inset:0;width:100%;height:100%;}
+
+/* ── Province fills ── */
+.prov-central    {fill:#fde8ba;}
+.prov-copperbelt {fill:#b8ddb8;}
+.prov-eastern    {fill:#fad4b2;}
+.prov-luapula    {fill:#b8d0ee;}
+.prov-lusaka     {fill:#f0b8cc;}
+.prov-muchinga   {fill:#ccddb0;}
+.prov-northern   {fill:#d8caee;}
+.prov-nwestern   {fill:#feeabf;}
+.prov-southern   {fill:#eadcc8;}
+.prov-western    {fill:#c0eeee;}
+.prov-stroke     {stroke:#888;stroke-width:0.7;}
+.dist-lines      {stroke:#ccc;stroke-width:0.3;fill:none;}
+
+/* ── TITLE BLOCK ── */
+#titleBlock{
+  position:absolute;left:26px;top:10px;
+  width:790px;height:50px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  cursor:move;z-index:30;
+}
+.map-title{
+  font-size:20px;font-weight:800;color:#1a5233;
+  letter-spacing:1.2px;text-align:center;font-family:'Inter',sans-serif;
+  text-transform:uppercase;line-height:1.2;
+}
+.map-subtitle{
+  font-size:9.5px;font-weight:400;color:#666;font-style:italic;
+  text-align:center;margin-top:3px;font-family:'Inter',sans-serif;
+}
+
+/* ── NORTH ARROW ── */
+#northArrowEl{
+  position:absolute;right:192px;top:74px;
+  width:54px;height:76px;cursor:move;z-index:30;
+}
+
+/* ── SCALE BAR ── */
+#scaleBarEl{
+  position:absolute;right:160px;bottom:40px;
+  width:210px;cursor:move;z-index:30;
+}
+.sb-inner{display:flex;flex-direction:column;align-items:center;}
+.sb-title{font-size:8px;font-weight:700;color:#333;margin-bottom:3px;letter-spacing:.5px;font-family:'Inter',sans-serif;}
+.sb-track{display:flex;width:190px;height:10px;border:1px solid #555;overflow:hidden;}
+.sb-seg{flex:1;height:100%;}
+.sb-labels{display:flex;justify-content:space-between;width:190px;margin-top:2px;}
+.sb-labels span{font-size:7px;color:#444;font-family:'Courier New',monospace;}
+
+/* ── LEGEND ── */
+#legendEl{
+  position:absolute;right:8px;top:62px;
+  width:162px;background:#fff;border:1px solid #aaa;
+  padding:9px 10px;cursor:move;z-index:30;
+}
+.leg-title{
+  font-size:9px;font-weight:800;color:#222;text-transform:uppercase;
+  letter-spacing:.6px;margin-bottom:7px;padding-bottom:5px;border-bottom:1px solid #ddd;
+  font-family:'Inter',sans-serif;
+}
+.leg-item{display:flex;align-items:center;gap:6px;margin-bottom:4px;}
+.leg-swatch{width:14px;height:9px;flex-shrink:0;border:0.5px solid rgba(0,0,0,.2);}
+.leg-label{font-size:7.5px;color:#333;font-family:'Inter',sans-serif;}
+.leg-sub{font-size:8px;font-weight:800;color:#444;text-transform:uppercase;letter-spacing:.4px;margin:6px 0 4px;font-family:'Inter',sans-serif;}
+
+/* ── FOOTER METADATA ── */
+#footerMeta{
+  position:absolute;right:8px;bottom:8px;
+  width:192px;background:#fff;border:0.5px solid #bbb;
+  padding:6px 9px;cursor:move;z-index:30;
+}
+.meta-row{font-size:7px;color:#555;margin-bottom:2px;font-family:'Courier New',monospace;line-height:1.6;}
+.meta-row:last-child{margin-bottom:0;}
+.meta-key{color:#999;font-weight:600;}
+
+/* ── Element selection ── */
+.layout-element:hover{outline:1px dashed rgba(255,255,255,.15);}
+.el-selected{outline:2px dashed rgba(124,58,237,.8)!important;outline-offset:1px;}
+.resize-handle{
+  position:absolute;width:8px;height:8px;
+  background:var(--accent2);border:1.5px solid #fff;border-radius:2px;z-index:300;
+}
+.rh-br{bottom:-4px;right:-4px;cursor:nwse-resize;}
+.rh-tr{top:-4px;right:-4px;cursor:nesw-resize;}
+.rh-bl{bottom:-4px;left:-4px;cursor:nesw-resize;}
+.rh-tl{top:-4px;left:-4px;cursor:nwse-resize;}
+.rh-r{top:50%;right:-4px;transform:translateY(-50%);cursor:ew-resize;}
+.rh-b{bottom:-4px;left:50%;transform:translateX(-50%);cursor:ns-resize;}
+
+/* ═══════════════════════════════════════════════════════
+   RIGHT PANEL — TEMPLATES
+═══════════════════════════════════════════════════════ */
+#rightPanel{
+  background:var(--panel);border-left:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.rp-header{
+  padding:10px 13px 8px;border-bottom:1px solid var(--border);flex-shrink:0;
+  display:flex;align-items:center;gap:7px;
+}
+.rp-header-ico{
+  width:24px;height:24px;border-radius:6px;
+  background:rgba(124,58,237,.15);border:1px solid rgba(124,58,237,.25);
+  display:flex;align-items:center;justify-content:center;font-size:.72rem;color:var(--accent3);
+}
+.rp-header h3{font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--accent3);}
+.rp-scroll{flex:1;overflow-y:auto;padding:10px 10px 8px;}
+.tpl-card{
+  display:flex;gap:10px;padding:9px 10px;border-radius:9px;
+  border:1.5px solid var(--border2);background:rgba(255,255,255,.025);
+  cursor:pointer;transition:all .15s;margin-bottom:7px;position:relative;
+}
+.tpl-card:hover{background:rgba(255,255,255,.055);border-color:var(--border);}
+.tpl-card.active{border-color:var(--accent2);background:rgba(124,58,237,.1);}
+.tpl-card.active .tpl-check{display:flex;}
+.tpl-check{
+  position:absolute;top:-6px;right:-6px;
+  width:17px;height:17px;border-radius:50%;
+  background:var(--accent);display:none;
+  align-items:center;justify-content:center;font-size:.52rem;color:#fff;
+}
+.tpl-thumb{
+  width:54px;height:42px;border-radius:5px;flex-shrink:0;
+  border:1px solid rgba(255,255,255,.08);overflow:hidden;background:#fff;
+}
+.tpl-info{}
+.tpl-name{font-size:.72rem;font-weight:700;color:var(--text);margin-bottom:2px;}
+.tpl-desc{font-size:.61rem;color:var(--muted2);line-height:1.4;}
+/* Template quick info */
+.rp-section{
+  margin-bottom:8px;border:1px solid var(--border);border-radius:8px;overflow:hidden;
+}
+.rp-sec-hdr{
+  padding:7px 11px;background:rgba(255,255,255,.02);
+  font-size:.59rem;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--muted2);
+  border-bottom:1px solid var(--border);
+}
+.rp-sec-body{padding:8px 11px;display:flex;flex-direction:column;gap:6px;}
+.rp-info-row{display:flex;justify-content:space-between;align-items:center;font-size:.65rem;}
+.rp-info-key{color:var(--muted2);}
+.rp-info-val{color:var(--text);font-weight:600;}
+.rp-save-btn{
+  width:calc(100% - 20px);margin:4px 10px 8px;padding:8px;
+  border-radius:7px;border:1px solid rgba(124,58,237,.25);
+  background:rgba(124,58,237,.12);color:var(--accent3);
+  font-family:'Inter',sans-serif;font-size:.71rem;font-weight:700;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;
+  transition:all .15s;flex-shrink:0;
+}
+.rp-save-btn:hover{background:rgba(124,58,237,.25);border-color:var(--accent2);}
+
+/* ═══════════════════════════════════════════════════════
+   STATUS BAR
+═══════════════════════════════════════════════════════ */
+#statusBar{
+  position:fixed;bottom:0;left:0;right:0;height:var(--sb);
+  background:#080b10;border-top:1px solid var(--border);
+  display:flex;align-items:center;padding:0 12px;z-index:9000;
+  font-size:.63rem;color:var(--muted);gap:0;
+}
+.sb-seg{
+  display:flex;align-items:center;gap:5px;padding:0 11px;
+  border-right:1px solid var(--border);height:100%;
+}
+.sb-seg:last-child{border-right:none;margin-left:auto;}
+.sb-seg strong{color:var(--muted3);}
+.sb-seg i{font-size:.58rem;}
+.sb-dot{
+  width:7px;height:7px;border-radius:50%;background:var(--g5);
+  box-shadow:0 0 4px var(--g5);flex-shrink:0;
+  animation:pulse 2s infinite;
+}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+.zoom-controls{display:flex;align-items:center;gap:4px;}
+.z-btn{
+  width:20px;height:20px;border:1px solid var(--border2);border-radius:4px;
+  background:rgba(255,255,255,.04);color:var(--muted3);font-size:.68rem;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;
+}
+.z-btn:hover{background:rgba(255,255,255,.1);color:var(--text);}
+#zoomPctDisp{font-size:.67rem;font-weight:700;color:var(--text);min-width:36px;text-align:center;}
+.fit-btn{
+  display:flex;align-items:center;gap:5px;padding:3px 8px;
+  border:1px solid var(--border2);border-radius:5px;
+  background:rgba(255,255,255,.04);color:var(--muted3);
+  font-size:.63rem;font-weight:600;cursor:pointer;transition:all .12s;
+}
+.fit-btn:hover{background:rgba(255,255,255,.09);color:var(--text);}
+.sb-divider{width:1px;height:16px;background:var(--border);margin:0 7px;flex-shrink:0;}
+
+/* ═══════════════════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════════════════ */
+#toast{
+  position:fixed;bottom:40px;right:16px;z-index:99999;
+  padding:9px 14px;border-radius:8px;display:none;align-items:center;gap:8px;
+  font-size:.74rem;font-weight:600;backdrop-filter:blur(10px);
+  max-width:300px;pointer-events:none;
+}
+#toast.success{background:rgba(20,83,45,.96);color:#fff;border:1px solid rgba(34,197,94,.3);}
+#toast.info   {background:rgba(23,37,84,.96);color:#fff;border:1px solid rgba(96,165,250,.3);}
+#toast.warn   {background:rgba(120,53,15,.96);color:#fff;border:1px solid rgba(251,191,36,.3);}
+#toast.error  {background:rgba(127,29,29,.96);color:#fff;border:1px solid rgba(248,113,113,.3);}
+
+/* ─ Animations ─ */
+@keyframes fadeIn{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:none;}}
+
+/* ── Minimap ── */
+#minimap{
+  position:absolute;bottom:10px;right:10px;
+  width:100px;height:70px;border:1px solid rgba(255,255,255,.2);
+  border-radius:6px;background:rgba(0,0,0,.35);backdrop-filter:blur(4px);
+  overflow:hidden;pointer-events:none;z-index:50;
+  transition:opacity .2s;
+}
+#minimap canvas{width:100%;height:100%;}
+#minimap-vp{
+  position:absolute;border:1.5px solid rgba(124,58,237,.7);
+  background:rgba(124,58,237,.07);border-radius:2px;pointer-events:none;
+}
+
+/* ── Crosshair position display ── */
+#cursorPos{
+  position:fixed;bottom:36px;left:50%;transform:translateX(-50%);
+  background:rgba(8,11,16,.9);border:1px solid var(--border2);
+  border-radius:6px;padding:3px 10px;
+  font-size:.6rem;font-weight:700;color:var(--muted3);
+  font-family:'Courier New',monospace;pointer-events:none;
+  z-index:8300;display:none;
+}
+
+/* ── Print styles ── */
+@media print{
+  .nb,.workspace > #leftPanel,.workspace > #rightPanel,#toolbar,#statusBar,#toast{display:none!important;}
+  .workspace{display:block!important;top:0!important;bottom:0!important;}
+  #canvasArea{padding:0!important;background:#fff!important;overflow:visible!important;}
+  #layoutPage{
+    transform:none!important;box-shadow:none!important;
+    position:static!important;margin:0 auto;
+  }
+  .el-selected{outline:none!important;}
+  .resize-handle{display:none!important;}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════ NAVBAR ══════════════ -->
+<nav class="nb">
+  <a class="nb-brand" href="dashboard.html">
+    <div class="nb-brand-ico">🌍</div>
+    <h1>Geo<em>Hub</em></h1>
+  </a>
+  <div class="nb-divider"></div>
+  <div class="nb-links">
+    <a class="nb-lnk" href="dashboard.html"><i class="fas fa-th-large"></i>Dashboard</a>
+    <a class="nb-lnk" href="map.html"><i class="fas fa-map-marked-alt"></i>Map Viewer</a>
+    <a class="nb-lnk active" href="print-layout.html"><i class="fas fa-print"></i>Print Layout</a>
+    <a class="nb-lnk" href="analytics.html"><i class="fas fa-chart-bar"></i>Analytics</a>
+    <a class="nb-lnk" href="data.html"><i class="fas fa-cloud-upload-alt"></i>Data Upload</a>
+    <a class="nb-lnk" href="settings.html"><i class="fas fa-cog"></i>Settings</a>
+  </div>
+  <div class="nb-right">
+    <span class="nb-badge"><i class="fas fa-layer-group"></i> GIS Layout</span>
+    <!-- Color Inspector toggle -->
+    <button class="tb-icon-only" onclick="toggleColorInspector()" title="Color Inspector" style="margin-right:2px;">
+      <i class="fas fa-eye-dropper" style="color:var(--teal2);"></i>
+    </button>
+    <!-- Shortcut hints toggle -->
+    <button class="tb-icon-only" onclick="toggleShortcutHint()" title="Keyboard Shortcuts" id="shortcutBtn">
+      <i class="fas fa-keyboard"></i>
+    </button>
+    <div class="nb-av">G</div>
+    <span class="nb-uname">GeoHub</span>
+    <button class="nb-signout" onclick="window.location='index.html'">
+      <i class="fas fa-sign-out-alt"></i>Sign Out
+    </button>
+  </div>
+</nav>
+
+<!-- Keyboard shortcut hint bar -->
+<div id="shortcutHint" class="hidden">
+  <span><kbd>Ctrl+Z</kbd> Undo</span>
+  <span><kbd>Ctrl+Y</kbd> Redo</span>
+  <span><kbd>Ctrl+D</kbd> Duplicate</span>
+  <span><kbd>Del</kbd> Delete</span>
+  <span><kbd>Esc</kbd> Deselect</span>
+  <span><kbd>↑↓←→</kbd> Nudge 1px</span>
+  <span><kbd>Shift+↑↓←→</kbd> Nudge 10px</span>
+  <span><kbd>Ctrl++/-</kbd> Zoom</span>
+  <span><kbd>Ctrl+0</kbd> Fit</span>
+  <span><kbd>Ctrl+P</kbd> Print PDF</span>
+</div>
+
+<!-- Color Inspector Widget -->
+<div id="colorInspector">
+  <div class="ci-swatch" id="ciSwatch" style="background:#1a5233;"></div>
+  <div class="ci-info">
+    <div class="ci-hex" id="ciHex">#1a5233</div>
+    <div class="ci-rgb" id="ciRgb">rgb(26,82,51)</div>
+  </div>
+</div>
+
+<!-- ══════════════ TOP TOOLBAR ══════════════ -->
+<div id="toolbar">
+  <!-- Add Map Elements -->
+  <div class="tb-group">
+    <button class="tb-btn" onclick="addElement('legend')" title="Add Legend">
+      <i class="fas fa-list-ul"></i><span>Legend</span>
+    </button>
+    <button class="tb-btn" onclick="addElement('scalebar')" title="Add Scale Bar">
+      <i class="fas fa-ruler-horizontal"></i><span>Scale Bar</span>
+    </button>
+    <button class="tb-btn" onclick="addElement('north')" title="Add North Arrow">
+      <i class="fas fa-compass"></i><span>N Arrow</span>
+    </button>
+    <button class="tb-btn" onclick="addElement('text')" title="Add Text Block">
+      <i class="fas fa-font"></i><span>Add Text</span>
+    </button>
+    <button class="tb-btn" onclick="addElement('image')" title="Add Image Placeholder">
+      <i class="fas fa-image"></i><span>Image</span>
+    </button>
+    <button class="tb-btn" onclick="addElement('grid')" title="Add Coordinate Grid">
+      <i class="fas fa-border-all"></i><span>Grid</span>
+    </button>
+  </div>
+  <div class="tb-sep"></div>
+  <!-- Edit Tools -->
+  <div class="tb-group">
+    <button class="tb-btn" onclick="doUndo()" id="undoBtn" title="Undo (Ctrl+Z)">
+      <i class="fas fa-undo"></i><span>Undo</span>
+    </button>
+    <button class="tb-btn" onclick="doRedo()" id="redoBtn" title="Redo (Ctrl+Y)">
+      <i class="fas fa-redo"></i><span>Redo</span>
+    </button>
+  </div>
+  <div class="tb-sep"></div>
+  <!-- Arrange -->
+  <div class="tb-group">
+    <button class="tb-btn" onclick="duplicateSelected()" title="Duplicate (Ctrl+D)">
+      <i class="fas fa-clone"></i><span>Duplicate</span>
+    </button>
+    <button class="tb-btn danger" onclick="deleteSelected()" title="Delete (Del)">
+      <i class="fas fa-trash-alt"></i><span>Delete</span>
+    </button>
+    <button class="tb-btn" id="lockBtn" onclick="toggleLock()" title="Lock/Unlock Element">
+      <i class="fas fa-lock-open"></i><span>Lock</span>
+    </button>
+  </div>
+  <div class="tb-sep"></div>
+  <!-- View -->
+  <div class="tb-group">
+    <button class="tb-btn" onclick="previewLayout()" title="Preview Clean Layout">
+      <i class="fas fa-eye"></i><span>Preview</span>
+    </button>
+    <button class="tb-btn" onclick="refreshMap()" title="Refresh Map from Canvas">
+      <i class="fas fa-sync-alt"></i><span>Refresh</span>
+    </button>
+  </div>
+  <!-- Export (right side) -->
+  <div class="tb-export-wrap">
+    <div class="tb-export-split">
+      <button class="tb-exp-main" onclick="exportPDF()">
+        <i class="fas fa-file-export"></i>Export
+      </button>
+      <div class="tb-exp-divider"></div>
+      <button class="tb-exp-caret" onclick="toggleExportMenu(event)">
+        <i class="fas fa-chevron-down"></i>
+      </button>
+    </div>
+    <div class="tb-exp-dropdown" id="exportMenu">
+      <div class="tb-exp-item" onclick="exportPDF()">
+        <i class="fas fa-file-pdf" style="color:#f87171;"></i><span>Export as PDF</span>
+      </div>
+      <div class="tb-exp-item" onclick="exportPNG()">
+        <i class="fas fa-image" style="color:#60a5fa;"></i><span>Export as PNG (High-res)</span>
+      </div>
+      <div class="tb-exp-item" onclick="exportJPEG()">
+        <i class="fas fa-file-image" style="color:#fbbf24;"></i><span>Export as JPEG</span>
+      </div>
+      <div class="tb-exp-item" onclick="printLayout()">
+        <i class="fas fa-print" style="color:#a78bfa;"></i><span>Print…</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ WORKSPACE ══════════════ -->
+<div class="workspace">
+
+  <!-- ── LEFT PANEL ── -->
+  <aside id="leftPanel">
+    <div class="lp-header">
+      <div class="lp-header-ico"><i class="fas fa-sliders-h"></i></div>
+      <h3>Layout Properties</h3>
+    </div>
+    <div class="lp-scroll">
+
+      <!-- SOURCE MAP -->
+      <div class="lp-section">
+        <div class="lp-sec-hdr" onclick="toggleSection('srcMap',this)">
+          <div class="lp-sec-title"><i class="fas fa-map"></i>Source Map</div>
+          <i class="fas fa-chevron-down lp-sec-chev open" id="chevSrcMap"></i>
+        </div>
+        <div class="lp-sec-body" id="srcMap">
+          <!-- Map Viewer Sync Banner -->
+          <div id="mapSyncBanner" style="background:rgba(22,163,74,.1);border:1px solid rgba(22,163,74,.25);
+            border-radius:7px;padding:7px 9px;margin-bottom:8px;display:none;">
+            <div style="font-size:.6rem;font-weight:800;color:var(--g5);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">
+              <i class="fas fa-check-circle"></i> Synced from Map Viewer
+            </div>
+            <div id="mapSyncInfo" style="font-size:.62rem;color:var(--muted3);line-height:1.5;"></div>
+          </div>
+          <div style="display:flex;gap:5px;">
+            <button class="lp-btn lp-btn-primary" style="flex:1;" onclick="openMapViewer()">
+              <i class="fas fa-external-link-alt"></i>Open Map Viewer
+            </button>
+            <button class="lp-btn" style="flex:1;background:rgba(22,163,74,.15);border-color:rgba(22,163,74,.35);color:var(--g5);font-weight:700;" onclick="captureExtentFromMapViewer()" title="Load last map state from Map Viewer">
+              <i class="fas fa-sync-alt"></i>Sync State
+            </button>
+          </div>
+          <p class="lp-helper" style="margin-top:4px;">Open Map Viewer, navigate to your area, then click <strong style="color:var(--g5);">Sync State</strong> to pull the extent, zoom &amp; basemap.</p>
+          <div class="lp-field">
+            <label class="lp-label">Captured Extent</label>
+            <input class="lp-inp" type="text" id="extentInput" placeholder="-13.13, 27.85, 6" style="font-family:'Courier New',monospace;font-size:.65rem;"/>
+          </div>
+          <div class="lp-field-row">
+            <div class="lp-field">
+              <label class="lp-label">Centre Lat</label>
+              <input class="lp-inp" type="number" id="extLat" placeholder="-13.13" step="0.0001"/>
+            </div>
+            <div class="lp-field">
+              <label class="lp-label">Centre Lng</label>
+              <input class="lp-inp" type="number" id="extLng" placeholder="27.85" step="0.0001"/>
+            </div>
+          </div>
+          <div class="lp-field">
+            <label class="lp-label">Zoom Level</label>
+            <div class="slider-row">
+              <input class="lp-slider" type="range" min="3" max="14" value="6" id="extZoom" oninput="document.getElementById('extZoomVal').textContent=this.value"/>
+              <span class="slider-val" id="extZoomVal">6</span>
+            </div>
+          </div>
+          <button class="lp-btn lp-btn-ghost" onclick="captureExtent()">
+            <i class="fas fa-crosshairs"></i>Capture / Apply Extent
+          </button>
+          <div class="toggle-row">
+            <div class="sw on" id="liveLink" onclick="toggleLiveLink(this)"></div>
+            <label>Live Link to Canvas</label>
+          </div>
+          <div class="toggle-row">
+            <div class="sw" id="extentLock" onclick="toggleExtentLock(this)"></div>
+            <label>Lock Extent</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE SETTINGS -->
+      <div class="lp-section">
+        <div class="lp-sec-hdr" onclick="toggleSection('pageSettings',this)">
+          <div class="lp-sec-title"><i class="fas fa-file-alt"></i>Page Settings</div>
+          <i class="fas fa-chevron-down lp-sec-chev open" id="chevPageSettings"></i>
+        </div>
+        <div class="lp-sec-body" id="pageSettings">
+          <div class="lp-field">
+            <label class="lp-label">Format</label>
+            <select class="lp-inp" id="pageFormat" onchange="applyPageFormat()">
+              <option value="a4l" selected>A4 Landscape (842×595)</option>
+              <option value="a4p">A4 Portrait (595×842)</option>
+              <option value="a3l">A3 Landscape (1191×842)</option>
+              <option value="a3p">A3 Portrait (842×1191)</option>
+              <option value="letter">Letter Landscape (816×612)</option>
+              <option value="custom">Custom…</option>
+            </select>
+          </div>
+          <div class="lp-field">
+            <label class="lp-label">Orientation</label>
+            <div class="orient-row">
+              <button class="orient-btn active" id="orientL" onclick="setOrientation('landscape',this)">
+                <i class="fas fa-file" style="transform:rotate(90deg);"></i>Landscape
+              </button>
+              <button class="orient-btn" id="orientP" onclick="setOrientation('portrait',this)">
+                <i class="fas fa-file"></i>Portrait
+              </button>
+            </div>
+          </div>
+          <div class="lp-field">
+            <label class="lp-label">Background</label>
+            <div class="color-row">
+              <div class="color-display" id="bgColorDisplay" style="background:#fff;border:1px solid #aaa;"
+                onclick="triggerColorPick('bgColorInp')"></div>
+              <input type="color" id="bgColorInp" value="#ffffff" style="opacity:0;width:0;height:0;position:absolute;"
+                oninput="setBgColor(this.value)"/>
+              <span class="color-txt" id="bgColorTxt">#ffffff</span>
+              <button class="lp-btn lp-btn-ghost" style="width:auto;padding:3px 8px;font-size:.62rem;flex-shrink:0;"
+                onclick="setBgColor('#f5f5f0');document.getElementById('bgColorInp').value='#f5f5f0'">Cream</button>
+            </div>
+          </div>
+          <div class="lp-field">
+            <label class="lp-label">Margin</label>
+            <div class="slider-row">
+              <input class="lp-slider" type="range" min="0" max="40" value="20" id="marginSlider"
+                oninput="setMargin(this.value)"/>
+              <span class="slider-val" id="marginVal">20mm</span>
+            </div>
+          </div>
+          <div class="lp-field">
+            <label class="lp-label">Resolution</label>
+            <select class="lp-inp" id="resSelect" onchange="updateResolution()">
+              <option value="72">72 DPI (Screen)</option>
+              <option value="150">150 DPI (Web)</option>
+              <option value="300" selected>300 DPI (Print)</option>
+              <option value="600">600 DPI (High Quality)</option>
+            </select>
+          </div>
+          <div class="lp-field">
+            <label class="lp-label">Map Colour Theme</label>
+            <div class="map-theme-grid">
+              <div class="theme-swatch active" style="background:linear-gradient(135deg,#c8e0c0,#b8d0ee)" title="Natural" onclick="applyMapTheme('natural',this)">NAT</div>
+              <div class="theme-swatch" style="background:linear-gradient(135deg,#fde8ba,#f0b8cc)" title="Pastel" onclick="applyMapTheme('pastel',this)">PAS</div>
+              <div class="theme-swatch" style="background:linear-gradient(135deg,#1a2a3a,#2a4a3a)" title="Dark" onclick="applyMapTheme('dark',this)" style2="color:rgba(255,255,255,.7)">DRK</div>
+              <div class="theme-swatch" style="background:linear-gradient(135deg,#fff8e8,#e8f4e8)" title="Mono" onclick="applyMapTheme('mono',this)">MNO</div>
+            </div>
+          </div>
+          <div class="toggle-row">
+            <div class="sw" id="snapToggle" onclick="toggleSnap(this)"></div>
+            <label>Snap to Grid (8 px)</label>
+          </div>
+          <div class="toggle-row">
+            <div class="sw" id="rulersToggle" onclick="toggleRulers(this)"></div>
+            <label>Show Rulers</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- TITLE SETTINGS -->
+      <div class="lp-section">
+        <div class="lp-sec-hdr" onclick="toggleSection('titleSec',this)">
+          <div class="lp-sec-title"><i class="fas fa-heading"></i>Title Settings</div>
+          <i class="fas fa-chevron-down lp-sec-chev open" id="chevTitleSec"></i>
+        </div>
+        <div class="lp-sec-body" id="titleSec">
+          <div class="lp-field">
+            <label class="lp-label">Title</label>
+            <input class="lp-inp" type="text" id="titleText" value="ZAMBIA ADMINISTRATIVE MAP" oninput="updateTitle()"/>
+          </div>
+          <div class="lp-field">
+            <label class="lp-label">Subtitle</label>
+            <input class="lp-inp" type="text" id="subtitleText" value="Showing Provinces and Districts" oninput="updateTitle()"/>
+          </div>
+          <div class="lp-field-row">
+            <div class="lp-field">
+              <label class="lp-label">Font Size</label>
+              <div class="slider-row">
+                <input class="lp-slider" type="range" min="10" max="48" value="20" id="titleSizeSlider"
+                  oninput="updateTitleSize(this.value)"/>
+                <span class="slider-val" id="titleSizeVal">20px</span>
+              </div>
+            </div>
+          </div>
+          <div class="lp-field">
+            <label class="lp-label">Title Color</label>
+            <div class="color-row">
+              <div class="color-display" id="titleColorDisplay" style="background:#1a5233;"
+                onclick="triggerColorPick('titleColorInp')"></div>
+              <input type="color" id="titleColorInp" value="#1a5233" style="opacity:0;width:0;height:0;position:absolute;"
+                oninput="setTitleColor(this.value)"/>
+              <span class="color-txt" id="titleColorTxt">#1a5233</span>
+            </div>
+          </div>
+          <div class="lp-field">
+            <label class="lp-label">Alignment</label>
+            <div class="font-row">
+              <button class="font-btn active" id="alignC" onclick="setTitleAlign('center',this)"><i class="fas fa-align-center"></i>Center</button>
+              <button class="font-btn" id="alignL" onclick="setTitleAlign('left',this)"><i class="fas fa-align-left"></i>Left</button>
+              <button class="font-btn" id="alignR" onclick="setTitleAlign('right',this)"><i class="fas fa-align-right"></i>Right</button>
+            </div>
+          </div>
+          <div class="toggle-row">
+            <div class="sw on" id="titleVisToggle" onclick="toggleTitleVis(this)"></div>
+            <label>Show Title Block</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- NORTH ARROW STYLES -->
+      <div class="lp-section">
+        <div class="lp-sec-hdr" onclick="toggleSection('northSec',this)">
+          <div class="lp-sec-title"><i class="fas fa-compass"></i>North Arrow Style</div>
+          <i class="fas fa-chevron-down lp-sec-chev" id="chevNorthSec"></i>
+        </div>
+        <div class="lp-sec-body hidden" id="northSec">
+          <div class="na-style-grid">
+            <div class="na-opt active" id="naOpt0" onclick="setNorthArrowStyle(0,this)" title="Classic circle">
+              <svg viewBox="0 0 28 28"><circle cx="14" cy="14" r="12" fill="white" stroke="#555" stroke-width="0.8"/><polygon points="14,4 16.5,14 14,11.5 11.5,14" fill="#1a1a1a"/><polygon points="14,24 16.5,14 14,16.5 11.5,14" fill="#bbb"/><text x="14" y="4" text-anchor="middle" font-size="5" font-weight="900" fill="#1a1a1a" font-family="sans-serif">N</text></svg>
+            </div>
+            <div class="na-opt" id="naOpt1" onclick="setNorthArrowStyle(1,this)" title="Modern arrow">
+              <svg viewBox="0 0 28 28"><polygon points="14,3 18,18 14,15 10,18" fill="#1a5233"/><polygon points="14,25 18,10 14,13 10,10" fill="#ccc"/><text x="14" y="3.5" text-anchor="middle" font-size="5" font-weight="900" fill="#1a5233" font-family="sans-serif">N</text></svg>
+            </div>
+            <div class="na-opt" id="naOpt2" onclick="setNorthArrowStyle(2,this)" title="Star / fleur-de-lis">
+              <svg viewBox="0 0 28 28"><polygon points="14,3 15.5,12 14,11 12.5,12" fill="#333"/><polygon points="14,25 15.5,16 14,17 12.5,16" fill="#aaa"/><polygon points="3,14 12,12.5 11,14 12,15.5" fill="#999"/><polygon points="25,14 16,12.5 17,14 16,15.5" fill="#999"/><circle cx="14" cy="14" r="2" fill="#333"/><text x="14" y="3" text-anchor="middle" font-size="5" font-weight="900" fill="#333" font-family="sans-serif">N</text></svg>
+            </div>
+            <div class="na-opt" id="naOpt3" onclick="setNorthArrowStyle(3,this)" title="Simple arrow">
+              <svg viewBox="0 0 28 28"><path d="M14 4 L18 20 L14 17 L10 20 Z" fill="#222"/><text x="14" y="4" text-anchor="middle" font-size="5.5" font-weight="900" fill="#222" font-family="sans-serif">N</text><line x1="14" y1="14" x2="14" y2="25" stroke="#999" stroke-width="0.8"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MAP FRAME -->
+      <div class="lp-section">
+        <div class="lp-sec-hdr" onclick="toggleSection('mapFrameSec',this)">
+          <div class="lp-sec-title"><i class="fas fa-vector-square"></i>Map Frame</div>
+          <i class="fas fa-chevron-down lp-sec-chev open" id="chevMapFrameSec"></i>
+        </div>
+        <div class="lp-sec-body" id="mapFrameSec">
+          <div class="lp-field">
+            <label class="lp-label">Position Preset</label>
+            <select class="lp-inp" id="mapPosition" onchange="setMapPosition(this.value)">
+              <option value="centered">Centered (default)</option>
+              <option value="left">Left-aligned</option>
+              <option value="fullbleed">Full-bleed</option>
+              <option value="custom">Custom (drag to position)</option>
+            </select>
+          </div>
+          <div class="lp-field">
+            <label class="lp-label">Map Size</label>
+            <div class="slider-row">
+              <input class="lp-slider" type="range" min="40" max="100" value="80" id="mapSizeSlider"
+                oninput="setMapSize(this.value)"/>
+              <span class="slider-val" id="mapSizeVal">80%</span>
+            </div>
+          </div>
+          <div class="lp-field">
+            <label class="lp-label">Scale Reference</label>
+            <input class="lp-inp" type="text" id="mapScaleRef" value="1:5,000,000"
+              oninput="updateFooterMeta()"/>
+          </div>
+          <div class="toggle-row">
+            <div class="sw on" id="gridToggle" onclick="toggleGrid(this)"></div>
+            <label>Show Coordinate Grid</label>
+          </div>
+          <div class="toggle-row">
+            <div class="sw on" id="frameToggle" onclick="toggleMapBorder(this)"></div>
+            <label>Show Frame Border</label>
+          </div>
+          <div class="toggle-row">
+            <div class="sw on" id="labelsToggle" onclick="toggleGridLabels(this)"></div>
+            <label>Show Grid Labels</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- EXPORT SETTINGS -->
+      <div class="lp-section">
+        <div class="lp-sec-hdr" onclick="toggleSection('exportSec',this)">
+          <div class="lp-sec-title"><i class="fas fa-file-export"></i>Export Options</div>
+          <i class="fas fa-chevron-down lp-sec-chev" id="chevExportSec"></i>
+        </div>
+        <div class="lp-sec-body hidden" id="exportSec">
+          <div class="lp-field">
+            <label class="lp-label">File Name Prefix</label>
+            <input class="lp-inp" type="text" id="exportPrefix" value="zambia-admin-map" placeholder="my-map"/>
+          </div>
+          <div class="lp-field">
+            <label class="lp-label">PNG Scale Factor</label>
+            <div class="slider-row">
+              <input class="lp-slider" type="range" min="1" max="4" value="3" id="pngScaleSlider"
+                oninput="document.getElementById('pngScaleVal').textContent=this.value+'×'"/>
+              <span class="slider-val" id="pngScaleVal">3×</span>
+            </div>
+          </div>
+          <div class="toggle-row">
+            <div class="sw on" id="embedFontToggle" onclick="this.classList.toggle('on')"></div>
+            <label>Embed Web Fonts</label>
+          </div>
+          <div class="toggle-row">
+            <div class="sw on" id="transparentBgToggle" onclick="this.classList.toggle('on')"></div>
+            <label>White Background on Export</label>
+          </div>
+          <div class="lp-btn-row" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+            <button class="lp-btn lp-btn-primary" onclick="exportPDF()"><i class="fas fa-file-pdf"></i>PDF</button>
+            <button class="lp-btn lp-btn-primary" onclick="exportPNG()"><i class="fas fa-image"></i>PNG</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- LEGEND SETTINGS -->
+      <div class="lp-section">
+        <div class="lp-sec-hdr" onclick="toggleSection('legendSec',this)">
+          <div class="lp-sec-title"><i class="fas fa-list"></i>Legend</div>
+          <i class="fas fa-chevron-down lp-sec-chev open" id="chevLegendSec"></i>
+        </div>
+        <div class="lp-sec-body" id="legendSec">
+          <div class="toggle-row">
+            <div class="sw on" id="legendVisToggle" onclick="toggleLegendVis(this)"></div>
+            <label>Show Legend</label>
+          </div>
+          <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-top:4px;">Layer Visibility</div>
+          <div class="layer-vis-row">
+            <div class="layer-dot" style="background:#888;border-color:#ccc;"></div>
+            <span class="layer-vis-name">District Boundaries</span>
+            <button class="layer-vis-eye" onclick="toggleLayerVis(this,'distBoundary')"><i class="fas fa-eye"></i></button>
+          </div>
+          <div class="layer-vis-row">
+            <div class="layer-dot" style="background:#4a9fd4;border-color:#93c5fd;"></div>
+            <span class="layer-vis-name">Water Bodies</span>
+            <button class="layer-vis-eye" onclick="toggleLayerVis(this,'waterBodies')"><i class="fas fa-eye"></i></button>
+          </div>
+          <div class="layer-vis-row">
+            <div class="layer-dot" style="background:#a3e4a3;border-color:#4ade80;"></div>
+            <span class="layer-vis-name">Province Labels</span>
+            <button class="layer-vis-eye" onclick="toggleLayerVis(this,'provLabels')"><i class="fas fa-eye"></i></button>
+          </div>
+          <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-top:6px;">Province Fills</div>
+          <div class="layer-vis-row"><div class="layer-dot" style="background:#fde8ba;"></div><span class="layer-vis-name">Central</span><button class="layer-vis-eye" onclick="toggleLayerVis(this,'central')"><i class="fas fa-eye"></i></button></div>
+          <div class="layer-vis-row"><div class="layer-dot" style="background:#b8ddb8;"></div><span class="layer-vis-name">Copperbelt</span><button class="layer-vis-eye" onclick="toggleLayerVis(this,'copperbelt')"><i class="fas fa-eye"></i></button></div>
+          <div class="layer-vis-row"><div class="layer-dot" style="background:#fad4b2;"></div><span class="layer-vis-name">Eastern</span><button class="layer-vis-eye" onclick="toggleLayerVis(this,'eastern')"><i class="fas fa-eye"></i></button></div>
+          <div class="layer-vis-row"><div class="layer-dot" style="background:#b8d0ee;"></div><span class="layer-vis-name">Luapula</span><button class="layer-vis-eye" onclick="toggleLayerVis(this,'luapula')"><i class="fas fa-eye"></i></button></div>
+          <div class="layer-vis-row"><div class="layer-dot" style="background:#f0b8cc;"></div><span class="layer-vis-name">Lusaka</span><button class="layer-vis-eye" onclick="toggleLayerVis(this,'lusaka')"><i class="fas fa-eye"></i></button></div>
+          <div class="layer-vis-row"><div class="layer-dot" style="background:#ccddb0;"></div><span class="layer-vis-name">Muchinga</span><button class="layer-vis-eye" onclick="toggleLayerVis(this,'muchinga')"><i class="fas fa-eye"></i></button></div>
+          <div class="layer-vis-row"><div class="layer-dot" style="background:#d8caee;"></div><span class="layer-vis-name">Northern</span><button class="layer-vis-eye" onclick="toggleLayerVis(this,'northern')"><i class="fas fa-eye"></i></button></div>
+          <div class="layer-vis-row"><div class="layer-dot" style="background:#feeabf;"></div><span class="layer-vis-name">North-Western</span><button class="layer-vis-eye" onclick="toggleLayerVis(this,'nwestern')"><i class="fas fa-eye"></i></button></div>
+          <div class="layer-vis-row"><div class="layer-dot" style="background:#eadcc8;"></div><span class="layer-vis-name">Southern</span><button class="layer-vis-eye" onclick="toggleLayerVis(this,'southern')"><i class="fas fa-eye"></i></button></div>
+          <div class="layer-vis-row"><div class="layer-dot" style="background:#c0eeee;"></div><span class="layer-vis-name">Western</span><button class="layer-vis-eye" onclick="toggleLayerVis(this,'western')"><i class="fas fa-eye"></i></button></div>
+        </div>
+      </div>
+
+    </div><!-- end lp-scroll -->
+  </aside>
+
+  <!-- ── CENTER CANVAS ── -->
+  <main id="canvasArea" onclick="deselectAll(event)">
+
+    <!-- THE WHITE PRINT PAGE -->
+    <div id="layoutPage">
+
+      <!-- Coordinate grid labels — top (longitudes) -->
+      <span class="grid-label-lon" style="left:72px;top:63px;" id="glon22">22°E</span>
+      <span class="grid-label-lon" style="left:154px;top:63px;" id="glon24">24°E</span>
+      <span class="grid-label-lon" style="left:236px;top:63px;" id="glon26">26°E</span>
+      <span class="grid-label-lon" style="left:318px;top:63px;" id="glon28">28°E</span>
+      <span class="grid-label-lon" style="left:400px;top:63px;" id="glon30">30°E</span>
+      <span class="grid-label-lon" style="left:482px;top:63px;" id="glon32">32°E</span>
+      <span class="grid-label-lon" style="left:548px;top:63px;" id="glon34">34°E</span>
+
+      <!-- Lat labels — right side of map -->
+      <span class="grid-label-lat" style="left:574px;top:74px;" id="glat8">8°S</span>
+      <span class="grid-label-lat" style="left:574px;top:154px;" id="glat10">10°S</span>
+      <span class="grid-label-lat" style="left:574px;top:234px;" id="glat12">12°S</span>
+      <span class="grid-label-lat" style="left:574px;top:314px;" id="glat14">14°S</span>
+      <span class="grid-label-lat" style="left:574px;top:394px;" id="glat16">16°S</span>
+      <span class="grid-label-lat" style="left:574px;top:474px;" id="glat18">18°S</span>
+
+      <!-- Lat labels — left side of map -->
+      <span class="grid-label-lat" style="left:14px;top:74px;" id="glat8l">8°S</span>
+      <span class="grid-label-lat" style="left:12px;top:154px;" id="glat10l">10°S</span>
+      <span class="grid-label-lat" style="left:12px;top:234px;" id="glat12l">12°S</span>
+      <span class="grid-label-lat" style="left:12px;top:314px;" id="glat14l">14°S</span>
+      <span class="grid-label-lat" style="left:12px;top:394px;" id="glat16l">16°S</span>
+      <span class="grid-label-lat" style="left:12px;top:474px;" id="glat18l">18°S</span>
+
+      <!-- ── TITLE BLOCK ── -->
+      <div id="titleBlock" class="layout-element" data-el="title">
+        <div class="map-title" id="mapTitleText">ZAMBIA ADMINISTRATIVE MAP</div>
+        <div class="map-subtitle" id="mapSubtitleText">Showing Provinces and Districts · WGS 84 (EPSG:4326)</div>
+      </div>
+
+      <!-- ── MAP FRAME ── -->
+      <div id="mapFrame" class="layout-element" data-el="map">
+
+        <!-- Coordinate grid lines -->
+        <svg id="mapGridSvg" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+          <g stroke="#aaa" stroke-width="0.4" stroke-dasharray="4,5" opacity="0.5">
+            <!-- vertical — longitude lines -->
+            <line x1="15%" y1="0" x2="15%" y2="100%"/>
+            <line x1="30%" y1="0" x2="30%" y2="100%"/>
+            <line x1="45%" y1="0" x2="45%" y2="100%"/>
+            <line x1="61%" y1="0" x2="61%" y2="100%"/>
+            <line x1="76%" y1="0" x2="76%" y2="100%"/>
+            <line x1="91%" y1="0" x2="91%" y2="100%"/>
+            <!-- horizontal — latitude lines -->
+            <line x1="0" y1="16%" x2="100%" y2="16%"/>
+            <line x1="0" y1="33%" x2="100%" y2="33%"/>
+            <line x1="0" y1="50%" x2="100%" y2="50%"/>
+            <line x1="0" y1="66%" x2="100%" y2="66%"/>
+            <line x1="0" y1="83%" x2="100%" y2="83%"/>
+          </g>
+        </svg>
+
+        <!-- ══ ZAMBIA PROVINCE MAP (SVG) ══ -->
+        <svg id="zambiaSvg" viewBox="0 0 540 502" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+          <defs>
+            <filter id="provShadow" x="-5%" y="-5%" width="110%" height="110%">
+              <feDropShadow dx="0.5" dy="0.5" stdDeviation="1.2" flood-opacity="0.12"/>
+            </filter>
+          </defs>
+
+          <!-- Background — water/neighboring country tone -->
+          <rect width="540" height="502" fill="#dce8f2"/>
+
+          <!-- ══ PROVINCE POLYGONS ══ -->
+
+          <!-- North-Western Province -->
+          <polygon class="prov-nwestern prov-stroke" filter="url(#provShadow)"
+            points="28,68 98,60 122,75 118,115 108,150 100,185 88,206 72,226 54,240 36,256 20,268 18,232 22,184 26,132 28,92"/>
+          <text x="64" y="148" text-anchor="middle" font-size="8.5" font-weight="700" fill="#5a3a0a" font-family="Inter,sans-serif" class="prov-label">North-</text>
+          <text x="64" y="159" text-anchor="middle" font-size="8.5" font-weight="700" fill="#5a3a0a" font-family="Inter,sans-serif" class="prov-label">Western</text>
+
+          <!-- Copperbelt Province -->
+          <polygon class="prov-copperbelt prov-stroke" filter="url(#provShadow)"
+            points="98,60 164,54 188,68 192,104 180,134 158,148 132,143 118,115 122,75"/>
+          <text x="150" y="102" text-anchor="middle" font-size="8.5" font-weight="700" fill="#1a4a1a" font-family="Inter,sans-serif" class="prov-label">Copperbelt</text>
+
+          <!-- Luapula Province -->
+          <polygon class="prov-luapula prov-stroke" filter="url(#provShadow)"
+            points="164,54 224,47 254,62 258,94 250,128 232,148 212,158 192,148 188,118 180,94 180,68"/>
+          <text x="218" y="98" text-anchor="middle" font-size="8.5" font-weight="700" fill="#1a2a5a" font-family="Inter,sans-serif" class="prov-label">Luapula</text>
+
+          <!-- Muchinga Province -->
+          <polygon class="prov-muchinga prov-stroke" filter="url(#provShadow)"
+            points="224,47 294,40 334,52 348,84 342,124 322,148 298,158 272,152 254,138 250,104 252,72"/>
+          <text x="284" y="100" text-anchor="middle" font-size="8.5" font-weight="700" fill="#2a4a1a" font-family="Inter,sans-serif" class="prov-label">Muchinga</text>
+
+          <!-- Northern Province -->
+          <polygon class="prov-northern prov-stroke" filter="url(#provShadow)"
+            points="294,40 374,36 414,50 418,94 410,134 392,158 368,168 342,161 322,148 334,104 342,76"/>
+          <text x="363" y="98" text-anchor="middle" font-size="8.5" font-weight="700" fill="#3a1a5a" font-family="Inter,sans-serif" class="prov-label">Northern</text>
+
+          <!-- Lake Mweru -->
+          <ellipse cx="228" cy="54" rx="7" ry="13" fill="#89c4e1" stroke="#5a9fcc" stroke-width="0.7" opacity="0.85"/>
+          <!-- Lake Tanganyika arm -->
+          <ellipse cx="432" cy="62" rx="9" ry="24" fill="#89c4e1" stroke="#5a9fcc" stroke-width="0.7" opacity="0.8"/>
+          <text x="454" y="63" font-size="5.5" fill="#1a5a8a" font-style="italic" font-family="Inter,sans-serif">L.Tang.</text>
+
+          <!-- Eastern Province -->
+          <polygon class="prov-eastern prov-stroke" filter="url(#provShadow)"
+            points="374,36 432,31 472,44 512,72 520,118 512,158 492,178 462,183 442,172 418,158 412,113 418,75"/>
+          <text x="466" y="108" text-anchor="middle" font-size="8.5" font-weight="700" fill="#5a2a1a" font-family="Inter,sans-serif" class="prov-label">Eastern</text>
+
+          <!-- Central Province -->
+          <polygon class="prov-central prov-stroke" filter="url(#provShadow)"
+            points="100,185 158,148 192,148 212,158 232,148 250,138 272,152 298,158 322,148 342,161 344,202 328,238 308,261 278,271 252,263 228,258 202,268 178,271 158,263 133,252 112,243 98,224"/>
+          <text x="226" y="212" text-anchor="middle" font-size="9" font-weight="700" fill="#5a3a0a" font-family="Inter,sans-serif" class="prov-label">Central</text>
+
+          <!-- Eastern lower extension -->
+          <polygon class="prov-eastern prov-stroke" style="opacity:.8;"
+            points="342,161 368,168 392,158 418,158 442,172 462,183 492,178 502,218 498,264 478,288 452,302 424,312 398,308 372,293 352,278 342,258 340,222"/>
+
+          <!-- Western Province -->
+          <polygon class="prov-western prov-stroke" filter="url(#provShadow)"
+            points="20,268 54,240 72,226 88,206 100,224 112,243 133,252 148,302 141,342 133,378 121,408 102,428 80,438 57,432 36,418 20,398 12,368 10,328 14,298"/>
+          <text x="73" y="333" text-anchor="middle" font-size="8.5" font-weight="700" fill="#0a4a4a" font-family="Inter,sans-serif" class="prov-label">Western</text>
+
+          <!-- Lusaka Province -->
+          <polygon class="prov-lusaka prov-stroke" filter="url(#provShadow)"
+            points="252,263 278,271 298,281 303,303 288,321 265,328 248,321 238,305 241,284"/>
+          <text x="270" y="303" text-anchor="middle" font-size="7.5" font-weight="700" fill="#5a1a3a" font-family="Inter,sans-serif" class="prov-label">Lusaka</text>
+
+          <!-- Muchinga lower -->
+          <polygon class="prov-muchinga prov-stroke" style="opacity:.72;"
+            points="272,152 298,158 308,182 308,217 298,243 278,258 252,263 241,247 232,227 244,203 257,184"/>
+
+          <!-- Southern Province -->
+          <polygon class="prov-southern prov-stroke" filter="url(#provShadow)"
+            points="158,263 178,271 202,268 228,258 252,263 241,284 248,321 265,328 260,363 248,393 231,418 213,434 190,446 168,451 144,443 127,428 121,408 133,378 141,342 148,302"/>
+          <text x="198" y="378" text-anchor="middle" font-size="8.5" font-weight="700" fill="#4a2a0a" font-family="Inter,sans-serif" class="prov-label">Southern</text>
+
+          <!-- ══ RIVERS ══ -->
+          <!-- Zambezi -->
+          <path d="M 20,394 Q 60,384 102,398 Q 144,413 172,432 Q 213,452 263,458 Q 313,463 353,448 Q 392,433 422,408 Q 452,383 482,362 Q 507,342 522,314"
+            fill="none" stroke="#4a9fd4" stroke-width="2" stroke-linecap="round" opacity="0.75"/>
+          <!-- Kafue River -->
+          <path d="M 82,172 Q 112,202 142,232 Q 167,258 187,288 Q 203,313 212,342 Q 219,368 227,394"
+            fill="none" stroke="#4a9fd4" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
+          <!-- Luangwa River -->
+          <path d="M 354,62 Q 374,102 384,144 Q 392,182 403,228 Q 413,272 426,312 Q 443,353 463,382"
+            fill="none" stroke="#4a9fd4" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
+          <!-- Chambeshi -->
+          <path d="M 293,53 Q 313,72 328,98 Q 343,123 350,158"
+            fill="none" stroke="#4a9fd4" stroke-width="1.2" stroke-linecap="round" opacity="0.65"/>
+          <!-- Kafue upper -->
+          <path d="M 138,72 Q 148,88 156,108 Q 163,128 168,150"
+            fill="none" stroke="#4a9fd4" stroke-width="1" stroke-linecap="round" opacity="0.6"/>
+
+          <!-- Lake Kariba -->
+          <ellipse cx="287" cy="451" rx="48" ry="13" fill="#89c4e1" stroke="#5a9fcc" stroke-width="0.8" opacity="0.85"/>
+          <text x="287" y="455" text-anchor="middle" font-size="6.5" fill="#1a5a8a" font-style="italic" font-family="Inter,sans-serif">Lake Kariba</text>
+
+          <!-- Lake Bangweulu region -->
+          <ellipse cx="243" cy="106" rx="14" ry="8" fill="#89c4e1" stroke="#5a9fcc" stroke-width="0.6" opacity="0.75"/>
+
+          <!-- ══ DISTRICT LINES (simplified) ══ -->
+          <g class="dist-lines" id="districtLines">
+            <line x1="132" y1="82" x2="168" y2="88"/><line x1="157" y1="97" x2="180" y2="113"/>
+            <line x1="109" y1="158" x2="132" y2="168"/><line x1="99" y1="203" x2="122" y2="212"/>
+            <line x1="177" y1="168" x2="192" y2="182"/><line x1="217" y1="172" x2="232" y2="188"/>
+            <line x1="252" y1="182" x2="271" y2="198"/><line x1="297" y1="178" x2="312" y2="193"/>
+            <line x1="332" y1="173" x2="347" y2="188"/><line x1="367" y1="178" x2="382" y2="193"/>
+            <line x1="397" y1="183" x2="412" y2="203"/><line x1="442" y1="188" x2="457" y2="208"/>
+            <line x1="152" y1="218" x2="167" y2="233"/><line x1="177" y1="223" x2="192" y2="243"/>
+            <line x1="207" y1="228" x2="222" y2="248"/><line x1="237" y1="231" x2="250" y2="251"/>
+            <line x1="267" y1="233" x2="280" y2="255"/><line x1="297" y1="225" x2="310" y2="245"/>
+            <line x1="324" y1="221" x2="338" y2="241"/><line x1="352" y1="218" x2="364" y2="238"/>
+            <line x1="132" y1="278" x2="150" y2="293"/><line x1="154" y1="303" x2="170" y2="318"/>
+            <line x1="174" y1="328" x2="188" y2="348"/><line x1="192" y1="353" x2="207" y2="373"/>
+            <line x1="422" y1="228" x2="440" y2="248"/><line x1="447" y1="251" x2="464" y2="271"/>
+            <line x1="470" y1="273" x2="487" y2="293"/><line x1="474" y1="318" x2="490" y2="335"/>
+            <line x1="63" y1="258" x2="79" y2="275"/><line x1="51" y1="288" x2="69" y2="308"/>
+            <line x1="43" y1="321" x2="61" y2="341"/><line x1="39" y1="355" x2="56" y2="373"/>
+          </g>
+
+          <!-- ══ ZAMBIA BORDER OUTLINE ══ -->
+          <polygon fill="none" stroke="#444" stroke-width="1.5"
+            points="20,268 18,232 22,184 26,132 28,92 28,68 98,60 164,54 224,47 294,40 374,36 432,31 472,44 512,72 520,118 512,158 492,178 462,183 502,218 498,264 478,288 452,302 424,312 463,382 442,408 422,422 397,443 368,458 338,468 308,473 278,468 248,458 218,453 190,446 168,451 144,443 127,428 102,428 80,438 57,432 36,418 20,398 12,368 10,328 14,298"/>
+
+          <!-- Major city dots -->
+          <circle cx="265" cy="298" r="3.5" fill="#c00" stroke="#fff" stroke-width="0.8" opacity="0.9"/>
+          <text x="271" y="302" font-size="6.5" font-weight="700" fill="#880000" font-family="Inter,sans-serif">Lusaka</text>
+          <circle cx="328" cy="118" r="2.5" fill="#333" stroke="#fff" stroke-width="0.6" opacity="0.85"/>
+          <text x="333" y="121" font-size="5.5" fill="#333" font-family="Inter,sans-serif">Kasama</text>
+          <circle cx="152" cy="103" r="2.5" fill="#333" stroke="#fff" stroke-width="0.6" opacity="0.85"/>
+          <text x="157" y="106" font-size="5.5" fill="#333" font-family="Inter,sans-serif">Ndola</text>
+          <circle cx="460" cy="148" r="2.5" fill="#333" stroke="#fff" stroke-width="0.6" opacity="0.85"/>
+          <text x="465" y="151" font-size="5.5" fill="#333" font-family="Inter,sans-serif">Chipata</text>
+          <circle cx="160" cy="413" r="2.5" fill="#333" stroke="#fff" stroke-width="0.6" opacity="0.85"/>
+          <text x="165" y="416" font-size="5.5" fill="#333" font-family="Inter,sans-serif">Livingstone</text>
+
+        </svg>
+
+      </div><!-- end mapFrame -->
+
+      <!-- ── NORTH ARROW ── -->
+      <div id="northArrowEl" class="layout-element" data-el="north">
+        <svg viewBox="0 0 54 76" width="54" height="76" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="27" cy="36" r="25" fill="white" stroke="#555" stroke-width="1" filter="drop-shadow(0 1px 2px rgba(0,0,0,.2))"/>
+          <polygon points="27,11 33,36 27,30 21,36" fill="#1a1a1a"/>
+          <polygon points="27,61 33,36 27,42 21,36" fill="#bbb"/>
+          <line x1="2" y1="36" x2="52" y2="36" stroke="#888" stroke-width="0.5"/>
+          <line x1="27" y1="11" x2="27" y2="61" stroke="#888" stroke-width="0.5"/>
+          <text x="27" y="10" text-anchor="middle" font-size="10" font-weight="900" fill="#1a1a1a" font-family="Inter,sans-serif">N</text>
+          <text x="27" y="67" text-anchor="middle" font-size="6.5" fill="#888" font-family="Inter,sans-serif">S</text>
+          <text x="5" y="39" text-anchor="middle" font-size="6.5" fill="#888" font-family="Inter,sans-serif">W</text>
+          <text x="49" y="39" text-anchor="middle" font-size="6.5" fill="#888" font-family="Inter,sans-serif">E</text>
+        </svg>
+      </div>
+
+      <!-- ── SCALE BAR ── -->
+      <div id="scaleBarEl" class="layout-element" data-el="scalebar">
+        <div class="sb-inner">
+          <div class="sb-title">SCALE</div>
+          <div class="sb-track">
+            <div class="sb-seg" style="background:#fff;border-right:1px solid #555;"></div>
+            <div class="sb-seg" style="background:#555;border-right:1px solid #555;"></div>
+            <div class="sb-seg" style="background:#fff;border-right:1px solid #555;"></div>
+            <div class="sb-seg" style="background:#555;"></div>
+          </div>
+          <div class="sb-labels">
+            <span>0</span><span>125</span><span>250</span><span>375</span><span>500 km</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── LEGEND ── -->
+      <div id="legendEl" class="layout-element" data-el="legend">
+        <div class="leg-title">Legend</div>
+        <div class="leg-item">
+          <div style="width:20px;height:1.5px;background:#555;margin-right:2px;border:0.5px solid #999;"></div>
+          <span class="leg-label">District Boundary</span>
+        </div>
+        <div class="leg-item">
+          <div style="width:20px;height:2.5px;background:#4a9fd4;border-radius:1px;margin-right:2px;"></div>
+          <span class="leg-label">Water Bodies / Rivers</span>
+        </div>
+        <div class="leg-item">
+          <circle fill="#c00" style="width:8px;height:8px;margin-right:4px;" r="4" cx="4" cy="4">
+            <svg viewBox="0 0 8 8" width="10" height="10" style="vertical-align:middle;margin-right:4px;display:inline-block;"><circle cx="4" cy="4" r="3.5" fill="#c00" stroke="#fff" stroke-width="0.5"/></svg>
+          </circle>
+          <span class="leg-label">Major City</span>
+        </div>
+        <div class="leg-sub">Provinces</div>
+        <div class="leg-item"><div class="leg-swatch" style="background:#fde8ba;"></div><span class="leg-label">Central</span></div>
+        <div class="leg-item"><div class="leg-swatch" style="background:#b8ddb8;"></div><span class="leg-label">Copperbelt</span></div>
+        <div class="leg-item"><div class="leg-swatch" style="background:#fad4b2;"></div><span class="leg-label">Eastern</span></div>
+        <div class="leg-item"><div class="leg-swatch" style="background:#b8d0ee;"></div><span class="leg-label">Luapula</span></div>
+        <div class="leg-item"><div class="leg-swatch" style="background:#f0b8cc;"></div><span class="leg-label">Lusaka</span></div>
+        <div class="leg-item"><div class="leg-swatch" style="background:#ccddb0;"></div><span class="leg-label">Muchinga</span></div>
+        <div class="leg-item"><div class="leg-swatch" style="background:#d8caee;"></div><span class="leg-label">Northern</span></div>
+        <div class="leg-item"><div class="leg-swatch" style="background:#feeabf;"></div><span class="leg-label">North-Western</span></div>
+        <div class="leg-item"><div class="leg-swatch" style="background:#eadcc8;"></div><span class="leg-label">Southern</span></div>
+        <div class="leg-item"><div class="leg-swatch" style="background:#c0eeee;"></div><span class="leg-label">Western</span></div>
+      </div>
+
+      <!-- ── FOOTER METADATA ── -->
+      <div id="footerMeta" class="layout-element" data-el="footer">
+        <div class="meta-row"><span class="meta-key">CRS: </span>WGS 84 (EPSG:4326)</div>
+        <div class="meta-row"><span class="meta-key">Scale: </span><span id="footerScaleText">1:5,000,000</span></div>
+        <div class="meta-row"><span class="meta-key">Date: </span><span id="footerDateText">25 April 2026</span></div>
+        <div class="meta-row"><span class="meta-key">Author: </span>GeoHub Zambia</div>
+        <div class="meta-row"><span class="meta-key">Source: </span>NSDI / GRID3 2022</div>
+      </div>
+
+    </div><!-- end layoutPage -->
+    <div id="canvasZoomBadge">88%</div>
+  </main>
+
+  <!-- ── RIGHT PANEL ── -->
+  <aside id="rightPanel">
+    <div class="rp-header">
+      <div class="rp-header-ico"><i class="fas fa-th-large"></i></div>
+      <h3>Templates</h3>
+    </div>
+    <div class="rp-scroll">
+
+      <!-- Template cards -->
+      <div class="tpl-card active" onclick="applyTemplate('classic',this)">
+        <div class="tpl-check"><i class="fas fa-check"></i></div>
+        <div class="tpl-thumb">
+          <svg viewBox="0 0 54 42" width="54" height="42">
+            <rect width="54" height="42" fill="#f5f5f5"/>
+            <rect x="2" y="8" width="35" height="30" fill="#c8e0c0" stroke="#888" stroke-width="0.5"/>
+            <rect x="39" y="8" width="13" height="30" fill="#fff" stroke="#aaa" stroke-width="0.5"/>
+            <rect x="2" y="2" width="50" height="5" fill="#f0f0f0" stroke="#ccc" stroke-width="0.3"/>
+            <rect x="39" y="32" width="13" height="6" fill="#f0f0f0" stroke="#ccc" stroke-width="0.3"/>
+          </svg>
+        </div>
+        <div class="tpl-info">
+          <div class="tpl-name">Classic Boxed</div>
+          <div class="tpl-desc">Professional layout with right legend panel</div>
+        </div>
+      </div>
+
+      <div class="tpl-card" onclick="applyTemplate('minimal',this)">
+        <div class="tpl-check"><i class="fas fa-check"></i></div>
+        <div class="tpl-thumb">
+          <svg viewBox="0 0 54 42" width="54" height="42">
+            <rect width="54" height="42" fill="#fafafa"/>
+            <rect x="3" y="5" width="48" height="30" fill="#d8eeda" stroke="#ddd" stroke-width="0.3"/>
+            <text x="27" y="4" text-anchor="middle" font-size="3.5" fill="#555" font-family="sans-serif">TITLE</text>
+            <rect x="3" y="37" width="48" height="4" fill="#eee"/>
+          </svg>
+        </div>
+        <div class="tpl-info">
+          <div class="tpl-name">Modern Minimal</div>
+          <div class="tpl-desc">Clean full-canvas map, subtle styling</div>
+        </div>
+      </div>
+
+      <div class="tpl-card" onclick="applyTemplate('toptitle',this)">
+        <div class="tpl-check"><i class="fas fa-check"></i></div>
+        <div class="tpl-thumb">
+          <svg viewBox="0 0 54 42" width="54" height="42">
+            <rect width="54" height="42" fill="#f5f5f5"/>
+            <rect x="2" y="2" width="50" height="8" fill="#1a5233" opacity="0.85"/>
+            <rect x="2" y="12" width="32" height="26" fill="#c8e0c0" stroke="#888" stroke-width="0.5"/>
+            <rect x="36" y="12" width="16" height="26" fill="#fff" stroke="#aaa" stroke-width="0.5"/>
+          </svg>
+        </div>
+        <div class="tpl-info">
+          <div class="tpl-name">Top Title Bar</div>
+          <div class="tpl-desc">Green title banner above map frame</div>
+        </div>
+      </div>
+
+      <div class="tpl-card" onclick="applyTemplate('leftsidebar',this)">
+        <div class="tpl-check"><i class="fas fa-check"></i></div>
+        <div class="tpl-thumb">
+          <svg viewBox="0 0 54 42" width="54" height="42">
+            <rect width="54" height="42" fill="#f5f5f5"/>
+            <rect x="2" y="2" width="14" height="38" fill="#fff" stroke="#aaa" stroke-width="0.5"/>
+            <rect x="18" y="2" width="34" height="38" fill="#c8e0c0" stroke="#888" stroke-width="0.5"/>
+          </svg>
+        </div>
+        <div class="tpl-info">
+          <div class="tpl-name">Left Sidebar</div>
+          <div class="tpl-desc">Legend &amp; metadata on left, map on right</div>
+        </div>
+      </div>
+
+      <div class="tpl-card" onclick="applyTemplate('atlas',this)">
+        <div class="tpl-check"><i class="fas fa-check"></i></div>
+        <div class="tpl-thumb">
+          <svg viewBox="0 0 54 42" width="54" height="42">
+            <rect width="54" height="42" fill="#f8f8f8"/>
+            <rect x="2" y="2" width="24" height="19" fill="#c8e0c0" stroke="#888" stroke-width="0.4"/>
+            <rect x="28" y="2" width="24" height="19" fill="#d8e8c0" stroke="#888" stroke-width="0.4"/>
+            <rect x="2" y="23" width="24" height="17" fill="#d8c8e8" stroke="#888" stroke-width="0.4"/>
+            <rect x="28" y="23" width="24" height="17" fill="#e8d8b8" stroke="#888" stroke-width="0.4"/>
+          </svg>
+        </div>
+        <div class="tpl-info">
+          <div class="tpl-name">Atlas Style</div>
+          <div class="tpl-desc">Multi-panel atlas for regional maps</div>
+        </div>
+      </div>
+
+      <!-- Page info section -->
+      <div class="rp-section">
+        <div class="rp-sec-hdr">Page Information</div>
+        <div class="rp-sec-body">
+          <div class="rp-info-row">
+            <span class="rp-info-key">Format</span>
+            <span class="rp-info-val" id="rpFmt">A4 Landscape</span>
+          </div>
+          <div class="rp-info-row">
+            <span class="rp-info-key">Size</span>
+            <span class="rp-info-val" id="rpSize">842 × 595 px</span>
+          </div>
+          <div class="rp-info-row">
+            <span class="rp-info-key">Resolution</span>
+            <span class="rp-info-val" id="rpDPI">300 DPI</span>
+          </div>
+          <div class="rp-info-row">
+            <span class="rp-info-key">Elements</span>
+            <span class="rp-info-val" id="rpElements">5</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Element list section -->
+      <div class="rp-section">
+        <div class="rp-sec-hdr">Elements on Canvas</div>
+        <div class="rp-sec-body" id="elementList" style="gap:3px;"></div>
+      </div>
+
+    </div><!-- end rp-scroll -->
+
+    <button class="rp-save-btn" onclick="saveAsTemplate()">
+      <i class="fas fa-save"></i>Save as Template
+    </button>
+  </aside>
+
+</div><!-- end workspace -->
+
+<!-- ══════════════ STATUS BAR ══════════════ -->
+<div id="statusBar">
+  <div class="sb-seg">
+    <div class="sb-dot"></div>
+    <strong id="sbPage">A4 LANDSCAPE</strong>
+  </div>
+  <div class="sb-seg">
+    <i class="fas fa-ruler-combined"></i><strong id="sbDims">842 × 595 px</strong>
+  </div>
+  <div class="sb-seg">
+    <i class="fas fa-tachometer-alt"></i><strong id="sbDPI">300 DPI</strong>
+  </div>
+  <div class="sb-seg" id="sbAutoSave" style="color:var(--g5);">
+    <i class="fas fa-check-circle" style="color:var(--g5);font-size:.6rem;"></i>
+    <strong>Auto Saved</strong>
+  </div>
+  <div class="sb-seg" style="color:var(--muted3);" id="sbSelected">
+    No element selected
+  </div>
+  <div class="sb-seg" id="sbCursorPos" style="color:var(--muted);display:none;">
+    <i class="fas fa-crosshairs" style="font-size:.55rem;"></i>
+    <span id="sbXY">0, 0</span>
+  </div>
+  <div class="sb-seg">
+    <button class="z-btn" title="25%" onclick="setZoom(25)" style="width:auto;padding:0 5px;font-size:.58rem;">25%</button>
+    <button class="z-btn" title="50%" onclick="setZoom(50)" style="width:auto;padding:0 5px;font-size:.58rem;">50%</button>
+    <button class="z-btn" title="100%" onclick="setZoom(100)" style="width:auto;padding:0 5px;font-size:.58rem;">100%</button>
+    <div class="sb-divider"></div>
+    <div class="zoom-controls">
+      <button class="z-btn" onclick="adjustZoom(-10)" title="Zoom Out (Ctrl+-)"><i class="fas fa-minus"></i></button>
+      <span id="zoomPctDisp">88%</span>
+      <button class="z-btn" onclick="adjustZoom(10)" title="Zoom In (Ctrl+=)"><i class="fas fa-plus"></i></button>
+    </div>
+    <div class="sb-divider"></div>
+    <button class="fit-btn" onclick="fitToPage()"><i class="fas fa-expand-arrows-alt"></i>Fit</button>
+  </div>
+</div>
+
+<!-- Element Property Panel (floats above status bar) -->
+<div id="propPanel">
+  <div class="pp-hd">
+    <div class="pp-title"><i class="fas fa-sliders-h"></i><span id="ppTitle">Element Properties</span></div>
+    <button class="pp-close" onclick="closePropPanel()"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="pp-grid" id="ppGrid"></div>
+  <div class="pp-row">
+    <button class="pp-btn" onclick="duplicateSelected()"><i class="fas fa-clone"></i> Duplicate</button>
+    <button class="pp-btn" onclick="doUndo()"><i class="fas fa-undo"></i> Undo</button>
+    <button class="pp-btn pp-btn-danger" onclick="deleteSelected()"><i class="fas fa-trash"></i> Delete</button>
+  </div>
+</div>
+
+<!-- Cursor position badge -->
+<div id="cursorPos"></div>
+<!-- Snap indicator -->
+<div id="snapIndicator"><i class="fas fa-magnet"></i> Snap</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- ══════════════════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════════════════ -->
+<script>
+'use strict';
+/* ─────────────── State ─────────────────────────────────── */
+let selectedEl   = null;
+let currentZoom  = 88;
+let undoStack    = [];
+let redoStack    = [];
+let isLocked     = false;
+let autoSaveTimer = null;
+let liveLinkOn   = true;
+let extentLocked = false;
+let toastTimer;
+
+const PAGE_DEFS = {
+  a4l:    {w:842,  h:595,  label:'A4 LANDSCAPE',     dims:'842 × 595 px'},
+  a4p:    {w:595,  h:842,  label:'A4 PORTRAIT',       dims:'595 × 842 px'},
+  a3l:    {w:1191, h:842,  label:'A3 LANDSCAPE',      dims:'1191 × 842 px'},
+  a3p:    {w:842,  h:1191, label:'A3 PORTRAIT',       dims:'842 × 1191 px'},
+  letter: {w:816,  h:612,  label:'LETTER LANDSCAPE',  dims:'816 × 612 px'},
+};
+let currentPage = 'a4l';
+
+/* ─────────────── Map State (from Map Viewer) ───────────── */
+let mapViewerState = null;
+
+function loadMapViewerState() {
+  try {
+    const raw = localStorage.getItem('ghz_map_state');
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch(e) { return null; }
+}
+
+function applyMapViewerState(state) {
+  if (!state) return;
+  mapViewerState = state;
+
+  // Fill in the Source Map fields
+  const latInp  = document.getElementById('extLat');
+  const lngInp  = document.getElementById('extLng');
+  const zoomSl  = document.getElementById('extZoom');
+  const zoomVal = document.getElementById('extZoomVal');
+  const extInp  = document.getElementById('extentInput');
+
+  if (latInp)  latInp.value  = state.lat.toFixed(5);
+  if (lngInp)  lngInp.value  = state.lng.toFixed(5);
+  if (zoomSl)  { zoomSl.value = Math.max(3, Math.min(14, state.zoom)); }
+  if (zoomVal) zoomVal.textContent = state.zoom;
+  if (extInp)  extInp.value  = `${state.lat.toFixed(4)}, ${state.lng.toFixed(4)}, ${state.zoom}`;
+
+  // Update the map frame mini-preview with basemap label
+  const bmLabels = { osm:'OpenStreetMap', sat:'Satellite', terrain:'Terrain', dark:'Dark (Carto)' };
+  const bmLabel  = bmLabels[state.basemap] || state.basemap || 'OpenStreetMap';
+
+  // Update the embedded SVG map's lat/lon overlay labels
+  const footerScale = document.getElementById('footerScaleText');
+  if (footerScale) {
+    const zoom = state.zoom;
+    const scaleStr = zoom >= 12 ? '1:500,000'
+                   : zoom >= 10 ? '1:1,000,000'
+                   : zoom >= 8  ? '1:2,500,000'
+                   : '1:5,000,000';
+    footerScale.textContent = scaleStr;
+    const scaleRef = document.getElementById('mapScaleRef');
+    if (scaleRef) scaleRef.value = scaleStr;
+  }
+
+  // Show a badge on the map frame showing the captured state
+  const mapFrame = document.getElementById('mapFrame');
+  if (mapFrame) {
+    let badge = mapFrame.querySelector('.mf-state-badge');
+    if (!badge) {
+      badge = document.createElement('div');
+      badge.className = 'mf-state-badge';
+      badge.style.cssText = `position:absolute;bottom:4px;right:4px;
+        background:rgba(22,163,74,.92);color:#fff;
+        font-size:6.5px;font-weight:700;font-family:Inter,sans-serif;
+        padding:2px 6px;border-radius:4px;z-index:20;pointer-events:none;
+        letter-spacing:.3px;`;
+      mapFrame.appendChild(badge);
+    }
+    const ts = new Date(state.ts);
+    const timeStr = ts.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    badge.textContent = `Synced ${timeStr} · ${bmLabel} · Zoom ${state.zoom}`;
+  }
+
+  // Update source map info in right panel
+  const rpSrc = document.getElementById('rpSource');
+  if (rpSrc) rpSrc.textContent = bmLabel;
+
+  // Show the sync banner
+  const banner = document.getElementById('mapSyncBanner');
+  const bannerInfo = document.getElementById('mapSyncInfo');
+  if (banner) banner.style.display = 'block';
+  if (bannerInfo) {
+    const activeLayers = (state.layers || []).join(', ') || 'Default';
+    bannerInfo.innerHTML =
+      'Basemap: <strong>' + bmLabel + '</strong><br>' +
+      'Centre: <strong>' + state.lat.toFixed(4) + ', ' + state.lng.toFixed(4) + '</strong> &nbsp;|&nbsp; ' +
+      'Zoom: <strong>' + state.zoom + '</strong><br>' +
+      'Active layers: <strong>' + activeLayers + '</strong>';
+  }
+
+  const ago = Math.round((Date.now() - state.ts) / 60000);
+  const agoStr = ago < 1 ? 'just now' : ago === 1 ? '1 min ago' : ago + ' min ago';
+  showToast('Map state synced from Map Viewer (' + agoStr + ') — ' + bmLabel + ' @ zoom ' + state.zoom, 'success', 4500);
+}
+
+function captureExtentFromMapViewer() {
+  const state = loadMapViewerState();
+  if (!state) {
+    showToast('No map state found — open Map Viewer first and navigate to your area', 'warn', 4000);
+    return;
+  }
+  applyMapViewerState(state);
+}
+
+/* ─────────────── Init ──────────────────────────────────── */
+window.addEventListener('DOMContentLoaded', () => {
+  setZoom(88);
+  applyDate();
+  attachDragToAll();
+  updateElementList();
+  document.getElementById('rpFmt').textContent  = 'A4 Landscape';
+  document.getElementById('rpSize').textContent = '842 x 595 px';
+  // Auto-load last map viewer state
+  const state = loadMapViewerState();
+  if (state) {
+    setTimeout(() => applyMapViewerState(state), 900);
+  } else {
+    setTimeout(() => {
+      showToast('\u2705 Print Layout Manager ready — open Map Viewer to sync your map', 'success', 3500);
+    }, 700);
+  }
+  scheduleAutoSave();
+});
+
+function applyDate() {
+  const m=['January','February','March','April','May','June',
+           'July','August','September','October','November','December'];
+  const d = new Date();
+  document.getElementById('footerDateText').textContent =
+    `${d.getDate()} ${m[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+/* ─────────────── Section collapse ─────────────────────── */
+function toggleSection(id, hdr) {
+  const body = document.getElementById(id);
+  const chev = hdr.querySelector('.lp-sec-chev');
+  body.classList.toggle('hidden');
+  chev.classList.toggle('open', body.classList.contains('hidden') ? false : true);
+}
+
+/* ─────────────── Element selection ────────────────────── */
+function selectElement(el) {
+  if(selectedEl === el) return;
+  deselectAll();
+  selectedEl = el;
+  el.classList.add('el-selected');
+  addResizeHandles(el);
+  updateLockBtn();
+  // Status bar
+  const type = el.dataset.el || 'element';
+  document.getElementById('sbSelected').textContent =
+    `Selected: ${capitalize(type)} (drag to move)`;
+}
+
+function deselectAll(e) {
+  if(e && e.target.closest('.layout-element')) return;
+  if(selectedEl) {
+    selectedEl.classList.remove('el-selected');
+    selectedEl.querySelectorAll('.resize-handle').forEach(h => h.remove());
+    selectedEl = null;
+    document.getElementById('sbSelected').textContent = 'No element selected';
+  }
+  updateLockBtn();
+}
+
+function addResizeHandles(el) {
+  el.querySelectorAll('.resize-handle').forEach(h => h.remove());
+  const type = el.dataset.el;
+  if(type === 'title') return;
+  const handles = type === 'map' ? ['r','b','br'] : ['br','tr','bl','tl','r','b'];
+  handles.forEach(pos => {
+    const h = document.createElement('div');
+    h.className = `resize-handle rh-${pos}`;
+    h.addEventListener('mousedown', e => {
+      e.stopPropagation(); startResize(e, el, pos);
+    });
+    el.appendChild(h);
+  });
+}
+
+/* Attach drag to all existing .layout-element */
+function attachDragToAll() {
+  document.querySelectorAll('.layout-element').forEach(el => attachDragToEl(el));
+}
+
+function attachDragToEl(el) {
+  el.removeEventListener('mousedown', el._mdHandler);
+  el._mdHandler = e => {
+    if(e.target.classList.contains('resize-handle')) return;
+    const isEditable = el.getAttribute('contenteditable') === 'true';
+    if(isEditable && e.detail === 2) return; // allow double-click to edit
+    e.stopPropagation();
+    selectElement(el);
+    if(!isLocked) startDrag(e, el);
+  };
+  el.addEventListener('mousedown', el._mdHandler);
+}
+
+/* ─────────────── Drag ──────────────────────────────────── */
+function startDrag(e, el) {
+  const page     = document.getElementById('layoutPage');
+  const pageRect = page.getBoundingClientRect();
+  const zoom     = currentZoom / 100;
+  const sx = (e.clientX - pageRect.left) / zoom;
+  const sy = (e.clientY - pageRect.top)  / zoom;
+  const ol = parseInt(el.style.left) || 0;
+  const ot = parseInt(el.style.top)  || 0;
+
+  const onMove = ev => {
+    const dx = (ev.clientX - pageRect.left) / zoom - sx;
+    const dy = (ev.clientY - pageRect.top)  / zoom - sy;
+    el.style.left = Math.max(0, ol + dx) + 'px';
+    el.style.top  = Math.max(0, ot + dy) + 'px';
+    scheduleAutoSave();
+  };
+  const onUp = () => {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+  };
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+}
+
+/* ─────────────── Resize ────────────────────────────────── */
+function startResize(e, el, handle) {
+  e.stopPropagation();
+  const zoom = currentZoom / 100;
+  const sx   = e.clientX, sy = e.clientY;
+  const ow   = el.offsetWidth, oh = el.offsetHeight;
+  const ol   = parseInt(el.style.left)||0;
+  const ot   = parseInt(el.style.top)||0;
+
+  const onMove = ev => {
+    const dx = (ev.clientX - sx) / zoom;
+    const dy = (ev.clientY - sy) / zoom;
+    if(handle==='br'){el.style.width=Math.max(40,ow+dx)+'px';el.style.height=Math.max(30,oh+dy)+'px';}
+    else if(handle==='tr'){el.style.width=Math.max(40,ow+dx)+'px';el.style.height=Math.max(30,oh-dy)+'px';el.style.top=(ot+dy)+'px';}
+    else if(handle==='bl'){el.style.width=Math.max(40,ow-dx)+'px';el.style.height=Math.max(30,oh+dy)+'px';el.style.left=(ol+dx)+'px';}
+    else if(handle==='tl'){el.style.width=Math.max(40,ow-dx)+'px';el.style.height=Math.max(30,oh-dy)+'px';el.style.left=(ol+dx)+'px';el.style.top=(ot+dy)+'px';}
+    else if(handle==='r'){el.style.width=Math.max(40,ow+dx)+'px';}
+    else if(handle==='b'){el.style.height=Math.max(30,oh+dy)+'px';}
+    scheduleAutoSave();
+  };
+  const onUp = () => {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+  };
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+}
+
+/* ─────────────── Zoom ──────────────────────────────────── */
+function setZoom(z) {
+  currentZoom = Math.max(20, Math.min(200, z));
+  document.getElementById('layoutPage').style.transform = `scale(${currentZoom/100})`;
+  document.getElementById('zoomPctDisp').textContent   = currentZoom + '%';
+  document.getElementById('canvasZoomBadge').textContent = currentZoom + '%';
+}
+function adjustZoom(delta) { setZoom(currentZoom + delta); }
+function fitToPage() {
+  const area = document.getElementById('canvasArea');
+  const page = document.getElementById('layoutPage');
+  const z = Math.min((area.clientWidth-56)/page.offsetWidth,
+                     (area.clientHeight-56)/page.offsetHeight) * 100;
+  setZoom(Math.floor(z));
+  showToast('Fit to page applied', 'info');
+}
+
+/* ─────────────── Add Elements ─────────────────────────── */
+function addElement(type) {
+  saveUndoState();
+  const page    = document.getElementById('layoutPage');
+  const pgW     = page.offsetWidth  || 842;
+  const pgH     = page.offsetHeight || 595;
+  const el      = document.createElement('div');
+  el.className  = 'layout-element';
+  el.dataset.el = type;
+  el.style.position = 'absolute';
+  el.style.zIndex   = '30';
+  el.style.cursor   = 'move';
+  el.style.userSelect = 'none';
+
+  // Compute safe default positions relative to actual page size
+  // so elements always appear visibly within the canvas
+  const cx = pgW * 0.5; // horizontal centre
+  const cy = pgH * 0.5; // vertical centre
+
+  const defs = {
+    legend:   { left: pgW - 180,  top: 62,       w: 160, h: Math.min(320, pgH - 100) },
+    scalebar: { left: Math.round(cx - 105), top: pgH - 60, w: 210, h: 44 },
+    north:    { left: pgW - 100,  top: 80,       w: 72,  h: 90  },
+    text:     { left: 60,         top: pgH - 70, w: 220, h: 50  },
+    image:    { left: Math.round(cx - 60), top: Math.round(cy - 40), w: 120, h: 80 },
+    grid:     { left: 26,         top: 62,       w: Math.round(pgW * 0.64), h: pgH - 100 },
+    title:    { left: 26,         top: 8,        w: pgW - 52, h: 44 },
+  };
+  const d = defs[type] || { left: Math.round(cx - 60), top: Math.round(cy - 30), w: 120, h: 60 };
+
+  // Clamp to within page bounds
+  const safeLeft = Math.max(0, Math.min(d.left, pgW - d.w));
+  const safeTop  = Math.max(0, Math.min(d.top,  pgH - d.h));
+
+  el.style.left   = safeLeft + 'px';
+  el.style.top    = safeTop  + 'px';
+  el.style.width  = d.w + 'px';
+  el.style.height = d.h + 'px';
+
+  switch(type) {
+    case 'legend':
+      el.style.overflow = 'hidden';
+      el.innerHTML = buildLegendHTML();
+      break;
+
+    case 'scalebar':
+      el.style.display         = 'flex';
+      el.style.alignItems      = 'center';
+      el.style.justifyContent  = 'center';
+      el.style.background      = 'rgba(255,255,255,0.92)';
+      el.style.border          = '1px solid rgba(0,0,0,0.15)';
+      el.style.borderRadius    = '3px';
+      el.style.padding         = '4px 8px';
+      el.innerHTML = buildScaleBarHTML();
+      break;
+
+    case 'north':
+      el.style.background   = 'rgba(255,255,255,0.92)';
+      el.style.border       = '1px solid rgba(0,0,0,0.12)';
+      el.style.borderRadius = '50%';
+      el.style.overflow     = 'hidden';
+      el.style.display      = 'flex';
+      el.style.alignItems   = 'center';
+      el.style.justifyContent = 'center';
+      el.innerHTML = buildNorthArrowHTML();
+      break;
+
+    case 'text':
+      el.setAttribute('contenteditable', 'true');
+      el.style.background   = 'rgba(255,255,255,0.93)';
+      el.style.border       = '1px dashed #aaa';
+      el.style.borderRadius = '2px';
+      el.style.padding      = '6px 8px';
+      el.style.fontSize     = '11px';
+      el.style.fontFamily   = 'Inter, sans-serif';
+      el.style.color        = '#222';
+      el.style.lineHeight   = '1.55';
+      el.style.minHeight    = '28px';
+      el.style.outline      = 'none';
+      el.innerHTML = '<strong>Map Title</strong><br><span style="font-size:9px;color:#666;">Double-click to edit this text</span>';
+      // Allow double-click to focus/edit without starting drag
+      el.addEventListener('dblclick', function(e) {
+        e.stopPropagation();
+        el.focus();
+      });
+      break;
+
+    case 'image':
+      el.style.overflow = 'hidden';
+      el.style.cursor   = 'move';
+      el.innerHTML = `<div style="width:100%;height:100%;display:flex;flex-direction:column;
+        align-items:center;justify-content:center;background:#f0f0f0;
+        border:2px dashed #bbb;border-radius:3px;gap:6px;cursor:pointer;"
+        onclick="triggerImageUpload(this.parentElement)">
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="1.5">
+          <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+          <path d="M21 15l-5-5L5 21"/>
+        </svg>
+        <span style="font-size:8px;color:#999;font-family:Inter,sans-serif;text-align:center;">Click to upload image<br><span style="font-size:7px;opacity:.7;">PNG / JPG / SVG</span></span>
+        <input type="file" accept="image/*" style="display:none;" onchange="loadImageIntoEl(this)"/>
+      </div>`;
+      break;
+
+    case 'grid':
+      el.style.pointerEvents = 'none';
+      el.style.zIndex        = '6';
+      el.style.overflow      = 'hidden';
+      el.innerHTML = buildGridHTML();
+      break;
+  }
+
+  page.appendChild(el);
+  attachDragToEl(el);
+  selectElement(el);
+  updateElementList();
+  scheduleAutoSave();
+  showToast(`${capitalize(type)} added — drag to reposition, resize from corners`, 'success', 3000);
+}
+
+/* ─────────────── Image upload helper ──────────────────── */
+function triggerImageUpload(el) {
+  const inp = el.querySelector('input[type="file"]');
+  if (inp) inp.click();
+}
+function loadImageIntoEl(inp) {
+  const el = inp.closest('.layout-element');
+  if (!el || !inp.files || !inp.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    el.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:contain;display:block;"/>`;
+  };
+  reader.readAsDataURL(inp.files[0]);
+}
+
+/* ─────────────── Element HTML builders ─────────────────── */
+const PROVINCE_COLORS = [
+  ['#fde8ba','Central'],     ['#b8ddb8','Copperbelt'],
+  ['#fad4b2','Eastern'],     ['#b8d0ee','Luapula'],
+  ['#f0b8cc','Lusaka'],      ['#ccddb0','Muchinga'],
+  ['#d8caee','Northern'],    ['#feeabf','North-Western'],
+  ['#eadcc8','Southern'],    ['#c0eeee','Western']
+];
+
+function buildLegendHTML() {
+  const items = PROVINCE_COLORS.map(([c,n]) =>
+    `<div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;">
+      <div style="width:14px;height:10px;background:${c};border:0.5px solid rgba(0,0,0,.25);flex-shrink:0;border-radius:1px;"></div>
+      <span style="font-size:7.5px;color:#333;font-family:Inter,sans-serif;">${n}</span>
+    </div>`).join('');
+  return `<div style="background:#fff;border:1px solid #ccc;padding:9px 10px;height:100%;
+    font-family:Inter,sans-serif;box-sizing:border-box;overflow:hidden;">
+    <div style="font-size:8.5px;font-weight:800;color:#111;text-transform:uppercase;
+      letter-spacing:.6px;margin-bottom:6px;padding-bottom:5px;border-bottom:1.5px solid #ddd;">
+      Legend
+    </div>
+    <div style="font-size:7px;font-weight:700;color:#666;text-transform:uppercase;
+      letter-spacing:.4px;margin-bottom:4px;">Boundaries</div>
+    <div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;">
+      <div style="width:18px;height:1.5px;background:#555;"></div>
+      <span style="font-size:7.5px;color:#333;">District Boundary</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;">
+      <div style="width:18px;height:2.5px;background:#1a6b35;border-radius:1px;"></div>
+      <span style="font-size:7.5px;color:#333;">Province Border</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:5px;margin-bottom:8px;">
+      <div style="width:18px;height:3px;background:#4a9fd4;border-radius:1px;"></div>
+      <span style="font-size:7.5px;color:#333;">Water Bodies</span>
+    </div>
+    <div style="font-size:7px;font-weight:700;color:#666;text-transform:uppercase;
+      letter-spacing:.4px;margin-bottom:4px;">Provinces</div>
+    ${items}
+    <div style="margin-top:6px;padding-top:5px;border-top:1px solid #eee;
+      font-size:6.5px;color:#aaa;font-family:Inter,sans-serif;">
+      Source: GeoHub Zambia · NSDI 2022
+    </div>
+  </div>`;
+}
+
+function buildScaleBarHTML() {
+  // Determine scale based on captured map state zoom
+  const zoom = mapViewerState ? mapViewerState.zoom : 6;
+  let labels, unit;
+  if (zoom >= 10) {
+    labels = ['0','25','50','75','100']; unit = 'km';
+  } else if (zoom >= 8) {
+    labels = ['0','50','100','150','200']; unit = 'km';
+  } else {
+    labels = ['0','125','250','375','500']; unit = 'km';
+  }
+  return `<div style="display:flex;flex-direction:column;align-items:center;
+    font-family:Inter,sans-serif;width:100%;">
+    <div style="font-size:7.5px;font-weight:800;color:#333;margin-bottom:3px;
+      letter-spacing:.6px;text-transform:uppercase;">Scale</div>
+    <div style="display:flex;width:190px;height:11px;border:1.5px solid #444;overflow:hidden;border-radius:1px;">
+      <div style="flex:1;background:#fff;border-right:1px solid #444;"></div>
+      <div style="flex:1;background:#444;border-right:1px solid #444;"></div>
+      <div style="flex:1;background:#fff;border-right:1px solid #444;"></div>
+      <div style="flex:1;background:#444;"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;width:190px;margin-top:2px;">
+      ${labels.map((l,i) => `<span style="font-size:6.5px;color:#444;font-family:'Courier New',monospace;">${l}${i===labels.length-1?' '+unit:''}</span>`).join('')}
+    </div>
+  </div>`;
+}
+
+// North Arrow SVG styles (4 designs)
+const NORTH_ARROW_SVGS = [
+  // Style 0: Classic compass rose
+  `<svg viewBox="0 0 72 90" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="36" cy="45" r="32" fill="white" stroke="#444" stroke-width="1.2"/>
+    <polygon points="36,13 43,45 36,38 29,45" fill="#1a1a1a"/>
+    <polygon points="36,77 43,45 36,52 29,45" fill="#bbb"/>
+    <line x1="4" y1="45" x2="68" y2="45" stroke="#aaa" stroke-width="0.6"/>
+    <line x1="36" y1="13" x2="36" y2="77" stroke="#aaa" stroke-width="0.6"/>
+    <text x="36" y="11" text-anchor="middle" font-size="11" font-weight="900" fill="#111" font-family="Inter,sans-serif">N</text>
+    <text x="36" y="85" text-anchor="middle" font-size="7.5" fill="#888" font-family="Inter,sans-serif">S</text>
+    <text x="7"  y="49" text-anchor="middle" font-size="7.5" fill="#888" font-family="Inter,sans-serif">W</text>
+    <text x="65" y="49" text-anchor="middle" font-size="7.5" fill="#888" font-family="Inter,sans-serif">E</text>
+  </svg>`,
+  // Style 1: Simple arrow
+  `<svg viewBox="0 0 72 90" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+    <polygon points="36,8 46,52 36,44 26,52" fill="#111"/>
+    <polygon points="36,82 46,52 36,60 26,52" fill="#ddd" stroke="#888" stroke-width="0.5"/>
+    <text x="36" y="6" text-anchor="middle" font-size="10" font-weight="900" fill="#111" font-family="Inter,sans-serif">N</text>
+  </svg>`,
+  // Style 2: Star / GIS-style
+  `<svg viewBox="0 0 72 90" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="36" cy="45" r="30" fill="none" stroke="#444" stroke-width="0.8"/>
+    <circle cx="36" cy="45" r="4"  fill="#111"/>
+    <line x1="36" y1="15" x2="36" y2="41" stroke="#111" stroke-width="2"/>
+    <line x1="36" y1="49" x2="36" y2="75" stroke="#bbb" stroke-width="1.5"/>
+    <line x1="10" y1="45" x2="32" y2="45" stroke="#bbb" stroke-width="1.5"/>
+    <line x1="40" y1="45" x2="62" y2="45" stroke="#bbb" stroke-width="1.5"/>
+    <polygon points="36,11 40,22 36,18 32,22" fill="#111"/>
+    <text x="36" y="10" text-anchor="middle" font-size="11" font-weight="900" fill="#111" font-family="Inter,sans-serif">N</text>
+  </svg>`,
+  // Style 3: Elegant arrow with serif N
+  `<svg viewBox="0 0 72 90" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+    <polygon points="36,10 48,58 36,50 24,58" fill="#1a1a1a"/>
+    <polygon points="36,80 48,58 36,50 24,58" fill="#e0e0e0" stroke="#999" stroke-width="0.5"/>
+    <line x1="36" y1="10" x2="36" y2="80" stroke="#555" stroke-width="0.4"/>
+    <circle cx="36" cy="50" r="3.5" fill="#555"/>
+    <text x="36" y="8" text-anchor="middle" font-size="12" font-weight="900" fill="#1a1a1a" font-family="Georgia,serif">N</text>
+  </svg>`
+];
+
+let currentNorthStyle = 0;
+
+function buildNorthArrowHTML(style) {
+  const s = (style !== undefined) ? style : currentNorthStyle;
+  return NORTH_ARROW_SVGS[s] || NORTH_ARROW_SVGS[0];
+}
+
+function buildGridHTML() {
+  const page = document.getElementById('layoutPage');
+  const W = page ? (page.offsetWidth || 842) : 842;
+  const H = page ? (page.offsetHeight || 595) : 595;
+  const mf  = document.getElementById('mapFrame');
+  const mfW = mf ? (mf.offsetWidth  || 540) : 540;
+  const mfH = mf ? (mf.offsetHeight || 502) : 502;
+  const cols = 6, rows = 6;
+  const cw = mfW / cols;
+  const rh = mfH / rows;
+  let lines = '';
+  for (let c = 1; c < cols; c++) {
+    const x = Math.round(c * cw);
+    lines += `<line x1="${x}" y1="0" x2="${x}" y2="${mfH}" stroke="#999" stroke-width="0.5" stroke-dasharray="4,5" opacity="0.55"/>`;
+  }
+  for (let r = 1; r < rows; r++) {
+    const y = Math.round(r * rh);
+    lines += `<line x1="0" y1="${y}" x2="${mfW}" y2="${y}" stroke="#999" stroke-width="0.5" stroke-dasharray="4,5" opacity="0.55"/>`;
+  }
+  return `<svg width="100%" height="100%" viewBox="0 0 ${mfW} ${mfH}" xmlns="http://www.w3.org/2000/svg"
+    preserveAspectRatio="none">${lines}</svg>`;
+}
+
+/* ─────────────── Toolbar actions ──────────────────────── */
+function duplicateSelected() {
+  if(!selectedEl) { showToast('Select an element first', 'warn'); return; }
+  saveUndoState();
+  const clone = selectedEl.cloneNode(true);
+  clone.style.left = (parseInt(selectedEl.style.left)||0) + 18 + 'px';
+  clone.style.top  = (parseInt(selectedEl.style.top)||0)  + 18 + 'px';
+  clone.classList.remove('el-selected');
+  clone.querySelectorAll('.resize-handle').forEach(h=>h.remove());
+  document.getElementById('layoutPage').appendChild(clone);
+  attachDragToEl(clone);
+  selectElement(clone);
+  updateElementList();
+  showToast('Element duplicated', 'success');
+}
+
+function deleteSelected() {
+  if(!selectedEl) { showToast('Select an element to delete', 'warn'); return; }
+  saveUndoState();
+  const type = selectedEl.dataset.el || 'element';
+  selectedEl.remove();
+  selectedEl = null;
+  document.getElementById('sbSelected').textContent = 'No element selected';
+  updateElementList();
+  showToast(`${capitalize(type)} removed`, 'info');
+}
+
+function toggleLock() {
+  isLocked = !isLocked;
+  const btn = document.getElementById('lockBtn');
+  btn.classList.toggle('active', isLocked);
+  btn.querySelector('i').className = isLocked ? 'fas fa-lock' : 'fas fa-lock-open';
+  btn.querySelector('span').textContent = isLocked ? 'Locked' : 'Lock';
+  showToast(isLocked ? '🔒 Elements locked' : '🔓 Elements unlocked', 'info');
+}
+function updateLockBtn() {
+  document.getElementById('lockBtn').classList.toggle('active', isLocked);
+}
+
+/* ─────────────── Undo / Redo ───────────────────────────── */
+function saveUndoState() {
+  undoStack.push(document.getElementById('layoutPage').innerHTML);
+  if(undoStack.length > 25) undoStack.shift();
+  redoStack = [];
+}
+function doUndo() {
+  if(!undoStack.length) { showToast('Nothing to undo', 'warn'); return; }
+  const page = document.getElementById('layoutPage');
+  redoStack.push(page.innerHTML);
+  page.innerHTML = undoStack.pop();
+  attachDragToAll();
+  updateElementList();
+  showToast('Undo applied', 'info');
+}
+function doRedo() {
+  if(!redoStack.length) { showToast('Nothing to redo', 'warn'); return; }
+  const page = document.getElementById('layoutPage');
+  undoStack.push(page.innerHTML);
+  page.innerHTML = redoStack.pop();
+  attachDragToAll();
+  updateElementList();
+  showToast('Redo applied', 'info');
+}
+
+/* ─────────────── Keyboard ──────────────────────────────── */
+document.addEventListener('keydown', e => {
+  const tag = document.activeElement.tagName;
+  if(['INPUT','TEXTAREA'].includes(tag)) return;
+  if(e.ctrlKey || e.metaKey) {
+    if(e.key==='z'){e.preventDefault();doUndo();}
+    if(e.key==='y'||e.key==='Z'){e.preventDefault();doRedo();}
+    if(e.key==='d'){e.preventDefault();duplicateSelected();}
+    if(e.key==='p'){e.preventDefault();exportPDF();}
+  }
+  if(e.key==='Delete'&&selectedEl&&!selectedEl.getAttribute('contenteditable')) deleteSelected();
+  if(e.key==='Escape') deselectAll();
+  // Arrow key nudge
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)&&selectedEl&&!isLocked) {
+    e.preventDefault();
+    const step = e.shiftKey ? 10 : 1;
+    const l = parseInt(selectedEl.style.left)||0;
+    const t = parseInt(selectedEl.style.top)||0;
+    if(e.key==='ArrowLeft')  selectedEl.style.left=(l-step)+'px';
+    if(e.key==='ArrowRight') selectedEl.style.left=(l+step)+'px';
+    if(e.key==='ArrowUp')    selectedEl.style.top=(t-step)+'px';
+    if(e.key==='ArrowDown')  selectedEl.style.top=(t+step)+'px';
+    scheduleAutoSave();
+  }
+});
+
+/* ─────────────── Page settings ─────────────────────────── */
+function applyPageFormat() {
+  const fmt = document.getElementById('pageFormat').value;
+  if(fmt === 'custom') { showToast('Enter custom dimensions in width/height fields (custom mode)', 'info'); return; }
+  currentPage = fmt;
+  const def   = PAGE_DEFS[fmt];
+  if(!def) return;
+  const page  = document.getElementById('layoutPage');
+  page.style.width  = def.w + 'px';
+  page.style.height = def.h + 'px';
+  document.getElementById('sbPage').textContent   = def.label;
+  document.getElementById('sbDims').textContent   = def.dims;
+  document.getElementById('rpFmt').textContent    = def.label;
+  document.getElementById('rpSize').textContent   = def.dims;
+  scheduleAutoSave();
+  showToast(`Page: ${def.label}`, 'info');
+}
+
+function setOrientation(dir, btn) {
+  document.querySelectorAll('.orient-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const fmt = document.getElementById('pageFormat').value;
+  let nf = fmt;
+  if(dir==='landscape') nf = fmt.replace(/p$/,'l');
+  else                  nf = fmt.replace(/l$/,'p');
+  if(PAGE_DEFS[nf]) {
+    document.getElementById('pageFormat').value = nf;
+    applyPageFormat();
+  }
+}
+
+function setBgColor(val) {
+  document.getElementById('bgColorDisplay').style.background = val;
+  document.getElementById('bgColorTxt').textContent = val;
+  document.getElementById('layoutPage').style.background = val;
+  scheduleAutoSave();
+}
+
+function setMargin(val) {
+  document.getElementById('marginVal').textContent = val + 'mm';
+  const px = Math.round(val * 3.78);
+  const tb  = document.getElementById('titleBlock');
+  const mf  = document.getElementById('mapFrame');
+  if(tb) { tb.style.left = px + 'px'; }
+  if(mf) { mf.style.left = px + 'px'; mf.style.top = Math.max(62, px*2.5) + 'px'; }
+  scheduleAutoSave();
+}
+
+function updateResolution() {
+  const dpi = document.getElementById('resSelect').value;
+  document.getElementById('sbDPI').textContent  = dpi + ' DPI';
+  document.getElementById('rpDPI').textContent  = dpi + ' DPI';
+  scheduleAutoSave();
+}
+
+/* ─────────────── Title ─────────────────────────────────── */
+function updateTitle() {
+  const t = document.getElementById('titleText').value;
+  const s = document.getElementById('subtitleText').value;
+  const mt = document.getElementById('mapTitleText');
+  const ms = document.getElementById('mapSubtitleText');
+  if(mt) mt.textContent = t;
+  if(ms) ms.textContent = s;
+  scheduleAutoSave();
+}
+function updateTitleSize(v) {
+  document.getElementById('titleSizeVal').textContent = v + 'px';
+  const mt = document.getElementById('mapTitleText');
+  if(mt) mt.style.fontSize = v + 'px';
+  scheduleAutoSave();
+}
+function setTitleColor(val) {
+  document.getElementById('titleColorDisplay').style.background = val;
+  document.getElementById('titleColorTxt').textContent = val;
+  const mt = document.getElementById('mapTitleText');
+  if(mt) mt.style.color = val;
+  scheduleAutoSave();
+}
+function setTitleAlign(align, btn) {
+  document.querySelectorAll('.font-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const tb = document.getElementById('titleBlock');
+  const mt = document.getElementById('mapTitleText');
+  if(tb) { tb.style.alignItems = align==='center'?'center':align==='left'?'flex-start':'flex-end'; }
+  if(mt) mt.style.textAlign = align;
+  scheduleAutoSave();
+}
+function toggleTitleVis(sw) {
+  sw.classList.toggle('on');
+  const tb = document.getElementById('titleBlock');
+  if(tb) tb.style.display = sw.classList.contains('on') ? '' : 'none';
+  scheduleAutoSave();
+}
+
+/* ─────────────── Map frame ─────────────────────────────── */
+function setMapSize(v) {
+  document.getElementById('mapSizeVal').textContent = v + '%';
+  const mf  = document.getElementById('mapFrame');
+  const pg  = document.getElementById('layoutPage');
+  if(!mf||!pg) return;
+  const fw  = Math.round(pg.offsetWidth  * v / 100 * 0.72);
+  const fh  = Math.round(pg.offsetHeight * v / 100 * 0.86);
+  mf.style.width  = fw + 'px';
+  mf.style.height = fh + 'px';
+  scheduleAutoSave();
+}
+function setMapPosition(val) {
+  const mf = document.getElementById('mapFrame');
+  if(!mf) return;
+  if(val==='centered'){mf.style.left='26px';mf.style.top='62px';}
+  else if(val==='left'){mf.style.left='8px';mf.style.top='62px';}
+  else if(val==='fullbleed'){mf.style.left='0';mf.style.top='0';mf.style.width='100%';mf.style.height='100%';}
+  scheduleAutoSave();
+}
+function toggleGrid(sw) {
+  sw.classList.toggle('on');
+  const g = document.getElementById('mapGridSvg');
+  if(g) g.style.display = sw.classList.contains('on') ? '' : 'none';
+  scheduleAutoSave();
+}
+function toggleMapBorder(sw) {
+  sw.classList.toggle('on');
+  const mf = document.getElementById('mapFrame');
+  if(mf) mf.style.border = sw.classList.contains('on') ? '1.5px solid #444' : 'none';
+  scheduleAutoSave();
+}
+function toggleGridLabels(sw) {
+  sw.classList.toggle('on');
+  const on = sw.classList.contains('on');
+  document.querySelectorAll('.grid-label-lon,.grid-label-lat').forEach(el => {
+    el.style.display = on ? '' : 'none';
+  });
+  scheduleAutoSave();
+}
+function updateFooterMeta() {
+  const ref = document.getElementById('mapScaleRef').value;
+  const ft  = document.getElementById('footerScaleText');
+  if(ft) ft.textContent = ref;
+  scheduleAutoSave();
+}
+
+/* ─────────────── Legend / Layer visibility ─────────────── */
+function toggleLegendVis(sw) {
+  sw.classList.toggle('on');
+  const leg = document.getElementById('legendEl');
+  if(leg) leg.style.display = sw.classList.contains('on') ? '' : 'none';
+  scheduleAutoSave();
+}
+function toggleLayerVis(btn, layerId) {
+  const ico   = btn.querySelector('i');
+  const wasOn = ico.classList.contains('fa-eye');
+  ico.classList.toggle('fa-eye',       !wasOn);
+  ico.classList.toggle('fa-eye-slash',  wasOn);
+  btn.classList.toggle('hidden-eye', wasOn);
+
+  const svgMap = document.getElementById('zambiaSvg');
+  const classMap = {
+    central:'prov-central',copperbelt:'prov-copperbelt',eastern:'prov-eastern',
+    luapula:'prov-luapula',lusaka:'prov-lusaka',muchinga:'prov-muchinga',
+    northern:'prov-northern',nwestern:'prov-nwestern',southern:'prov-southern',
+    western:'prov-western'
+  };
+  if(classMap[layerId]) {
+    svgMap.querySelectorAll('.'+classMap[layerId]).forEach(el=>{
+      el.style.opacity = wasOn ? '0' : '1';
+    });
+  }
+  if(layerId==='waterBodies') {
+    svgMap.querySelectorAll('path,ellipse').forEach(el=>{ el.style.opacity = wasOn?'0.1':''; });
+  }
+  if(layerId==='distBoundary') {
+    const dl = document.getElementById('districtLines');
+    if(dl) dl.style.display = wasOn ? 'none' : '';
+  }
+  if(layerId==='provLabels') {
+    svgMap.querySelectorAll('.prov-label').forEach(el=>{ el.style.display = wasOn?'none':''; });
+  }
+  scheduleAutoSave();
+}
+
+/* ─────────────── Templates ─────────────────────────────── */
+function applyTemplate(name, card) {
+  document.querySelectorAll('.tpl-card').forEach(c=>c.classList.remove('active'));
+  card.classList.add('active');
+  saveUndoState();
+
+  const TB = document.getElementById('titleBlock');
+  const LG = document.getElementById('legendEl');
+  const MF = document.getElementById('mapFrame');
+  const SB = document.getElementById('scaleBarEl');
+  const NA = document.getElementById('northArrowEl');
+  const FM = document.getElementById('footerMeta');
+
+  // Reset common styles
+  if(TB) { TB.style.background=''; TB.style.padding=''; }
+  const mt = document.getElementById('mapTitleText');
+  const ms = document.getElementById('mapSubtitleText');
+  if(mt) { mt.style.color='#1a5233'; mt.style.textAlign='center'; }
+  if(ms) { ms.style.color='#666'; }
+
+  switch(name) {
+    case 'classic':
+      // Map left, legend right, title top
+      if(TB) { TB.style.left='26px'; TB.style.top='10px'; TB.style.width='790px'; }
+      if(MF) { MF.style.left='26px'; MF.style.top='62px'; MF.style.width='540px'; MF.style.height='502px'; }
+      if(LG) { LG.style.right='8px'; LG.style.left=''; LG.style.top='62px'; LG.style.width='162px'; }
+      if(NA) { NA.style.right='192px'; NA.style.left=''; NA.style.top='74px'; }
+      if(SB) { SB.style.right='160px'; SB.style.left=''; SB.style.bottom='40px'; SB.style.top=''; }
+      if(FM) { FM.style.right='8px'; FM.style.bottom='8px'; FM.style.left=''; FM.style.top=''; }
+      break;
+    case 'minimal':
+      if(TB) { TB.style.left='8px'; TB.style.top='4px'; TB.style.width='826px'; }
+      if(mt) mt.style.fontSize='16px';
+      if(MF) { MF.style.left='8px'; MF.style.top='54px'; MF.style.width='610px'; MF.style.height='518px'; }
+      if(LG) { LG.style.left='626px'; LG.style.right=''; LG.style.top='54px'; }
+      if(NA) { NA.style.left='640px'; NA.style.right=''; NA.style.top='330px'; }
+      if(SB) { SB.style.left='10px'; SB.style.right=''; SB.style.bottom='12px'; SB.style.top=''; }
+      if(FM) { FM.style.left='626px'; FM.style.right=''; FM.style.bottom='12px'; FM.style.top=''; }
+      break;
+    case 'toptitle':
+      if(TB) {
+        TB.style.left='0';TB.style.top='0';TB.style.width='100%';TB.style.height='48px';
+        TB.style.background='#1a5233';TB.style.padding='0 16px';
+      }
+      if(mt) mt.style.color='#fff';
+      if(ms) ms.style.color='rgba(255,255,255,.75)';
+      if(MF) { MF.style.left='8px'; MF.style.top='52px'; MF.style.width='530px'; MF.style.height='510px'; }
+      if(LG) { LG.style.left='546px'; LG.style.right=''; LG.style.top='52px'; }
+      if(NA) { NA.style.left='558px'; NA.style.right=''; NA.style.top='330px'; }
+      if(SB) { SB.style.left='10px'; SB.style.bottom='12px'; SB.style.right=''; SB.style.top=''; }
+      if(FM) { FM.style.left='546px'; FM.style.bottom='12px'; FM.style.right=''; FM.style.top=''; }
+      break;
+    case 'leftsidebar':
+      if(TB) { TB.style.left='4px'; TB.style.top='4px'; TB.style.width='168px'; }
+      if(mt) { mt.style.textAlign='left'; mt.style.fontSize='12px'; }
+      if(LG) { LG.style.left='4px'; LG.style.right=''; LG.style.top='68px'; LG.style.width='162px'; }
+      if(NA) { NA.style.left='60px'; NA.style.right=''; NA.style.top='348px'; }
+      if(SB) { SB.style.left='4px'; SB.style.right=''; SB.style.bottom='30px'; SB.style.top=''; }
+      if(MF) { MF.style.left='178px'; MF.style.top='8px'; MF.style.width='656px'; MF.style.height='578px'; }
+      if(FM) { FM.style.left='4px'; FM.style.bottom='8px'; FM.style.right=''; FM.style.top=''; }
+      break;
+    case 'atlas':
+      if(TB) { TB.style.left='26px'; TB.style.top='8px'; }
+      showToast('Atlas template active — add extra map frames via toolbar', 'info');
+      break;
+  }
+  scheduleAutoSave();
+  showToast(`Template "${capitalize(name)}" applied`, 'success');
+}
+
+/* ─────────────── Live Link / Extent Lock ───────────────── */
+function toggleLiveLink(sw) {
+  sw.classList.toggle('on');
+  liveLinkOn = sw.classList.contains('on');
+  showToast(liveLinkOn ? '🔗 Live link enabled' : 'Live link disabled', 'info');
+}
+function toggleExtentLock(sw) {
+  sw.classList.toggle('on');
+  extentLocked = sw.classList.contains('on');
+  showToast(extentLocked ? '🔒 Extent locked' : '🔓 Extent unlocked', 'info');
+}
+
+/* ─────────────── Refresh map ───────────────────────────── */
+function refreshMap() {
+  showToast('🔄 Map refreshed from canvas', 'success');
+  // Pulse the map frame to indicate refresh
+  const mf = document.getElementById('mapFrame');
+  if(mf) {
+    mf.style.outline = '2px solid rgba(34,197,94,.6)';
+    setTimeout(() => { mf.style.outline = ''; }, 1200);
+  }
+}
+
+/* ─────────────── Source map capture ────────────────────── */
+function openMapViewer() {
+  window.open('map.html', '_blank');
+  showToast('\uD83D\uDDFA\uFE0F Map Viewer opened — navigate to your area, then click "Capture from Map Viewer" to sync', 'info', 5000);
+}
+function captureExtent() {
+  // First try to load from Map Viewer localStorage
+  const state = loadMapViewerState();
+  if (state) {
+    applyMapViewerState(state);
+    return;
+  }
+  // Fallback: use the manual input fields
+  const val = document.getElementById('extentInput').value.trim();
+  if (!val) {
+    showToast('No map state found. Open Map Viewer, navigate to your area, then click here again.', 'warn', 4000);
+    return;
+  }
+  showToast('\u2705 Extent captured: ' + val, 'success');
+}
+
+/* ─────────────── Color picker helper ───────────────────── */
+function triggerColorPick(inputId) {
+  document.getElementById(inputId).click();
+}
+
+/* ─────────────── Element list (right panel) ────────────── */
+function updateElementList() {
+  const el = document.getElementById('elementList');
+  if(!el) return;
+  const items = document.querySelectorAll('#layoutPage .layout-element');
+  document.getElementById('rpElements').textContent = items.length;
+  el.innerHTML = '';
+  items.forEach((item, i) => {
+    const type = item.dataset.el || 'element';
+    const row  = document.createElement('div');
+    row.style.cssText = `display:flex;align-items:center;gap:7px;padding:4px 0;
+      border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer;`;
+    const icons = {map:'fa-vector-square',title:'fa-heading',legend:'fa-list-ul',
+                   scalebar:'fa-ruler-horizontal',north:'fa-compass',text:'fa-font',
+                   image:'fa-image',grid:'fa-border-all',footer:'fa-info-circle'};
+    const ico = icons[type] || 'fa-square';
+    row.innerHTML = `
+      <i class="fas ${ico}" style="font-size:.65rem;color:var(--accent3);width:14px;text-align:center;"></i>
+      <span style="font-size:.68rem;color:var(--text);flex:1;">${capitalize(type)} ${i+1}</span>
+      <button onclick="focusElement(this,${i})" style="background:none;border:none;color:var(--muted2);font-size:.6rem;cursor:pointer;padding:2px 4px;" title="Select">
+        <i class="fas fa-crosshairs"></i>
+      </button>`;
+    row.addEventListener('click', () => selectElement(item));
+    el.appendChild(row);
+  });
+}
+
+function focusElement(btn, idx) {
+  const items = document.querySelectorAll('#layoutPage .layout-element');
+  if(items[idx]) selectElement(items[idx]);
+}
+
+/* ─────────────── Preview ───────────────────────────────── */
+function previewLayout() {
+  deselectAll();
+  showToast('📄 Preview — selecting all elements hidden. Click Export to save.', 'info');
+}
+
+/* ─────────────── Export ────────────────────────────────── */
+function toggleExportMenu(e) {
+  e.stopPropagation();
+  document.getElementById('exportMenu').classList.toggle('show');
+}
+document.addEventListener('click', () => {
+  document.getElementById('exportMenu').classList.remove('show');
+});
+
+function exportPDF() {
+  document.getElementById('exportMenu').classList.remove('show');
+  showToast('⏳ Opening PDF print dialog…', 'info');
+  const page = document.getElementById('layoutPage');
+  const fmt  = PAGE_DEFS[currentPage] || PAGE_DEFS.a4l;
+  // Create print window with clean content
+  const printWin = window.open('', '_blank', 'width=1000,height=750');
+  if(!printWin) { showToast('⚠️ Pop-up blocked — allow pop-ups for this site', 'warn'); return; }
+  // Clone page and strip selection UI
+  const clone = page.cloneNode(true);
+  clone.querySelectorAll('.resize-handle').forEach(h=>h.remove());
+  clone.querySelectorAll('.el-selected').forEach(el=>el.classList.remove('el-selected'));
+  clone.style.transform = 'none';
+  clone.style.boxShadow = 'none';
+  printWin.document.write(`<!DOCTYPE html><html><head>
+    <title>GeoHub — Map Layout</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css"/>
+    <style>
+      @page{size:${fmt.w/3.7795}mm ${fmt.h/3.7795}mm;margin:0;}
+      *{box-sizing:border-box;margin:0;padding:0;}
+      body{width:${fmt.w}px;height:${fmt.h}px;overflow:hidden;}
+      @media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact;}}
+    </style>
+  </head><body>${clone.outerHTML}
+  <script>window.onload=()=>{setTimeout(()=>{window.print();},800);}<\/script>
+  </body></html>`);
+  printWin.document.close();
+}
+
+function exportPNG() {
+  document.getElementById('exportMenu').classList.remove('show');
+  if(typeof html2canvas === 'undefined') {
+    showToast('⚠️ html2canvas not loaded yet — try again in a moment', 'warn'); return;
+  }
+  deselectAll();
+  showToast('⏳ Rendering high-resolution PNG…', 'info', 6000);
+  const page = document.getElementById('layoutPage');
+  html2canvas(page, {
+    backgroundColor:'#ffffff', scale:3, useCORS:true, allowTaint:false,
+    logging:false
+  }).then(canvas => {
+    const a = document.createElement('a');
+    a.download = `geohub-layout-${new Date().toISOString().slice(0,10)}.png`;
+    a.href     = canvas.toDataURL('image/png');
+    a.click();
+    showToast('✅ PNG exported successfully', 'success');
+  }).catch(() => showToast('PNG export failed — please try PDF export', 'warn'));
+}
+
+function exportJPEG() {
+  document.getElementById('exportMenu').classList.remove('show');
+  if(typeof html2canvas === 'undefined') {
+    showToast('⚠️ html2canvas not loaded yet — try again', 'warn'); return;
+  }
+  deselectAll();
+  showToast('⏳ Rendering JPEG…', 'info', 5000);
+  const page = document.getElementById('layoutPage');
+  html2canvas(page, {
+    backgroundColor:'#ffffff', scale:2, useCORS:true
+  }).then(canvas => {
+    const a = document.createElement('a');
+    a.download = `geohub-layout-${new Date().toISOString().slice(0,10)}.jpg`;
+    a.href     = canvas.toDataURL('image/jpeg', 0.92);
+    a.click();
+    showToast('✅ JPEG exported', 'success');
+  }).catch(() => showToast('JPEG export failed', 'warn'));
+}
+
+function printLayout() {
+  document.getElementById('exportMenu').classList.remove('show');
+  exportPDF();
+}
+
+/* ─────────────── Save template ─────────────────────────── */
+function saveAsTemplate() {
+  const name = prompt('Template name:', 'My Layout ' + new Date().toLocaleDateString());
+  if(!name) return;
+  showToast(`✅ Template "${name}" saved`, 'success');
+}
+
+/* ─────────────── Auto-save ─────────────────────────────── */
+function scheduleAutoSave() {
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(() => {
+    try {
+      const page = document.getElementById('layoutPage');
+      sessionStorage.setItem('geohub_layout_html',  page.innerHTML);
+      sessionStorage.setItem('geohub_layout_zoom',  currentZoom);
+      sessionStorage.setItem('geohub_layout_page',  currentPage);
+    } catch(e){}
+  }, 1800);
+}
+
+/* ─────────────── Toast ─────────────────────────────────── */
+function showToast(msg, type='info', dur=2800) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className   = type;
+  t.style.display = 'flex';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.style.display = 'none'; }, dur);
+}
+
+/* ─────────────── Helpers ───────────────────────────────── */
+function capitalize(s) { return s ? s.charAt(0).toUpperCase()+s.slice(1) : ''; }
+
+/* ─────────────── Property Panel ────────────────────────── */
+function openPropPanel(el) {
+  const panel = document.getElementById('propPanel');
+  const type  = el.dataset.el || 'element';
+  const icoMap = {map:'fa-vector-square',title:'fa-heading',legend:'fa-list-ul',
+    scalebar:'fa-ruler-horizontal',north:'fa-compass',text:'fa-font',
+    image:'fa-image',grid:'fa-border-all',footer:'fa-info-circle'};
+  const ico = icoMap[type] || 'fa-square';
+  document.getElementById('ppTitle').innerHTML =
+    '<i class="fas ' + ico + '" style="color:var(--teal2);margin-right:5px;font-size:.62rem;"></i>' +
+    capitalize(type) + ' Properties';
+  const grid = document.getElementById('ppGrid');
+  const l  = parseInt(el.style.left)||0;
+  const t  = parseInt(el.style.top)||0;
+  const w  = parseInt(el.style.width)||el.offsetWidth;
+  const h  = parseInt(el.style.height)||el.offsetHeight;
+  const op = Math.round((parseFloat(el.style.opacity)||1)*100);
+  const rotMatch = el.style.transform && el.style.transform.match(/rotate\(([^)]+)/);
+  const rot  = rotMatch ? parseInt(rotMatch[1]) : 0;
+  const zIdx = parseInt(el.style.zIndex)||30;
+
+  let extraHTML = '';
+  if (type === 'text') {
+    const fs = parseInt(el.style.fontSize)||9;
+    const fc = el.style.color ? el.style.color : '#333333';
+    extraHTML = '<div class="pp-sep"></div>'
+      + '<div class="pp-section-title">Text Options</div>'
+      + '<div class="pp-field" style="grid-column:span 2">'
+      + '<label class="pp-label">Font Size (px)</label>'
+      + '<input class="pp-inp" type="number" min="6" max="72" value="' + fs + '"'
+      + ' onchange="applyPropChange(\'fontSize\',this.value+\'px\')" /></div>'
+      + '<div class="pp-color-row"><label class="pp-label" style="flex:1;">Text Color</label>'
+      + '<div class="pp-color-box" id="ppTxtBox" style="background:' + fc + ';" onclick="document.getElementById(\'ppTxtInp\').click();"></div>'
+      + '<input type="color" id="ppTxtInp" value="' + fc + '" style="opacity:0;width:0;position:absolute;"'
+      + ' oninput="applyPropChange(\'color\',this.value);document.getElementById(\'ppTxtBox\').style.background=this.value;" /></div>';
+  }
+  if (type === 'north' || type === 'scalebar') {
+    extraHTML = '<div class="pp-sep"></div>'
+      + '<div class="pp-section-title">Scale Reference</div>'
+      + '<div class="pp-field" style="grid-column:span 2">'
+      + '<label class="pp-label">Scale Label</label>'
+      + '<select class="pp-inp" onchange="updateScaleLabel(this.value)" style="font-size:.65rem;">'
+      + '<option value="1:5,000,000">1:5,000,000</option>'
+      + '<option value="1:2,500,000">1:2,500,000</option>'
+      + '<option value="1:1,000,000">1:1,000,000</option>'
+      + '<option value="1:500,000">1:500,000</option>'
+      + '</select></div>';
+  }
+
+  grid.innerHTML =
+    '<div class="pp-section-title">Position &amp; Size</div>'
+    + '<div class="pp-field"><label class="pp-label">X (px)</label>'
+    + '<input class="pp-inp" type="number" value="' + Math.round(l) + '" onchange="applyPropChange(\'left\',this.value+\'px\')" /></div>'
+    + '<div class="pp-field"><label class="pp-label">Y (px)</label>'
+    + '<input class="pp-inp" type="number" value="' + Math.round(t) + '" onchange="applyPropChange(\'top\',this.value+\'px\')" /></div>'
+    + '<div class="pp-field"><label class="pp-label">W (px)</label>'
+    + '<input class="pp-inp" type="number" value="' + Math.round(w) + '" onchange="applyPropChange(\'width\',this.value+\'px\')" /></div>'
+    + '<div class="pp-field"><label class="pp-label">H (px)</label>'
+    + '<input class="pp-inp" type="number" value="' + Math.round(h) + '" onchange="applyPropChange(\'height\',this.value+\'px\')" /></div>'
+    + '<div class="pp-sep"></div>'
+    + '<div class="pp-section-title">Appearance</div>'
+    + '<div class="pp-field" style="grid-column:span 2">'
+    + '<label class="pp-label">Opacity <strong style="color:var(--teal2);" id="ppOpLbl">' + op + '%</strong></label>'
+    + '<input type="range" min="10" max="100" value="' + op + '" style="width:100%;accent-color:var(--teal2);"'
+    + ' oninput="applyPropChange(\'opacity\',this.value/100);document.getElementById(\'ppOpLbl\').textContent=this.value+\'%\';" /></div>'
+    + '<div class="pp-field"><label class="pp-label">Rotate (deg)</label>'
+    + '<input class="pp-inp" type="number" min="-180" max="180" value="' + rot + '"'
+    + ' onchange="applyPropChange(\'transform\',\'rotate(\'+this.value+\'deg)\')" /></div>'
+    + '<div class="pp-field"><label class="pp-label">Z-Index</label>'
+    + '<input class="pp-inp" type="number" min="1" max="100" value="' + zIdx + '"'
+    + ' onchange="applyPropChange(\'zIndex\',this.value)" /></div>'
+    + extraHTML
+    + '<div class="pp-sep"></div>'
+    + '<div style="grid-column:span 2;font-size:.56rem;color:var(--muted);text-align:center;">'
+    + 'Pos: ' + Math.round(l) + ', ' + Math.round(t) + ' px &nbsp;|&nbsp; '
+    + 'Size: ' + Math.round(w) + ' x ' + Math.round(h) + ' px</div>';
+
+  panel.classList.add('visible');
+}
+
+function updateScaleLabel(val) {
+  const ft = document.getElementById('footerScaleText');
+  if (ft) ft.textContent = val;
+  const mapScaleRef = document.getElementById('mapScaleRef');
+  if (mapScaleRef) mapScaleRef.value = val;
+  scheduleAutoSave();
+}
+
+function closePropPanel() {
+  document.getElementById('propPanel').classList.remove('visible');
+}
+function applyPropChange(prop, val) {
+  if (!selectedEl) return;
+  selectedEl.style[prop] = val;
+  scheduleAutoSave();
+}
+
+/* ─────────────── Snap to Grid ──────────────────────────── */
+let snapEnabled = false;
+const SNAP_SIZE = 8;
+function toggleSnap(sw) {
+  sw.classList.toggle('on');
+  snapEnabled = sw.classList.contains('on');
+  const ind = document.getElementById('snapIndicator');
+  ind.style.display = snapEnabled ? 'flex' : 'none';
+  showToast(snapEnabled ? '🧲 Snap to grid enabled (8px)' : 'Snap disabled', 'info');
+}
+function snapVal(v) { return snapEnabled ? Math.round(v/SNAP_SIZE)*SNAP_SIZE : v; }
+
+/* ─────────────── Rulers ────────────────────────────────── */
+let rulersVisible = false;
+function toggleRulers(sw) {
+  sw.classList.toggle('on');
+  rulersVisible = sw.classList.contains('on');
+  const ca = document.getElementById('canvasArea');
+  let rh = document.getElementById('rulerH');
+  let rv = document.getElementById('rulerV');
+  if(rulersVisible) {
+    if(!rh) { rh = document.createElement('div'); rh.id='rulerH'; ca.appendChild(rh); buildRulerH(rh); }
+    if(!rv) { rv = document.createElement('div'); rv.id='rulerV'; ca.appendChild(rv); buildRulerV(rv); }
+    rh.style.display = rv.style.display = 'block';
+  } else {
+    if(rh) rh.style.display='none';
+    if(rv) rv.style.display='none';
+  }
+}
+function buildRulerH(el) {
+  el.style.cssText='position:absolute;top:0;left:0;right:0;height:16px;background:rgba(20,25,35,.9);border-bottom:1px solid rgba(255,255,255,.1);z-index:8200;pointer-events:none;overflow:hidden;';
+  let html='';
+  for(let i=0;i<=900;i+=50){html+=`<div style="position:absolute;left:${i}px;top:0;width:1px;height:${i%100===0?10:5}px;background:rgba(255,255,255,${i%100===0?.35:.2});"></div>${i%100===0?`<span style="position:absolute;left:${i+2}px;top:2px;font-size:6px;color:rgba(255,255,255,.3);font-family:Courier New,monospace;">${i}</span>`:''}`; }
+  el.innerHTML=html;
+}
+function buildRulerV(el) {
+  el.style.cssText='position:absolute;top:0;left:0;bottom:0;width:16px;background:rgba(20,25,35,.9);border-right:1px solid rgba(255,255,255,.1);z-index:8200;pointer-events:none;overflow:hidden;';
+  let html='';
+  for(let i=0;i<=800;i+=50){html+=`<div style="position:absolute;top:${i}px;left:0;height:1px;width:${i%100===0?10:5}px;background:rgba(255,255,255,${i%100===0?.35:.2});"></div>${i%100===0?`<span style="position:absolute;top:${i+2}px;left:1px;font-size:6px;color:rgba(255,255,255,.3);font-family:Courier New,monospace;">${i}</span>`:''}`; }
+  el.innerHTML=html;
+}
+
+/* ─────────────── Cursor position tracking ──────────────── */
+document.getElementById('canvasArea').addEventListener('mousemove', e => {
+  const page = document.getElementById('layoutPage');
+  const rect = page.getBoundingClientRect();
+  const z = currentZoom/100;
+  const x = Math.round((e.clientX - rect.left)/z);
+  const y = Math.round((e.clientY - rect.top)/z);
+  const xy = document.getElementById('sbXY');
+  if(xy) xy.textContent = `${x}, ${y} px`;
+  const sbCur = document.getElementById('sbCursorPos');
+  if(sbCur) sbCur.style.display = 'flex';
+});
+document.getElementById('canvasArea').addEventListener('mouseleave', () => {
+  const sbCur = document.getElementById('sbCursorPos');
+  if(sbCur) sbCur.style.display = 'none';
+});
+
+/* ─────────────── Snap-aware drag override ───────────────── */
+const _origStartDrag = window.startDrag;
+window.startDrag = function(e, el) {
+  const page     = document.getElementById('layoutPage');
+  const pageRect = page.getBoundingClientRect();
+  const zoom     = currentZoom / 100;
+  const sx = (e.clientX - pageRect.left) / zoom;
+  const sy = (e.clientY - pageRect.top)  / zoom;
+  const ol = parseInt(el.style.left) || 0;
+  const ot = parseInt(el.style.top)  || 0;
+  const onMove = ev => {
+    const dx = (ev.clientX - pageRect.left) / zoom - sx;
+    const dy = (ev.clientY - pageRect.top)  / zoom - sy;
+    el.style.left = snapVal(Math.max(0, ol + dx)) + 'px';
+    el.style.top  = snapVal(Math.max(0, ot + dy)) + 'px';
+    scheduleAutoSave();
+  };
+  const onUp = () => {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+    updateElementList();
+    if(document.getElementById('propPanel').classList.contains('visible')) openPropPanel(el);
+  };
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+};
+
+/* ─────────────── Select element opens prop panel ────────── */
+const _origSelect = window.selectElement;
+window.selectElement = function(el) {
+  if(selectedEl === el) { openPropPanel(el); return; }
+  deselectAll();
+  selectedEl = el;
+  el.classList.add('el-selected');
+  addResizeHandles(el);
+  updateLockBtn();
+  const type = el.dataset.el || 'element';
+  document.getElementById('sbSelected').textContent = `Selected: ${capitalize(type)} — X:${parseInt(el.style.left)||0} Y:${parseInt(el.style.top)||0}`;
+  openPropPanel(el);
+};
+
+/* ─────────────── North Arrow Style ─────────────────────── */
+function setNorthArrowStyle(idx, btn) {
+  currentNorthStyle = idx;
+  document.querySelectorAll('.na-opt').forEach(o=>o.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('[data-el="north"]').forEach(el => {
+    el.innerHTML = NORTH_ARROW_SVGs[idx];
+  });
+  showToast('North arrow style updated', 'success');
+}
+
+/* ─────────────── Map Colour Theme ──────────────────────── */
+const MAP_THEMES = {
+  natural:  { central:'#fde8ba',copperbelt:'#b8ddb8',eastern:'#fad4b2',luapula:'#b8d0ee',lusaka:'#f0b8cc',muchinga:'#ccddb0',northern:'#d8caee',nwestern:'#feeabf',southern:'#eadcc8',western:'#c0eeee',bg:'#dce8f2' },
+  pastel:   { central:'#fef3c7',copperbelt:'#d1fae5',eastern:'#ffe4e6',luapula:'#dbeafe',lusaka:'#fce7f3',muchinga:'#dcfce7',northern:'#ede9fe',nwestern:'#fef9c3',southern:'#fff7ed',western:'#e0f2fe',bg:'#f0f9ff' },
+  dark:     { central:'#374151',copperbelt:'#166534',eastern:'#78350f',luapula:'#1e3a5f',lusaka:'#5b21b6',muchinga:'#14532d',northern:'#312e81',nwestern:'#6b3500',southern:'#1c1917',western:'#155e75',bg:'#111827' },
+  mono:     { central:'#f5f5f4',copperbelt:'#e7e5e4',eastern:'#f5f5f4',luapula:'#d6d3d1',lusaka:'#e7e5e4',muchinga:'#f5f5f4',northern:'#d6d3d1',nwestern:'#e7e5e4',southern:'#fafaf9',western:'#f5f5f4',bg:'#f0f0ef' }
+};
+function applyMapTheme(theme, swatch) {
+  document.querySelectorAll('.theme-swatch').forEach(s=>s.classList.remove('active'));
+  swatch.classList.add('active');
+  const t = MAP_THEMES[theme]; if(!t) return;
+  const svg = document.getElementById('zambiaSvg'); if(!svg) return;
+  const bgRect = svg.querySelector('rect');
+  if(bgRect) bgRect.setAttribute('fill', t.bg);
+  const pMap = {central:'central',copperbelt:'copperbelt',eastern:'eastern',luapula:'luapula',lusaka:'lusaka',muchinga:'muchinga',northern:'northern',nwestern:'nwestern',southern:'southern',western:'western'};
+  Object.entries(pMap).forEach(([k,cls]) => {
+    svg.querySelectorAll('.prov-'+cls).forEach(el=>el.style.fill=t[k]);
+  });
+  scheduleAutoSave();
+  showToast(`Map theme: ${capitalize(theme)}`, 'success');
+}
+
+/* ─────────────── Auto-save status indicator ────────────── */
+function markSaving() {
+  const el = document.getElementById('sbAutoSave');
+  if(!el) return;
+  el.innerHTML='<i class="fas fa-spinner fa-spin" style="color:var(--amber);font-size:.6rem;"></i><strong style="color:var(--amber);">Saving…</strong>';
+}
+function markSaved() {
+  const el = document.getElementById('sbAutoSave');
+  if(!el) return;
+  el.innerHTML='<i class="fas fa-check-circle" style="color:var(--g5);font-size:.6rem;"></i><strong style="color:var(--g5);">Auto Saved</strong>';
+}
+
+/* Override scheduleAutoSave to show indicator */
+const _schedAutoSaveOrig = scheduleAutoSave;
+function scheduleAutoSave() {
+  markSaving();
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(() => {
+    try {
+      const page = document.getElementById('layoutPage');
+      sessionStorage.setItem('geohub_layout_html', page.innerHTML);
+      sessionStorage.setItem('geohub_layout_zoom', currentZoom);
+      sessionStorage.setItem('geohub_layout_page', currentPage);
+      markSaved();
+    } catch(e){ markSaved(); }
+  }, 1800);
+}
+
+/* ─────────────── Keyboard Shortcut Hint Panel ─────────────── */
+function toggleShortcutHint() {
+  const hint = document.getElementById('shortcutHint');
+  hint.classList.toggle('hidden');
+  const btn = document.getElementById('shortcutBtn');
+  btn.classList.toggle('active', !hint.classList.contains('hidden'));
+}
+
+/* ─────────────── Color Inspector ────────────────────────── */
+let colorInspectorOn = false;
+function toggleColorInspector() {
+  colorInspectorOn = !colorInspectorOn;
+  const ci = document.getElementById('colorInspector');
+  ci.classList.toggle('show', colorInspectorOn);
+  showToast(colorInspectorOn ? '🎨 Color inspector active — hover elements' : 'Color inspector off', 'info');
+}
+
+document.addEventListener('mouseover', function(e) {
+  if (!colorInspectorOn) return;
+  const el = e.target.closest('.layout-element, .layout-element *');
+  if (!el) return;
+  const style = window.getComputedStyle(el);
+  let col = style.backgroundColor || style.fill || '#1a5233';
+  if (col === 'rgba(0, 0, 0, 0)' || col === 'transparent') col = style.color || '#1a5233';
+  // Parse rgb string
+  const rgb = col.match(/\d+/g);
+  if (rgb && rgb.length >= 3) {
+    const hex = '#' + rgb.slice(0,3).map(v => parseInt(v).toString(16).padStart(2,'0')).join('');
+    document.getElementById('ciSwatch').style.background = hex;
+    document.getElementById('ciHex').textContent = hex;
+    document.getElementById('ciRgb').textContent = 'rgb(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ')';
+  }
+});
+
+/* ─────────────── Keyboard additions ────────────────────── */
+document.addEventListener('keydown', e => {
+  if(e.ctrlKey || e.metaKey) {
+    if(e.key==='+' || e.key==='=') { e.preventDefault(); adjustZoom(10); }
+    if(e.key==='-')                { e.preventDefault(); adjustZoom(-10); }
+    if(e.key==='0')                { e.preventDefault(); fitToPage(); }
+  }
+});
+
+/* Close prop panel when clicking canvas background */
+document.getElementById('canvasArea').addEventListener('click', ev => {
+  if(!ev.target.closest('.layout-element') && !ev.target.closest('#propPanel')) {
+    closePropPanel();
+  }
+});
+
+/* ─────────────── Restore session on load ───────────────── */
+window.addEventListener('DOMContentLoaded', () => {
+  try {
+    const html = sessionStorage.getItem('geohub_layout_html');
+    const zoom = sessionStorage.getItem('geohub_layout_zoom');
+    const pg   = sessionStorage.getItem('geohub_layout_page');
+    if(html) { document.getElementById('layoutPage').innerHTML = html; attachDragToAll(); updateElementList(); }
+    if(zoom) setZoom(parseInt(zoom));
+    if(pg && PAGE_DEFS[pg]) {
+      currentPage = pg;
+      document.getElementById('pageFormat').value = pg;
+      const def = PAGE_DEFS[pg];
+      document.getElementById('layoutPage').style.width  = def.w + 'px';
+      document.getElementById('layoutPage').style.height = def.h + 'px';
+      document.getElementById('sbPage').textContent = def.label;
+      document.getElementById('sbDims').textContent = def.dims;
+    }
+  } catch(e){}
+}, {once:true});
+
+/* ─────────────── Export with custom filename ────────────── */
+function getExportFilename(ext) {
+  const pfx = (document.getElementById('exportPrefix')||{}).value || 'geohub-layout';
+  return `${pfx}-${new Date().toISOString().slice(0,10)}.${ext}`;
+}
+function exportPNG() {
+  document.getElementById('exportMenu').classList.remove('show');
+  if(typeof html2canvas === 'undefined') { showToast('⚠️ html2canvas not loaded — try again', 'warn'); return; }
+  deselectAll();
+  const scale = parseInt((document.getElementById('pngScaleSlider')||{value:'3'}).value)||3;
+  showToast(`⏳ Rendering PNG at ${scale}× scale…`, 'info', 6000);
+  const page = document.getElementById('layoutPage');
+  html2canvas(page, { backgroundColor:'#ffffff', scale, useCORS:true, allowTaint:false, logging:false })
+    .then(canvas => {
+      const a = document.createElement('a');
+      a.download = getExportFilename('png');
+      a.href     = canvas.toDataURL('image/png');
+      a.click();
+      showToast(`✅ PNG exported (${scale}× scale)`, 'success');
+    }).catch(err => showToast('PNG export failed: ' + (err.message||err), 'warn'));
+}
+</script>
+
+<!-- html2canvas for PNG/JPEG export -->
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+</body>
+</html>

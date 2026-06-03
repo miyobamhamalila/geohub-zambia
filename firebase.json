@@ -1,0 +1,37 @@
+{
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**",
+      "requirements.txt",
+      "runtime.txt",
+      "*.py",
+      "*.log",
+      "*.txt",
+      "*.docx",
+      "*.pptx",
+      "*.tif",
+      "*.aux.xml",
+      "*.geojson",
+      "Dockerfile"
+    ],
+    "rewrites": [
+      {
+        "source": "/api/**",
+        "run": {
+          "serviceId": "geohub-api",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  },
+  "firestore": {
+    "rules": "firestore.rules"
+  }
+}

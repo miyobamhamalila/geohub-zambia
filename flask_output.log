@@ -1,0 +1,5 @@
+Trying EE init with default credentials...
+Earth Engine initialized (default credentials)
+EE test value: 1
+ * Serving Flask app 'app'
+ * Debug mode: on

@@ -3,6 +3,15 @@
  * Email/Password auth via localStorage
  */
 
+const FIREBASE_CONFIG = {
+  apiKey:            'AIzaSyBDQPZB1_QQluhiZ3DUWoK3lEHCDtJLpWs',
+  authDomain:        'geohub-zambia-cb18f.firebaseapp.com',
+  projectId:         'geohub-zambia-cb18f',
+  storageBucket:     'geohub-zambia-cb18f.firebasestorage.app',
+  messagingSenderId: '188435108246',
+  appId:             '1:188435108246:web:401716a9dd307f826c8db7'
+};
+
 const GeoHubAuth = (() => {
     const SESSION_KEY = 'ghz_session';
     const USERS_KEY = 'ghz_users';

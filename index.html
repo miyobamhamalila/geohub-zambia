@@ -319,10 +319,7 @@
     const sp    = document.getElementById('loginSpinner');
     const ico   = document.getElementById('loginIco');
     const txt   = document.getElementById('loginTxt');
-    const err   = document.getElementById('errBanner');
-    const errMsg= document.getElementById('errMsg');
 
-    err.style.display = 'none';
     document.getElementById('emailInp').classList.remove('err');
     document.getElementById('passInp').classList.remove('err');
 
@@ -350,8 +347,7 @@
       txt.textContent = 'Sign In';
 
       if (!result.success) {
-        errMsg.textContent = result.error;
-        err.style.display = 'flex';
+        showToast(result.error || 'Login failed.');
         document.getElementById('emailInp').classList.add('err');
         document.getElementById('passInp').classList.add('err');
         return;
@@ -370,8 +366,7 @@
       ico.style.display = '';
       btn.disabled = false;
       txt.textContent = 'Sign In';
-      errMsg.textContent = e.message || 'An unexpected error occurred.';
-      err.style.display = 'flex';
+      showToast(e.message || 'An unexpected error occurred.');
     }
   }
 
@@ -389,6 +384,13 @@
     setTimeout(() => {
       window.location.href = 'dashboard.html';
     }, 900);
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    document.getElementById('toastMsg').textContent = msg;
+    t.style.display = 'block';
+    setTimeout(() => t.style.display = 'none', 3000);
   }
 </script>
 </body>

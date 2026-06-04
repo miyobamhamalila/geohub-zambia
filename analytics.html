@@ -7,8 +7,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css"/>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- Firebase SDKs Compat -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/zambia-data.js"></script>
+  <script src="js/places-data.js"></script>
+  <script src="js/climate-data.js"></script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
@@ -168,7 +174,7 @@
   <!-- Page header -->
   <div class="pg-hd">
     <div class="pg-hd-l">
-      <h2>📊 Analytics &amp; Insights</h2>
+      <h2>📊 Analytics & Insights</h2>
       <p>Real spatial data — NSDI GRID3, FAO, CHIRPS, LCCS, ZDA sources</p>
     </div>
     <div class="pg-hd-r">
@@ -292,7 +298,7 @@
     </div>
     <div class="chart-card">
       <div class="chart-hd">
-        <div><h3>Population Density vs Forest Cover</h3><p>Scatter by province — Census 2022 &amp; FAO</p></div>
+        <div><h3>Population Density vs Forest Cover</h3><p>Scatter by province — Census 2022 & FAO</p></div>
         <span class="chart-tag tag-g">Multi-source</span>
       </div>
       <div class="chart-wrap"><canvas id="scatterChart"></canvas></div>
@@ -311,25 +317,25 @@
           <svg width="120" height="120" viewBox="0 0 120 120">
             <circle cx="60" cy="60" r="50" fill="none" stroke="#f3f4f6" stroke-width="10"/>
             <circle cx="60" cy="60" r="50" fill="none" stroke="#dc2626" stroke-width="10"
-              stroke-dasharray="314.16" stroke-dashoffset="188.5"
+              stroke-dasharray="314.16" stroke-dashoffset="276.5"
               stroke-linecap="round" id="gaugeArc"/>
           </svg>
-          <div class="gauge-label"><strong>40%</strong><small>of target</small></div>
+          <div class="gauge-label"><strong>12%</strong><small>lost since 2018</small></div>
         </div>
         <div>
-          <div style="font-size:.85rem;font-weight:700;color:var(--text);">1.8% per year</div>
+          <div style="font-size:.85rem;font-weight:700;color:var(--text);">Deforestation: 1.8% per year</div>
           <div style="font-size:.76rem;color:var(--muted);margin-top:4px;line-height:1.5;">Current rate exceeds<br>national target of 0.5%/yr.<br>Total loss 2018–24:</div>
           <div style="font-size:1.2rem;font-weight:900;color:#dc2626;margin-top:6px;">−59,500 km²</div>
-          <div style="font-size:.7rem;color:var(--muted);">≈ 7.9% of 2018 cover</div>
+          <div style="font-size:.7rem;color:var(--muted);">≈ 12% of 2018 forest cover</div>
           <div style="margin-top:10px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:7px 10px;font-size:.73rem;color:#dc2626;font-weight:600;">
-            <i class="fas fa-exclamation-triangle"></i> High risk — Copperbelt &amp; Lusaka provinces
+            <i class="fas fa-exclamation-triangle"></i> High risk — Copperbelt & Lusaka provinces
           </div>
         </div>
       </div>
     </div>
     <div class="chart-card" style="grid-column:span 2;">
       <div class="chart-hd">
-        <div><h3>Annual Forest Loss &amp; Gain 2018–2024</h3><p>Net change trajectory — FAO / Zambia Forestry Dept</p></div>
+        <div><h3>Annual Forest Loss & Gain 2018–2024</h3><p>Net change trajectory — FAO / Zambia Forestry Dept</p></div>
         <button class="btn-sm btn-outline" onclick="exportForestCSV()" style="font-size:.72rem;padding:5px 10px;"><i class="fas fa-download"></i>Export CSV</button>
       </div>
       <div class="chart-wrap"><canvas id="forestBarChart"></canvas></div>
@@ -346,7 +352,7 @@
     <table class="prov-table" id="provTable">
       <thead>
         <tr>
-          <th onclick="sortTable('name')">#</th>
+          <th style="cursor:default;">#</th>
           <th onclick="sortTable('name')">Province</th>
           <th onclick="sortTable('capital')">Capital</th>
           <th onclick="sortTable('districts')">Districts</th>
@@ -375,7 +381,7 @@
 <div class="dist-sec-hd" style="margin-bottom:4px;margin-top:14px;">
     <div>
       <h2><i class="fas fa-map-marker-alt" style="color:var(--g3);margin-right:6px;"></i>District Data</h2>
-      <p>NSDI GRID3 2022 — All 116 districts, Census 2022</p>
+      <p>NSDI GRID3 2022 — All districts, Census 2022</p>
     </div>
     <div class="dist-search-wrap">
       <i class="fas fa-search dist-search-ico"></i>
@@ -425,7 +431,7 @@
   <div class="charts2" style="margin-bottom:18px;">
     <div class="chart-card">
       <div class="chart-hd">
-        <div><h3>District Population Density</h3><p>People per km² — all 116 districts</p></div>
+        <div><h3>District Population Density</h3><p>People per km² — all districts</p></div>
         <span class="chart-tag tag-p">Census 2022</span>
       </div>
       <div class="chart-wrap-sm"><canvas id="distDensChart"></canvas></div>
@@ -442,13 +448,13 @@
   <!-- Full District Table -->
   <div class="chart-card" style="margin-bottom:18px;">
     <div class="chart-hd">
-      <div><h3>All Districts — Full List</h3><p>116 districts · NSDI GRID3 2022 · Click column headers to sort · Filter by province</p></div>
+      <div><h3>All Districts — Full List</h3><p>NSDI GRID3 2022 · Click column headers to sort · Filter by province</p></div>
       <div class="dist-filter-pills" id="distFilterPills">
         <button class="dist-pill active" onclick="filterDistProvince('',this)">All</button>
       </div>
     </div>
     <div class="dist-tbl-hdr">
-      <span id="distTableCount">Showing 116 districts</span>
+      <span id="distTableCount">Showing districts</span>
     </div>
     <div style="overflow-x:auto;">
       <table class="dist-table" id="distTable">
@@ -465,6 +471,104 @@
         </thead>
         <tbody id="distTableBody"></tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- ══ SCHOOLS & HEALTH FACILITIES ═════════════════════════════════════════ -->
+  <div class="dist-sec-hd" style="margin-bottom:4px;margin-top:18px;">
+    <div>
+      <h2><i class="fas fa-graduation-cap" style="color:#2563eb;margin-right:6px;"></i>🏥 Education & Health Services</h2>
+      <p>GRID3 2022 · Schools (8,509) & Health Facilities (2,798) — Ministry of Education & Ministry of Health</p>
+    </div>
+  </div>
+
+  <!-- School & Health Stats row -->
+  <div class="stats4" style="margin-bottom:22px;">
+    <div class="stat-c">
+      <div class="stat-ico" style="background:#eff6ff;"><i class="fas fa-graduation-cap" style="color:#2563eb;"></i></div>
+      <div>
+        <div class="stat-v" id="schoolTotalCount">8,509</div>
+        <div class="stat-l">Total Schools Nationwide</div>
+        <div class="stat-delta up"><i class="fas fa-arrow-up"></i>Primary: 5,200 · Secondary: 2,800</div>
+      </div>
+    </div>
+    <div class="stat-c">
+      <div class="stat-ico" style="background:#fef2f2;"><i class="fas fa-hospital" style="color:#dc2626;"></i></div>
+      <div>
+        <div class="stat-v" id="healthTotalCount">2,798</div>
+        <div class="stat-l">Health Facilities (Public)</div>
+        <div class="stat-delta up"><i class="fas fa-arrow-up"></i>Clinics: 1,950 · Hospitals: 75</div>
+      </div>
+    </div>
+    <div class="stat-c">
+      <div class="stat-ico" style="background:#fef3c7;"><i class="fas fa-users-class" style="color:#d97706;"></i></div>
+      <div>
+        <div class="stat-v" id="schoolStudRatio">1 : 58</div>
+        <div class="stat-l">School-to-Population Ratio</div>
+        <div class="stat-delta dn"><i class="fas fa-info-circle"></i>One school per 58,000 people</div>
+      </div>
+    </div>
+    <div class="stat-c">
+      <div class="stat-ico" style="background:#fecdd3;"><i class="fas fa-ambulance" style="color:#ef4444;"></i></div>
+      <div>
+        <div class="stat-v" id="healthPopRatio">1 : 7,100</div>
+        <div class="stat-l">Health Facility Coverage</div>
+        <div class="stat-delta dn"><i class="fas fa-info-circle"></i>One facility per 7,100 people</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- School & Health Charts row 1: Top 10 districts by school count + Top 10 by health facilities -->
+  <div class="charts2" style="margin-bottom:18px;">
+    <div class="chart-card">
+      <div class="chart-hd">
+        <div><h3>Top 10 Districts by School Count</h3><p>GRID3 2022 — Total schools per district</p></div>
+        <span class="chart-tag tag-b">Schools 2022</span>
+      </div>
+      <div class="chart-wrap"><canvas id="schoolDistChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-hd">
+        <div><h3>Top 10 Districts by Health Facilities</h3><p>GRID3 2022 — Total facilities per district</p></div>
+        <span class="chart-tag tag-r">Health 2022</span>
+      </div>
+      <div class="chart-wrap"><canvas id="healthDistChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- School & Health Charts row 2: Schools by type + Health facilities by type -->
+  <div class="charts2" style="margin-bottom:18px;">
+    <div class="chart-card">
+      <div class="chart-hd">
+        <div><h3>Schools by Type (Nationwide)</h3><p>GRID3 2022 classification — Primary, Secondary, TVET, University</p></div>
+        <span class="chart-tag tag-b">Schools 2022</span>
+      </div>
+      <div class="chart-wrap"><canvas id="schoolTypeChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-hd">
+        <div><h3>Health Facilities by Type</h3><p>GRID3 2022 classification — Clinic, Health Post, Hospital</p></div>
+        <span class="chart-tag tag-r">Health 2022</span>
+      </div>
+      <div class="chart-wrap"><canvas id="healthTypeChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- School & Health Charts row 3: Coverage per 10K pop by province -->
+  <div class="charts2" style="margin-bottom:18px;">
+    <div class="chart-card">
+      <div class="chart-hd">
+        <div><h3>Schools per 10,000 Population by Province</h3><p>GRID3 2022 & Census 2022 — Service coverage metric</p></div>
+        <span class="chart-tag tag-b">Schools/Health</span>
+      </div>
+      <div class="chart-wrap-sm"><canvas id="schoolCoverageChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-hd">
+        <div><h3>Health Facilities per 10,000 Population by Province</h3><p>GRID3 2022 & Census 2022 — Service coverage metric</p></div>
+        <span class="chart-tag tag-r">Schools/Health</span>
+      </div>
+      <div class="chart-wrap-sm"><canvas id="healthCoverageChart"></canvas></div>
     </div>
   </div>
 
@@ -550,7 +654,7 @@
   <!-- GEE data info table -->
   <div class="chart-card" style="margin-bottom:18px;">
     <div class="chart-hd">
-      <div><h3>GEE Layer Scale &amp; Metadata</h3><p>Colour palettes, unit ranges, and data sources for each Earth Engine layer displayed on the map</p></div>
+      <div><h3>GEE Layer Scale & Metadata</h3><p>Colour palettes, unit ranges, and data sources for each Earth Engine layer displayed on the map</p></div>
     </div>
     <div style="overflow-x:auto;">
       <table class="prov-table" id="geeMetaTable">
@@ -560,6 +664,355 @@
           </tr>
         </thead>
         <tbody id="geeMetaBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ CURRENT CLIMATE CONDITIONS ═══════════════════════════════════════════ -->
+  <div class="dist-sec-hd" style="margin-bottom:4px;margin-top:18px;">
+    <div>
+      <h2><i class="fas fa-thermometer-half" style="color:#f97316;margin-right:6px;"></i>Current Climate Conditions</h2>
+      <p>Near-real-time analysis — ERA5-Land / MODIS / CHIRPS — Updated May 2026</p>
+    </div>
+  </div>
+
+  <div class="stats4" style="margin-bottom:18px;">
+    <div class="stat-c">
+      <div class="stat-ico" style="background:#fef2f2;"><i class="fas fa-thermometer-high" style="color:#dc2626;"></i></div>
+      <div>
+        <div class="stat-v" id="climateCurrTemp">+1.8°C</div>
+        <div class="stat-l">Current National Temp Anomaly</div>
+        <div class="stat-delta up"><i class="fas fa-arrow-up"></i> vs pre-industrial</div>
+      </div>
+    </div>
+    <div class="stat-c">
+      <div class="stat-ico" style="background:#fff7ed;"><i class="fas fa-cloud-rain" style="color:#ea580c;"></i></div>
+      <div>
+        <div class="stat-v" id="climateCurrRain">-10.1%</div>
+        <div class="stat-l">Wet Season Rainfall Anomaly</div>
+        <div class="stat-delta dn"><i class="fas fa-arrow-down"></i> deficit below baseline</div>
+      </div>
+    </div>
+    <div class="stat-c">
+      <div class="stat-ico" style="background:#fef2f2;"><i class="fas fa-exclamation-triangle" style="color:#dc2626;"></i></div>
+      <div>
+        <div class="stat-v" id="climateCurrDrought">MODERATE</div>
+        <div class="stat-l">Drought Severity</div>
+        <div class="stat-delta dn"><i class="fas fa-exclamation-circle"></i> SPI-3: -0.78</div>
+      </div>
+    </div>
+    <div class="stat-c">
+      <div class="stat-ico" style="background:#fefce8;"><i class="fas fa-fire" style="color:#f59e0b;"></i></div>
+      <div>
+        <div class="stat-v" id="climateCurrFire">HIGH</div>
+        <div class="stat-l">Fire Risk (VIIRS)</div>
+        <div class="stat-delta up"><i class="fas fa-burn"></i> 142 fires/week</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Climate stats grid -->
+  <div class="stats4" style="margin-bottom:18px;">
+    <div class="stat-c">
+      <div class="stat-ico" style="background:#eff6ff;"><i class="fas fa-water" style="color:#2563eb;"></i></div>
+      <div>
+        <div class="stat-v" id="climateKariba">18.7%</div>
+        <div class="stat-l">Lake Kariba Storage</div>
+        <div class="stat-delta dn"><i class="fas fa-arrow-down"></i> critical — declining</div>
+      </div>
+    </div>
+    <div class="stat-c">
+      <div class="stat-ico" style="background:#f0fdf4;"><i class="fas fa-leaf" style="color:var(--g3);"></i></div>
+      <div>
+        <div class="stat-v" id="climateNDVI">0.62</div>
+        <div class="stat-l">Current NDVI (National)</div>
+        <div class="stat-delta dn"><i class="fas fa-arrow-down"></i> -0.08 below normal</div>
+      </div>
+    </div>
+    <div class="stat-c">
+      <div class="stat-ico" style="background:#fffbeb;"><i class="fas fa-sun" style="color:#d97706;"></i></div>
+      <div>
+        <div class="stat-v" id="climateHeatDays">142</div>
+        <div class="stat-l">Extreme Heat Days YTD</div>
+        <div class="stat-delta up"><i class="fas fa-arrow-up"></i> worst: Southern(28)</div>
+      </div>
+    </div>
+    <div class="stat-c">
+      <div class="stat-ico" style="background:#f5f3ff;"><i class="fas fa-bolt" style="color:#7c3aed;"></i></div>
+      <div>
+        <div class="stat-v" id="climateHydro">42%</div>
+        <div class="stat-l">Hydro Capacity Output</div>
+        <div class="stat-delta dn"><i class="fas fa-arrow-down"></i> 58% deficit</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Current climate charts row -->
+  <div class="charts2" style="margin-bottom:18px;">
+    <div class="chart-card">
+      <div class="chart-hd">
+        <div><h3>Temperature Anomaly by Province — May 2026</h3><p>°C above 1991-2020 baseline · MODIS MOD11A2 / ERA5-Land</p></div>
+        <span class="chart-tag tag-r">Current</span>
+      </div>
+      <div class="chart-wrap-sm"><canvas id="climateCurrTempChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-hd">
+        <div><h3>Rainfall Anomaly by Province — May 2026</h3><p>% change vs 1991-2020 baseline · CHIRPS / GEE</p></div>
+        <span class="chart-tag tag-b">CHIRPS</span>
+      </div>
+      <div class="chart-wrap-sm"><canvas id="climateCurrRainChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="charts2" style="margin-bottom:18px;">
+    <div class="chart-card">
+      <div class="chart-hd">
+        <div><h3>Extreme Heat Days YTD 2026</h3><p>Cumulative days exceeding 40°C LST — per province</p></div>
+        <span class="chart-tag tag-r">Alert</span>
+      </div>
+      <div class="chart-wrap-sm"><canvas id="climateHeatChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-hd">
+        <div><h3>Current Water Stress Indicators</h3><p>Lake Kariba level · Hydro output · River flow status</p></div>
+        <span class="chart-tag tag-b">Water</span>
+      </div>
+      <div class="chart-wrap-sm"><canvas id="climateWaterChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Current conditions detail table -->
+  <div class="chart-card" style="margin-bottom:18px;">
+    <div class="chart-hd">
+      <div><h3>Province-Level Current Climate Summary</h3><p>May 2026 — temperature anomaly, rainfall anomaly, extreme heat days</p></div>
+      <span class="chart-tag tag-r">ERA5/CHIRPS</span>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="prov-table" id="climateCurrTable">
+        <thead>
+          <tr>
+            <th>Province</th><th>Temp Anomaly °C</th><th>Rainfall %</th><th>Extreme Heat Days</th><th>Drought Affected</th>
+          </tr>
+        </thead>
+        <tbody id="climateCurrTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ PREDICTIVE CLIMATE ANALYSIS ═══════════════════════════════════════════ -->
+  <div class="dist-sec-hd" style="margin-bottom:4px;margin-top:18px;">
+    <div>
+      <h2><i class="fas fa-chart-line" style="color:#a78bfa;margin-right:6px;"></i>Predictive Climate Analysis</h2>
+      <p>CMIP6 Multi-Model Mean (32 GCMs) · IPCC AR6 · SSP2-4.5 & SSP5-8.5</p>
+    </div>
+  </div>
+
+  <!-- Controls for predictive -->
+  <div class="ctrl-bar">
+    <label>Scenario</label>
+    <select class="ctrl-sel" id="predScenario" onchange="buildPredictiveCharts()">
+      <option value="ssp245">SSP2-4.5 (Moderate)</option>
+      <option value="ssp585">SSP5-8.5 (High Emissions)</option>
+    </select>
+    <div class="ctrl-divider"></div>
+    <label>Horizon</label>
+    <select class="ctrl-sel" id="predHorizon" onchange="buildPredictiveCharts()">
+      <option value="near_term">Near-term (2021-2040)</option>
+      <option value="mid_century" selected>Mid-century (2041-2060)</option>
+      <option value="end_century">End-century (2081-2100)</option>
+    </select>
+    <div class="ctrl-divider"></div>
+    <button class="btn-sm btn-primary" onclick="buildPredictiveCharts()"><i class="fas fa-sync-alt"></i>Update</button>
+  </div>
+
+  <!-- Predictive stats -->
+  <div class="stats4" style="margin-bottom:18px;">
+    <div class="stat-c">
+      <div class="stat-ico" style="background:#fef2f2;"><i class="fas fa-temperature-high" style="color:#dc2626;"></i></div>
+      <div>
+        <div class="stat-v" id="predTempAnomaly">+2.2°C</div>
+        <div class="stat-l">Mid-Century Temp Anomaly</div>
+        <div class="stat-delta up"><i class="fas fa-arrow-up"></i> SSP2-4.5 scenario</div>
+      </div>
+    </div>
+    <div class="stat-c">
+      <div class="stat-ico" style="background:#fffbeb;"><i class="fas fa-cloud-rain" style="color:#d97706;"></i></div>
+      <div>
+        <div class="stat-v" id="predPrecipChange">-5.0%</div>
+        <div class="stat-l">Mid-Century Rainfall Change</div>
+        <div class="stat-delta dn"><i class="fas fa-arrow-down"></i> 955 mm/year</div>
+      </div>
+    </div>
+    <div class="stat-c">
+      <div class="stat-ico" style="background:#fff7ed;"><i class="fas fa-calendar-day" style="color:#ea580c;"></i></div>
+      <div>
+        <div class="stat-v" id="predHotDays">78</div>
+        <div class="stat-l">Days >35°C by 2050</div>
+        <div class="stat-delta up"><i class="fas fa-arrow-up"></i> baseline: 45 days</div>
+      </div>
+    </div>
+    <div class="stat-c">
+      <div class="stat-ico" style="background:#fef2f2;"><i class="fas fa-exclamation-triangle" style="color:#dc2626;"></i></div>
+      <div>
+        <div class="stat-v" id="predRiskLevel">HIGH</div>
+        <div class="stat-l">National Climate Risk (2050)</div>
+        <div class="stat-delta up"><i class="fas fa-arrow-up"></i> VERY HIGH by 2100</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Predictive charts row 1 -->
+  <div class="charts2" style="margin-bottom:18px;">
+    <div class="chart-card">
+      <div class="chart-hd">
+        <div><h3>Temperature Projection 2025–2100</h3><p>Zambia national mean — °C above 1995-2014 baseline</p></div>
+        <span class="chart-tag tag-r">CMIP6</span>
+      </div>
+      <div class="chart-wrap"><canvas id="predTempChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-hd">
+        <div><h3>Precipitation Change 2025–2100</h3><p>% change from baseline (1005 mm/year)</p></div>
+        <span class="chart-tag tag-a">CMIP6</span>
+      </div>
+      <div class="chart-wrap"><canvas id="predPrecipChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Predictive charts row 2 -->
+  <div class="charts2" style="margin-bottom:18px;">
+    <div class="chart-card">
+      <div class="chart-hd">
+        <div><h3>Province Temp Anomalies by 2050</h3><p>°C warming by mid-century — SSP2-4.5</p></div>
+        <span class="chart-tag tag-r">CMIP6</span>
+      </div>
+      <div class="chart-wrap-sm"><canvas id="predProvTempChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-hd">
+        <div><h3>Province Rainfall Change by 2050</h3><p>% change in annual precipitation — SSP2-4.5</p></div>
+        <span class="chart-tag tag-b">CMIP6</span>
+      </div>
+      <div class="chart-wrap-sm"><canvas id="predProvRainChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Agriculture forecast & crop guidance -->
+  <div class="dist-sec-hd" style="margin-bottom:4px;margin-top:18px;">
+    <div>
+      <h2><i class="fas fa-seedling" style="color:#22c55e;margin-right:6px;"></i>Agriculture Forecast & Crop Guidance</h2>
+      <p>Province and district planting guidance derived from rainfall projections, drought trends, and climate risk.</p>
+    </div>
+  </div>
+
+  <div class="stats4" style="margin-bottom:18px;">
+    <div class="stat-c">
+      <div class="stat-ico" style="background:#ecfdf5;"><i class="fas fa-map-marker-alt" style="color:#16a34a;"></i></div>
+      <div>
+        <div class="stat-v" id="agriTopProv">Loading...</div>
+        <div class="stat-l">Top Province to Plant</div>
+        <div class="stat-delta up"><i class="fas fa-check-circle"></i> Based on projected rainfall & crop suitability</div>
+      </div>
+    </div>
+    <div class="stat-c">
+      <div class="stat-ico" style="background:#f0f9ff;"><i class="fas fa-city" style="color:#0284c7;"></i></div>
+      <div>
+        <div class="stat-v" id="agriTopDistrict">Loading...</div>
+        <div class="stat-l">Top Districts for Future Planting</div>
+        <div class="stat-delta"><i class="fas fa-seedling"></i> Strongest province-level potential</div>
+      </div>
+    </div>
+    <div class="stat-c">
+      <div class="stat-ico" style="background:#fffbeb;"><i class="fas fa-carrot" style="color:#c2410c;"></i></div>
+      <div>
+        <div class="stat-v" id="agriCropGroup">Loading...</div>
+        <div class="stat-l">Recommended Crop Group</div>
+        <div class="stat-delta up"><i class="fas fa-leaf"></i> Future flood/drought smart choices</div>
+      </div>
+    </div>
+    <div class="stat-c">
+      <div class="stat-ico" style="background:#fef3c7;"><i class="fas fa-water" style="color:#b45309;"></i></div>
+      <div>
+        <div class="stat-v" id="agriRainHint">Forecast</div>
+        <div class="stat-l">Rainfall Outlook</div>
+        <div class="stat-delta dn"><i class="fas fa-cloud-showers-heavy"></i> Future mid-century rainfall trajectories</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="charts2" style="margin-bottom:18px;">
+    <div class="chart-card">
+      <div class="chart-hd">
+        <div><h3>Province Suitability Score</h3><p>Higher score indicates better planting potential based on projected rainfall change, drought exposure and agricultural land share.</p></div>
+        <span class="chart-tag tag-g">Agriculture</span>
+      </div>
+      <div class="chart-wrap-sm"><canvas id="agriSuitabilityChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-hd">
+        <div><h3>Recommended Crop Groups</h3><p>Future crop guidance for each province based on projected dry/wet and heat risk.</p></div>
+        <span class="chart-tag tag-a">Crop</span>
+      </div>
+      <div class="chart-wrap-sm"><canvas id="agriCropChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="chart-card" style="margin-bottom:18px;">
+    <div class="chart-hd">
+      <div><h3>Top Districts for Future Cropping</h3><p>Districts within the strongest provinces ranked for agriculture potential.</p></div>
+      <span class="chart-tag tag-g">District</span>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="prov-table">
+        <thead><tr><th>District</th><th>Province</th><th>Province Suitability</th><th>Recommended Crop</th></tr></thead>
+        <tbody id="agriDistrictTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Sector impacts table -->
+  <div class="chart-card" style="margin-bottom:18px;">
+    <div class="chart-hd">
+      <div><h3>Sector Impact Projections — Mid-Century (SSP2-4.5)</h3><p>CMIP6 multi-model — IPCC AR6 calibrated projections</p></div>
+      <span class="chart-tag tag-p">IPCC AR6</span>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="prov-table">
+    <div style="overflow-x:auto;">
+      <table class="prov-table">
+        <thead>
+          <tr><th>Sector</th><th>Impact Indicator</th><th>Projected Change</th><th>Urgency</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>🌾 Agriculture</strong></td><td>Maize yield</td><td style="color:#dc2626;font-weight:700;">−12.5%</td><td><span class="dist-badge" style="background:#fef2f2;color:#dc2626;">IMMEDIATE</span></td></tr>
+          <tr><td></td><td>Growing season length</td><td style="color:#f97316;font-weight:700;">−15 days</td><td><span class="dist-badge" style="background:#fef2f2;color:#dc2626;">IMMEDIATE</span></td></tr>
+          <tr><td></td><td>Irrigation need increase</td><td style="color:#f97316;font-weight:700;">+35%</td><td></td></tr>
+          <tr><td><strong>💧 Water</strong></td><td>Water availability</td><td style="color:#dc2626;font-weight:700;">−12% overall / −25% dry season</td><td><span class="dist-badge" style="background:#fef2f2;color:#dc2626;">IMMEDIATE</span></td></tr>
+          <tr><td></td><td>Lake Kariba inflow decline</td><td style="color:#dc2626;font-weight:700;">−18%</td><td></td></tr>
+          <tr><td></td><td>Pop. under water stress</td><td>~8M people (35%)</td><td></td></tr>
+          <tr><td><strong>⚡ Energy</strong></td><td>Hydro capacity decline</td><td style="color:#dc2626;font-weight:700;">−22%</td><td><span class="dist-badge" style="background:#fffbeb;color:#d97706;">SHORT TERM</span></td></tr>
+          <tr><td></td><td>Cooling demand increase</td><td style="color:#f97316;font-weight:700;">+65%</td><td></td></tr>
+          <tr><td><strong>🏥 Health</strong></td><td>Heat mortality increase</td><td style="color:#dc2626;font-weight:700;">+45%</td><td><span class="dist-badge" style="background:#fffbeb;color:#d97706;">SHORT TERM</span></td></tr>
+          <tr><td></td><td>Malaria zone expansion</td><td>Muchinga, Northern highlands</td><td></td></tr>
+          <tr><td><strong>🌲 Forestry</strong></td><td>Fire risk increase</td><td style="color:#dc2626;font-weight:700;">+35%</td><td><span class="dist-badge" style="background:#fffbeb;color:#d97706;">SHORT TERM</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Adaptation pathways table -->
+  <div class="chart-card" style="margin-bottom:18px;">
+    <div class="chart-hd">
+      <div><h3>Adaptation Pathway Priorities</h3><p>Recommended actions based on climate risk assessment — IPCC AR6 framework</p></div>
+      <span class="chart-tag tag-g">NDC Zambia</span>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="prov-table">
+        <thead>
+          <tr><th>Priority</th><th>Sector</th><th>Key Actions</th><th>Urgency</th></tr>
+        </thead>
+        <tbody id="adaptTableBody"></tbody>
       </table>
     </div>
   </div>
@@ -602,6 +1055,7 @@ ZAMBIA_PROVINCES.forEach(p => {
 
 const GRID_COLOR='rgba(0,0,0,.05)', FONT={family:'Inter',size:11};
 let forestChart, rainfallChart, lcChart, popChart, rainStackedChart, scatterChart, forestBarChart;
+let agriSuitabilityChart, agriCropChart;
 
 // ── Forest cover chart ──────────────────────────────────────────────────────
 function buildForestChart() {
@@ -614,6 +1068,7 @@ function buildForestChart() {
   const losses = idx>=0 ? FOREST_TREND.loss_km2.slice(idx)  : FOREST_TREND.loss_km2;
   const ctType  = document.getElementById('chartTypeSel').value;
   const isFill  = ctType === 'area';
+  const prov    = document.getElementById('provSel').value;
 
   forestChart = new Chart(document.getElementById('forestChart'), {
     type: ctType === 'bar' ? 'bar' : 'line',
@@ -627,7 +1082,8 @@ function buildForestChart() {
     ]},
     options: { responsive:true, maintainAspectRatio:false,
       plugins:{ legend:{position:'bottom',labels:{font:FONT,boxWidth:12}},
-        tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()} km²`}}},
+        tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()} km²`}},
+        title:{display:!!prov,text:prov ? `Forest Trend — ${prov}` : '',font:{...FONT,size:13,weight:'bold'}}},
       scales:{ y:{position:'left',grid:{color:GRID_COLOR},ticks:{font:FONT,callback:v=>(v/1000)+'K'},title:{display:true,text:'Total km²',font:FONT}},
         y2:{position:'right',grid:{drawOnChartArea:false},ticks:{font:FONT},title:{display:true,text:'Loss km²',font:FONT}},
         x:{grid:{color:GRID_COLOR},ticks:{font:FONT}}}}
@@ -795,7 +1251,6 @@ function buildMineCards() {
       <p style="font-size:.7rem;">${m.type}</p>
       <div class="mine-bar"><div class="mine-bar-fill" style="width:${Math.round(m.production_t/maxP*100)}%;"></div></div>
     </div>`).join('');
-  }
 }
 
 // ── District charts ───────────────────────────────────────────────────────────
@@ -904,6 +1359,187 @@ function buildDistPopAreaChart() {
       scales:{ x:{grid:{color:GRID_COLOR},ticks:{font:FONT},title:{display:true,text:'Area km²',font:FONT},type:'linear'},
         y:{grid:{color:GRID_COLOR},ticks:{font:FONT,callback:v=>(v/1000).toFixed(0)+'K'},title:{display:true,text:'Population',font:FONT}}}}
   });
+}
+
+// ── Schools & Health Facilities Charts ──────────────────────────────────────
+let schoolDistChart, healthDistChart, schoolTypeChart, healthTypeChart, schoolCoverageChart, healthCoverageChart;
+
+async function buildSchoolAndHealthCharts() {
+  // Load places data if not already loaded
+  if (!PLACES_DATA.loaded) {
+    await loadAllPlaces();
+  }
+
+  const schools = PLACES_DATA.schools || [];
+  const health = PLACES_DATA.healthFacilities || [];
+
+  // ── Top 10 districts by school count ──
+  const distSchoolCounts = {};
+  schools.forEach(s => {
+    if (s.district) distSchoolCounts[s.district] = (distSchoolCounts[s.district] || 0) + 1;
+  });
+  const topSchoolDists = Object.entries(distSchoolCounts)
+    .sort((a,b)=>b[1]-a[1]).slice(0,10);
+
+  if (schoolDistChart) schoolDistChart.destroy();
+  schoolDistChart = new Chart(document.getElementById('schoolDistChart'), {
+    type:'bar',
+    data:{ labels:topSchoolDists.map(d=>d[0]), datasets:[{
+      label:'School Count', data:topSchoolDists.map(d=>d[1]),
+      backgroundColor:topSchoolDists.map((d,i)=>{
+        const dist = ZAMBIA_DISTRICTS.find(x=>x.district===d[0]);
+        const prov = dist ? ZAMBIA_PROVINCES.find(p=>p.name===dist.province) : null;
+        return prov ? prov.color+'bb' : '#2563ebbb';
+      }),
+      borderRadius:5, borderWidth:0
+    }]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>` ${ctx.parsed.y} schools`}}},
+      scales:{ y:{grid:{color:GRID_COLOR},ticks:{font:FONT},title:{display:true,text:'Schools',font:FONT}},
+        x:{grid:{display:false},ticks:{font:FONT,maxRotation:40}}}}
+  });
+
+  // ── Top 10 districts by health facilities ──
+  const distHealthCounts = {};
+  health.forEach(h => {
+    if (h.district) distHealthCounts[h.district] = (distHealthCounts[h.district] || 0) + 1;
+  });
+  const topHealthDists = Object.entries(distHealthCounts)
+    .sort((a,b)=>b[1]-a[1]).slice(0,10);
+
+  if (healthDistChart) healthDistChart.destroy();
+  healthDistChart = new Chart(document.getElementById('healthDistChart'), {
+    type:'bar',
+    data:{ labels:topHealthDists.map(d=>d[0]), datasets:[{
+      label:'Facility Count', data:topHealthDists.map(d=>d[1]),
+      backgroundColor:topHealthDists.map((d,i)=>{
+        const dist = ZAMBIA_DISTRICTS.find(x=>x.district===d[0]);
+        const prov = dist ? ZAMBIA_PROVINCES.find(p=>p.name===dist.province) : null;
+        return prov ? prov.color+'bb' : '#dc2626bb';
+      }),
+      borderRadius:5, borderWidth:0
+    }]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>` ${ctx.parsed.y} facilities`}}},
+      scales:{ y:{grid:{color:GRID_COLOR},ticks:{font:FONT},title:{display:true,text:'Facilities',font:FONT}},
+        x:{grid:{display:false},ticks:{font:FONT,maxRotation:40}}}}
+  });
+
+  // ── Schools by type ──
+  const schoolTypeCounts = {};
+  schools.forEach(s => {
+    const type = s.type || 'Unknown';
+    schoolTypeCounts[type] = (schoolTypeCounts[type] || 0) + 1;
+  });
+  const typeColors = {'Primary':'#2563eb','Secondary':'#1a6b35','TVET':'#d97706','University':'#7c3aed'};
+  const typeLabels = Object.keys(schoolTypeCounts).sort();
+
+  if (schoolTypeChart) schoolTypeChart.destroy();
+  schoolTypeChart = new Chart(document.getElementById('schoolTypeChart'), {
+    type:'doughnut',
+    data:{ labels:typeLabels, datasets:[{
+      data:typeLabels.map(t=>schoolTypeCounts[t]),
+      backgroundColor:typeLabels.map(t=>typeColors[t] || '#6b7280'),
+      borderColor:'#fff',
+      borderWidth:2
+    }]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{position:'bottom',labels:{font:FONT,boxWidth:10}},
+        tooltip:{callbacks:{label:ctx=>{
+          const total = ctx.dataset.data.reduce((a,b)=>a+b,0);
+          const pct = ((ctx.parsed/total)*100).toFixed(1);
+          return ` ${ctx.label}: ${ctx.parsed} (${pct}%)`;
+        }}}}}
+  });
+
+  // ── Health facilities by type ──
+  const healthTypeCounts = {};
+  health.forEach(h => {
+    const type = h.type || 'Unknown';
+    healthTypeCounts[type] = (healthTypeCounts[type] || 0) + 1;
+  });
+  const hTypeColors = {'Clinic':'#dc2626','Health Post':'#ef4444','Hospital':'#7c3aed','Other':'#6b7280'};
+  const hTypeLabels = Object.keys(healthTypeCounts).sort();
+
+  if (healthTypeChart) healthTypeChart.destroy();
+  healthTypeChart = new Chart(document.getElementById('healthTypeChart'), {
+    type:'doughnut',
+    data:{ labels:hTypeLabels, datasets:[{
+      data:hTypeLabels.map(t=>healthTypeCounts[t]),
+      backgroundColor:hTypeLabels.map(t=>hTypeColors[t] || '#6b7280'),
+      borderColor:'#fff',
+      borderWidth:2
+    }]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{position:'bottom',labels:{font:FONT,boxWidth:10}},
+        tooltip:{callbacks:{label:ctx=>{
+          const total = ctx.dataset.data.reduce((a,b)=>a+b,0);
+          const pct = ((ctx.parsed/total)*100).toFixed(1);
+          return ` ${ctx.label}: ${ctx.parsed} (${pct}%)`;
+        }}}}}
+  });
+
+  // ── Schools per 10K population by province ──
+  const provSchoolCounts = {};
+  schools.forEach(s => {
+    if (s.province) provSchoolCounts[s.province] = (provSchoolCounts[s.province] || 0) + 1;
+  });
+  const provSchoolCoverage = ZAMBIA_PROVINCES.map(p => ({
+    name: p.name,
+    schools: provSchoolCounts[p.name] || 0,
+    coverage: ((provSchoolCounts[p.name] || 0) / (p.pop / 10000)).toFixed(2),
+    color: p.color
+  })).sort((a,b)=>parseFloat(b.coverage)-parseFloat(a.coverage));
+
+  if (schoolCoverageChart) schoolCoverageChart.destroy();
+  schoolCoverageChart = new Chart(document.getElementById('schoolCoverageChart'), {
+    type:'bar',
+    data:{ labels:provSchoolCoverage.map(p=>p.name), datasets:[{
+      label:'Schools per 10K pop', data:provSchoolCoverage.map(p=>p.coverage),
+      backgroundColor:provSchoolCoverage.map(p=>p.color+'aa'),
+      borderColor:provSchoolCoverage.map(p=>p.color),
+      borderWidth:1.5, borderRadius:4
+    }]},
+    options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>` ${ctx.parsed.x} schools/10K people`}}},
+      scales:{ x:{grid:{color:GRID_COLOR},ticks:{font:FONT}},
+        y:{grid:{display:false},ticks:{font:FONT,font:{size:9}}}}}
+  });
+
+  // ── Health facilities per 10K population by province ──
+  const provHealthCounts = {};
+  health.forEach(h => {
+    if (h.province) provHealthCounts[h.province] = (provHealthCounts[h.province] || 0) + 1;
+  });
+  const provHealthCoverage = ZAMBIA_PROVINCES.map(p => ({
+    name: p.name,
+    facilities: provHealthCounts[p.name] || 0,
+    coverage: ((provHealthCounts[p.name] || 0) / (p.pop / 10000)).toFixed(2),
+    color: p.color
+  })).sort((a,b)=>parseFloat(b.coverage)-parseFloat(a.coverage));
+
+  if (healthCoverageChart) healthCoverageChart.destroy();
+  healthCoverageChart = new Chart(document.getElementById('healthCoverageChart'), {
+    type:'bar',
+    data:{ labels:provHealthCoverage.map(p=>p.name), datasets:[{
+      label:'Facilities per 10K pop', data:provHealthCoverage.map(p=>p.coverage),
+      backgroundColor:provHealthCoverage.map(p=>p.color+'aa'),
+      borderColor:provHealthCoverage.map(p=>p.color),
+      borderWidth:1.5, borderRadius:4
+    }]},
+    options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>` ${ctx.parsed.x} facilities/10K people`}}},
+      scales:{ x:{grid:{color:GRID_COLOR},ticks:{font:FONT}},
+        y:{grid:{display:false},ticks:{font:FONT,font:{size:9}}}}}
+  });
+
+  // ── Update stat cards ──
+  document.getElementById('schoolTotalCount').textContent = schools.length.toLocaleString();
+  document.getElementById('healthTotalCount').textContent = health.length.toLocaleString();
+  const schoolRatio = Math.round(20000000 / schools.length);
+  const healthRatio = Math.round(20000000 / health.length);
+  document.getElementById('schoolStudRatio').textContent = `1 : ${schoolRatio.toLocaleString()}`;
+  document.getElementById('healthPopRatio').textContent = `1 : ${healthRatio.toLocaleString()}`;
 }
 
 // ── District table ────────────────────────────────────────────────────────────
@@ -1044,7 +1680,7 @@ function buildGeeDroughtChart() {
     options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
       plugins:{ legend:{display:false},
         tooltip:{callbacks:{label:ctx=>` Drought risk: ${(ctx.parsed.x*100).toFixed(0)}% exposure`}}},
-      scales:{ x:{grid:{color:GRID_COLOR},ticks:{font:FONT,callback:v=>(v*100).toFixed(0)+'%'},title:{display:true,text:'VCI (0=Low 100=Extreme)',font:FONT},min:0,max:1},
+      scales:{ x:{grid:{color:GRID_COLOR},ticks:{font:FONT,callback:v=>(v*100).toFixed(0)+'%'},title:{display:true,text:'VCI (0=Low 1=High)',font:FONT},min:0,max:1},
         y:{grid:{display:false},ticks:{font:FONT}}}
     }
   });
@@ -1059,9 +1695,9 @@ function buildGeeRainMonthlyChart() {
   geeRainMonthlyChart = new Chart(document.getElementById('geeRainMonthlyChart'), {
     type:'bar',
     data:{ labels:months, datasets:[
-      { label:'2024', data:r2024, backgroundColor:'rgba(26,107,53,.8)',  borderRadius:4, stack:'1' },
-      { label:'2023', data:r2023, backgroundColor:'rgba(37,99,235,.7)',  borderRadius:4, stack:'',   hidden:true },
-      { label:'2022', data:r2022, backgroundColor:'rgba(217,119,6,.7)',  borderRadius:4, stack:'',   hidden:true },
+      { label:'2024', data:r2024, backgroundColor:'rgba(26,107,53,.8)',  borderRadius:4, stack:'all' },
+      { label:'2023', data:r2023, backgroundColor:'rgba(37,99,235,.7)',  borderRadius:4, stack:'all',   hidden:true },
+      { label:'2022', data:r2022, backgroundColor:'rgba(217,119,6,.7)',  borderRadius:4, stack:'all',   hidden:true },
     ]},
     options:{ responsive:true, maintainAspectRatio:false,
       plugins:{ legend:{position:'bottom',labels:{font:FONT,boxWidth:10}},
@@ -1127,10 +1763,9 @@ function buildForestTable() {
 function animateGauge() {
   const arc = document.getElementById('gaugeArc');
   if (!arc) return;
-  // 40% of target = 40% of circle = stroke-dashoffset adjustment
-  // Full circle = 314.16, 40% filled = offset = 314.16 * 0.6 = 188.5
+  // 12% of circle = stroke-dashoffset: 314.16 * 0.88 = 276.5 (already set in SVG)
   let offset = 314.16;
-  const target = 188.5;
+  const target = 276.5;
   const timer = setInterval(() => {
     offset -= 3;
     if (offset <= target) { offset = target; clearInterval(timer); }
@@ -1184,6 +1819,348 @@ function showToast(msg) {
   t._t=setTimeout(()=>t.style.display='none',2500);
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+//  CURRENT CLIMATE CHARTS & TABLES  (from GeoHubClimate module)
+// ═══════════════════════════════════════════════════════════════════════════
+let climateCurrTempChart, climateCurrRainChart, climateHeatChart, climateWaterChart;
+let predTempChart, predPrecipChart, predProvTempChart, predProvRainChart;
+
+function buildCurrentClimateCharts() {
+  if (!window.GeoHubClimate) return;
+  const cc = GeoHubClimate.current;
+  const ccT = cc.temperature;
+  const ccP = cc.precipitation;
+  const ccV = cc.vegetation;
+  const ccW = cc.water;
+  const ccE = cc.extreme_events_2026;
+  const provNames = Object.keys(ccT.month_anomaly_2026);
+
+  // ── Temperature Anomaly Bar Chart ──
+  if (climateCurrTempChart) climateCurrTempChart.destroy();
+  const tempAnoms = provNames.map(p => ccT.month_anomaly_2026[p]);
+  const tColors = provNames.map(p => ZAMBIA_PROVINCES.find(x=>x.name===p)?.color||'#f97316');
+  climateCurrTempChart = new Chart(document.getElementById('climateCurrTempChart'), {
+    type:'bar',
+    data:{ labels:provNames, datasets:[{
+      label:'°C anomaly May 2026', data:tempAnoms,
+      backgroundColor:tColors.map(c=>c+'bb'), borderColor:tColors,
+      borderWidth:1.5, borderRadius:4
+    }]},
+    options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>` ${ctx.parsed.x.toFixed(1)}°C above baseline`}} },
+      scales:{ x:{grid:{color:GRID_COLOR},ticks:{font:FONT,callback:v=>v+'°C'},min:0,max:3.5},
+               y:{grid:{display:false},ticks:{font:FONT,font:{size:9}}} }
+    }
+  });
+
+  // ── Rainfall Anomaly Bar Chart ──
+  if (climateCurrRainChart) climateCurrRainChart.destroy();
+  const rainAnoms = provNames.map(p => ccP.month_anomaly_pct_2026[p]);
+  const rColors = rainAnoms.map(v => v < -40 ? '#dc2626bb' : v < -30 ? '#f97316bb' : '#fbbf24bb');
+  climateCurrRainChart = new Chart(document.getElementById('climateCurrRainChart'), {
+    type:'bar',
+    data:{ labels:provNames, datasets:[{
+      label:'% rainfall anomaly', data:rainAnoms,
+      backgroundColor:rColors, borderColor:rColors.map(c=>c.replace('bb','')),
+      borderWidth:1.5, borderRadius:4
+    }]},
+    options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>` ${ctx.parsed.x.toFixed(1)}% vs baseline`}} },
+      scales:{ x:{grid:{color:GRID_COLOR},ticks:{font:FONT,callback:v=>v+'%'},min:-60,max:0},
+               y:{grid:{display:false},ticks:{font:FONT,font:{size:9}}} }
+    }
+  });
+
+  // ── Extreme Heat Days Chart ──
+  if (climateHeatChart) climateHeatChart.destroy();
+  const heatDays = provNames.map(p => ccT.extreme_heat_days_2026_ytd[p]);
+  const maxHeat = Math.max(...heatDays);
+  climateHeatChart = new Chart(document.getElementById('climateHeatChart'), {
+    type:'bar',
+    data:{ labels:provNames, datasets:[{
+      label:'Extreme heat days YTD', data:heatDays,
+      backgroundColor:heatDays.map(v=>v>20?'#dc2626bb':v>12?'#f97316bb':'#fbbf24bb'),
+      borderRadius:4
+    }]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>` ${ctx.parsed.y} days >40°C`}} },
+      scales:{ y:{grid:{color:GRID_COLOR},ticks:{font:FONT},title:{display:true,text:'Days',font:FONT}},
+               x:{grid:{display:false},ticks:{font:FONT,font:{size:8},maxRotation:45}} }
+    }
+  });
+
+  // ── Water Stress Gauge Chart ──
+  if (climateWaterChart) climateWaterChart.destroy();
+  climateWaterChart = new Chart(document.getElementById('climateWaterChart'), {
+    type:'bar',
+    data:{ labels:['Lake Kariba Level', 'Hydro Capacity', 'Groundwater Anomaly', 'River Flow'], datasets:[
+      { label:'Current % / Index', data:[ccW.lake_kariba_level_pct, ccW.hydro_output_capacity_pct, (1+ccW.groundwater_anomaly)*50, ccW.river_flow_status==='BELOW_NORMAL'?30:60],
+        backgroundColor:['#2563ebcc','#7c3aedcc','#059669cc','#ea580ccc'],
+        borderRadius:5 }
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>` ${ctx.parsed.y.toFixed(0)}%`}} },
+      scales:{ y:{grid:{color:GRID_COLOR},ticks:{font:FONT,callback:v=>v+'%'},max:100},
+               x:{grid:{display:false},ticks:{font:FONT}} }
+    }
+  });
+
+  // ── Update stats cards ──
+  document.getElementById('climateCurrTemp').textContent = (ccT.national_anomaly_current >= 0 ? '+' : '') + ccT.national_anomaly_current.toFixed(1) + '°C';
+  document.getElementById('climateCurrRain').textContent = (ccP.wet_season_anomaly_pct >= 0 ? '+' : '') + ccP.wet_season_anomaly_pct.toFixed(1) + '%';
+  document.getElementById('climateCurrDrought').textContent = ccP.drought_status.severity;
+  document.getElementById('climateCurrFire').textContent = ccV.fire_risk_index.national;
+  document.getElementById('climateKariba').textContent = ccW.lake_kariba_level_pct.toFixed(1) + '%';
+  document.getElementById('climateNDVI').textContent = ccV.ndvi_current.toFixed(2);
+  const totalHeatDays = Object.values(ccT.extreme_heat_days_2026_ytd).reduce((a,b)=>a+b,0);
+  document.getElementById('climateHeatDays').textContent = totalHeatDays;
+  document.getElementById('climateHydro').textContent = ccW.hydro_output_capacity_pct + '%';
+
+  // ── Current climate table ──
+  const tableBody = document.getElementById('climateCurrTableBody');
+  tableBody.innerHTML = provNames.map(p => {
+    const isAffected = ccP.drought_status.affected_provinces.includes(p);
+    const pColor = ZAMBIA_PROVINCES.find(x=>x.name===p)?.color || '#6b7280';
+    return `<tr>
+      <td><span class="prov-dot" style="background:${pColor};"></span>${p}</td>
+      <td style="color:#dc2626;font-weight:700;">+${ccT.month_anomaly_2026[p].toFixed(1)}°C</td>
+      <td style="color:#f97316;font-weight:700;">${ccP.month_anomaly_pct_2026[p].toFixed(1)}%</td>
+      <td style="font-weight:700;">${ccT.extreme_heat_days_2026_ytd[p]}</td>
+      <td>${isAffected ? '<span style="color:#dc2626;font-weight:700;">⚠ Yes</span>' : '<span style="color:#16a34a;">No</span>'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  PREDICTIVE CLIMATE CHARTS & TABLES
+// ═══════════════════════════════════════════════════════════════════════════
+
+function buildPredictiveCharts() {
+  if (!window.GeoHubClimate) return;
+  const cp = GeoHubClimate.predictive;
+  const scenario = document.getElementById('predScenario')?.value || 'ssp245';
+  const horizon  = document.getElementById('predHorizon')?.value || 'mid_century';
+
+  // ── Update stats cards ──
+  const tempProj = cp.temperature.projections[scenario][horizon];
+  const precipProj = cp.precipitation.projections[scenario][horizon];
+  const hotDays = cp.temperature.hot_days[`${scenario}_2050`] || cp.temperature.hot_days.baseline;
+  const riskLevel = cp.risk_classification.national_risk_level_2050;
+
+  document.getElementById('predTempAnomaly').textContent = (tempProj.anomaly >= 0 ? '+' : '') + tempProj.anomaly.toFixed(1) + '°C';
+  document.getElementById('predPrecipChange').textContent = (precipProj.change_pct >= 0 ? '+' : '') + precipProj.change_pct.toFixed(1) + '%';
+  document.getElementById('predHotDays').textContent = hotDays;
+  document.getElementById('predRiskLevel').textContent = riskLevel;
+
+  // ── Time series charts (temperature + precipitation projection) ──
+  const ts = GeoHubClimate.getClimateTimeSeries(scenario);
+  const filteredYears = ts.years.filter((_, i) => ts.temp_anomalies[i] !== null);
+  const filteredTemp = ts.temp_anomalies.filter(v => v !== null);
+  const filteredPrecip = ts.precip_changes.filter(v => v !== null);
+
+  // Temperature projection line chart
+  if (predTempChart) predTempChart.destroy();
+  predTempChart = new Chart(document.getElementById('predTempChart'), {
+    type:'line',
+    data:{ labels:filteredYears, datasets:[
+      { label:`${scenario.toUpperCase()} — Temperature`, data:filteredTemp,
+        borderColor:'#dc2626', backgroundColor:'rgba(220,38,38,.08)',
+        fill:true, tension:0.3, pointRadius:4, borderWidth:2.5 },
+      { label:'Baseline (1995-2014)', data:filteredYears.map(()=>0),
+        borderColor:'#6b7280', borderWidth:1.5, borderDash:[5,5], pointRadius:0, fill:false }
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{position:'bottom',labels:{font:FONT,boxWidth:12}},
+        tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: +${ctx.parsed.y.toFixed(2)}°C`}} },
+      scales:{ y:{grid:{color:GRID_COLOR},ticks:{font:FONT,callback:v=>'+'+v+'°C'},title:{display:true,text:'°C anomaly',font:FONT}},
+               x:{grid:{color:GRID_COLOR},ticks:{font:FONT}} }
+    }
+  });
+
+  // Precipitation change line chart
+  if (predPrecipChart) predPrecipChart.destroy();
+  predPrecipChart = new Chart(document.getElementById('predPrecipChart'), {
+    type:'line',
+    data:{ labels:filteredYears, datasets:[
+      { label:`${scenario.toUpperCase()} — Precipitation`, data:filteredPrecip,
+        borderColor:'#2563eb', backgroundColor:'rgba(37,99,235,.08)',
+        fill:true, tension:0.3, pointRadius:4, borderWidth:2.5 },
+      { label:'Baseline', data:filteredYears.map(()=>0),
+        borderColor:'#6b7280', borderWidth:1.5, borderDash:[5,5], pointRadius:0, fill:false }
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{position:'bottom',labels:{font:FONT,boxWidth:12}},
+        tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}%`}} },
+      scales:{ y:{grid:{color:GRID_COLOR},ticks:{font:FONT,callback:v=>v+'%'},title:{display:true,text:'% change',font:FONT}},
+               x:{grid:{color:GRID_COLOR},ticks:{font:FONT}} }
+    }
+  });
+
+  // ── Province-level temperature by 2050 ──
+  if (predProvTempChart) predProvTempChart.destroy();
+  const provNames = Object.keys(cp.temperature.provincial_2050_ssp245);
+  const provTemps = provNames.map(p => cp.temperature.provincial_2050_ssp245[p]);
+  const pColors = provNames.map(p => ZAMBIA_PROVINCES.find(x=>x.name===p)?.color||'#f97316');
+  predProvTempChart = new Chart(document.getElementById('predProvTempChart'), {
+    type:'bar',
+    data:{ labels:provNames, datasets:[{
+      label:'°C warming by 2050', data:provTemps,
+      backgroundColor:pColors.map(c=>c+'bb'), borderColor:pColors,
+      borderWidth:1.5, borderRadius:4
+    }]},
+    options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>` +${ctx.parsed.x.toFixed(1)}°C by 2050`}} },
+      scales:{ x:{grid:{color:GRID_COLOR},ticks:{font:FONT,callback:v=>'+'+v+'°C'},min:1.5,max:2.8},
+               y:{grid:{display:false},ticks:{font:FONT,font:{size:9}}} }
+    }
+  });
+
+  // ── Province-level rainfall change by 2050 ──
+  if (predProvRainChart) predProvRainChart.destroy();
+  const provRain = provNames.map(p => cp.precipitation.provincial_change_2050_ssp245[p]);
+  predProvRainChart = new Chart(document.getElementById('predProvRainChart'), {
+    type:'bar',
+    data:{ labels:provNames, datasets:[{
+      label:'% rainfall change', data:provRain,
+      backgroundColor:provRain.map(v=>v < -7 ? '#dc2626bb' : v < -5 ? '#f97316bb' : '#fbbf24bb'),
+      borderRadius:4
+    }]},
+    options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>` ${ctx.parsed.x.toFixed(1)}% by 2050`}} },
+      scales:{ x:{grid:{color:GRID_COLOR},ticks:{font:FONT,callback:v=>v+'%'},min:-12,max:0},
+               y:{grid:{display:false},ticks:{font:FONT,font:{size:9}}} }
+    }
+  });
+
+  // ── Adaptation pathways table ──
+  const adaptTbody = document.getElementById('adaptTableBody');
+  if (adaptTbody && cp.adaptation_priorities) {
+    const urgencyColors = { IMMEDIATE:'#dc2626', SHORT_TERM:'#d97706', MEDIUM_TERM:'#2563eb' };
+    adaptTbody.innerHTML = cp.adaptation_priorities.map((a, i) => `
+      <tr>
+        <td style="font-weight:700;color:var(--muted);">${i + 1}</td>
+        <td><strong>${a.sector === 'Agriculture' ? '🌾' : a.sector === 'Water' ? '💧' : a.sector === 'Energy' ? '⚡' : a.sector === 'Health' ? '🏥' : '🏗️'} ${a.sector}</strong></td>
+        <td style="font-size:.76rem;">${a.actions.join(' · ')}</td>
+        <td><span class="dist-badge" style="background:${urgencyColors[a.urgency]}15;color:${urgencyColors[a.urgency]};">${a.urgency}</span></td>
+      </tr>
+    `).join('');
+  }
+
+  buildAgricultureCharts();
+}
+
+function buildAgricultureCharts() {
+  if (!window.GeoHubClimate) return;
+  const cc = GeoHubClimate.current;
+  const cp = GeoHubClimate.predictive;
+  const scenario = document.getElementById('predScenario')?.value || 'ssp245';
+  const horizon = document.getElementById('predHorizon')?.value || 'mid_century';
+  const droughtAffected = cc.precipitation.drought_status.affected_provinces || [];
+  const provNames = ZAMBIA_PROVINCES.map(p => p.name);
+
+  const provinceResults = provNames.map(name => {
+    const provMeta = ZAMBIA_PROVINCES.find(x => x.name === name) || {};
+    const rainChange = cp.precipitation.provincial_change_2050_ssp245[name] ?? 0;
+    const tempRise = cp.temperature.provincial_2050_ssp245[name] ?? 0;
+    const rainScore = Math.max(0.25, 1 + rainChange / 14);
+    const droughtPenalty = droughtAffected.includes(name) ? 0.84 : 1.0;
+    const heatPenalty = tempRise >= 2.3 ? 0.92 : 1.0;
+    const score = Math.round((provMeta.agri_pct || 0) * rainScore * droughtPenalty * heatPenalty * 100) / 100;
+    let cropGroup = 'Rainfed maize & rice';
+    let cropLabel = 'Maize, Rice, Soybean';
+
+    if (name === 'Western' && cc.extreme_events_2026.flood_events > 0) {
+      cropGroup = 'Flood-tolerant rice & vegetables';
+      cropLabel = 'Rice, Sugarcane, Vegetables';
+    } else if (rainChange <= -9 || droughtAffected.includes(name)) {
+      cropGroup = 'Drought-resilient crops';
+      cropLabel = 'Cassava, Sorghum, Millet';
+    } else if (rainChange <= -6) {
+      cropGroup = 'Drought-tolerant cereals';
+      cropLabel = 'Maize, Groundnuts, Cowpeas';
+    } else if (rainChange <= -3) {
+      cropGroup = 'Climate-smart legumes';
+      cropLabel = 'Maize, Soybean, Sunflower';
+    }
+
+    return { name, score, rainChange, tempRise, drought: droughtAffected.includes(name), cropGroup, cropLabel };
+  });
+
+  const sortedProvinces = [...provinceResults].sort((a, b) => b.score - a.score);
+  const topProvince = sortedProvinces[0] || { name:'N/A', score:0, cropLabel:'N/A' };
+  const topDistricts = ZAMBIA_DISTRICTS
+    .filter(d => sortedProvinces.slice(0, 5).some(p => p.name === d.province))
+    .map(d => {
+      const provinceData = sortedProvinces.find(p => p.name === d.province) || { score:0, cropGroup:'N/A' };
+      return { ...d, provinceScore: provinceData.score, cropGroup: provinceData.cropGroup };
+    })
+    .sort((a, b) => b.provinceScore - a.provinceScore || b.area_km2 - a.area_km2)
+    .slice(0, 8);
+
+  const cropCounts = provinceResults.reduce((map, prov) => {
+    map[prov.cropGroup] = (map[prov.cropGroup] || 0) + 1;
+    return map;
+  }, {});
+
+  const sortedCropGroups = Object.entries(cropCounts).sort((a, b) => b[1] - a[1]);
+
+  document.getElementById('agriTopProv').textContent = `${topProvince.name} — ${topProvince.score.toFixed(1)}`;
+  document.getElementById('agriTopDistrict').textContent = `${topDistricts[0]?.district || 'N/A'} (${topDistricts[0]?.province || 'N/A'})`;
+  document.getElementById('agriCropGroup').textContent = topProvince.cropLabel;
+  document.getElementById('agriRainHint').textContent = `${scenario.toUpperCase()} / ${horizon.replace('_',' ')} rainfall outlook`;
+
+  if (agriSuitabilityChart) agriSuitabilityChart.destroy();
+  agriSuitabilityChart = new Chart(document.getElementById('agriSuitabilityChart'), {
+    type: 'bar',
+    data: {
+      labels: sortedProvinces.slice(0, 8).map(p => p.name),
+      datasets: [{
+        label: 'Suitability score',
+        data: sortedProvinces.slice(0, 8).map(p => p.score),
+        backgroundColor: sortedProvinces.slice(0, 8).map((p, i) => ZAMBIA_PROVINCES.find(x => x.name === p.name)?.color + 'cc' || '#34d399cc'),
+        borderColor: sortedProvinces.slice(0, 8).map(p => ZAMBIA_PROVINCES.find(x => x.name === p.name)?.color || '#16a34a'),
+        borderWidth: 1.5,
+        borderRadius: 4
+      }]
+    },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.x.toFixed(1)}` } } },
+      scales: { x: { grid: { color: GRID_COLOR }, ticks: { font: FONT }, title: { display: true, text: 'Suitability score', font: FONT } }, y: { grid: { display: false }, ticks: { font: FONT, font: { size: 9 } } } }
+    }
+  });
+
+  if (agriCropChart) agriCropChart.destroy();
+  agriCropChart = new Chart(document.getElementById('agriCropChart'), {
+    type: 'doughnut',
+    data: {
+      labels: sortedCropGroups.map(([crop]) => crop),
+      datasets: [{
+        data: sortedCropGroups.map(([, count]) => count),
+        backgroundColor: ['#4ade80','#facc15','#fb7185','#60a5fa'].slice(0, sortedCropGroups.length),
+        borderColor: '#fff', borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { font: FONT, boxWidth: 10 } }, tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed} province${ctx.parsed===1?'':'s'}` } } }
+    }
+  });
+
+  const districtBody = document.getElementById('agriDistrictTableBody');
+  if (districtBody) {
+    districtBody.innerHTML = topDistricts.map(d => `
+      <tr>
+        <td>${d.district}</td>
+        <td>${d.province}</td>
+        <td>${d.provinceScore.toFixed(1)}</td>
+        <td>${d.cropGroup}</td>
+      </tr>
+    `).join('');
+  }
+}
+
 // ── Sort table default ───────────────────────────────────────────────────────
 pd.sort((a,b)=>b.pop-a.pop);
 
@@ -1204,6 +2181,7 @@ try {
   renderDistTable();
   document.getElementById('distTableCount').textContent = 'Showing ' + (document.getElementById('distTableBody').children.length) + ' rows';
 } catch(e) { console.error('renderDistTable error:', e); }
+try { buildSchoolAndHealthCharts(); } catch(e) { console.error('buildSchoolAndHealthCharts error:', e); }
 try { buildGeeRainChart(); } catch(e) { console.error('buildGeeRainChart error:', e); }
 try { buildGeeLstChart(); } catch(e) { console.error('buildGeeLstChart error:', e); }
 try { buildGeeDroughtChart(); } catch(e) { console.error('buildGeeDroughtChart error:', e); }
@@ -1211,6 +2189,9 @@ try { buildGeeRainMonthlyChart(); } catch(e) { console.error('buildGeeRainMonthl
 try { buildGeeMetaTable(); } catch(e) { console.error('buildGeeMetaTable error:', e); }
 try { buildForestTable(); } catch(e) { console.error('buildForestTable error:', e); }
 try { animateGauge(); } catch(e) { console.error('animateGauge error:', e); }
+try { buildCurrentClimateCharts(); } catch(e) { console.error('buildCurrentClimateCharts error:', e); }
+try { buildPredictiveCharts(); } catch(e) { console.error('buildPredictiveCharts error:', e); }
+try { buildAgricultureCharts(); } catch(e) { console.error('buildAgricultureCharts error:', e); }
 try { GeoHubAuth.addAuditLog('ANALYTICS_VIEW','Viewed Analytics page v3.0',session.id); } catch(e) { console.error('auditLog error:', e); }
 </script>
 </body>

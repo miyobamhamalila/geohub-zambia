@@ -42,7 +42,7 @@ const GeoHubAuth = (() => {
       : ['view_map','upload_data','view_analytics','export_data'];
   }
 
-  function _friendlyError(code) {
+  function _friendlyError(code, message) {
     const map = {
       'auth/user-not-found':        'No account found with this email address.',
       'auth/wrong-password':        'Incorrect password. Please try again.',
@@ -55,7 +55,19 @@ const GeoHubAuth = (() => {
       'auth/email-already-in-use':  'An account with this email already exists.',
       'auth/weak-password':         'Password must be at least 6 characters.',
       'auth/requires-recent-login': 'Please log out and log back in before changing your password.',
+      'auth/operation-not-supported-in-this-environment': 'Google sign-in is not supported in this browser environment.',
+      'auth/unauthorized-domain':   'This app is not authorized for Google sign-in from this origin.',
     };
+
+    if (code && map[code]) return map[code];
+    if (message) {
+      if (message.includes('file://') || message.includes('operation-not-supported-in-this-environment')) {
+        return 'Google sign-in does not work from a local file URL. Serve the site over http://localhost or a real web host.';
+      }
+      if (message.includes('unauthorized-domain')) {
+        return 'Google sign-in is blocked because this origin is not authorized in Firebase. Add your domain in the Firebase console.';
+      }
+    }
     return map[code] || 'An error occurred. Please try again.';
   }
 
@@ -166,6 +178,13 @@ const GeoHubAuth = (() => {
 
   // ── Google sign-in ────────────────────────────────────────────────────────
   async function loginWithGoogle() {
+    if (window.location.protocol === 'file:') {
+      return {
+        success: false,
+        error: 'Google sign-in is not supported from file:// pages. Please run the app through http://localhost or a hosted web URL.',
+      };
+    }
+
     try {
       const provider = new firebase.auth.GoogleAuthProvider();
       await _auth.signInWithPopup(provider);
@@ -180,7 +199,8 @@ const GeoHubAuth = (() => {
       if (session) addAuditLog('LOGIN', `Google sign-in: ${session.name}`, session.id);
       return { success: true, user: session };
     } catch (e) {
-      return { success: false, error: _friendlyError(e.code) };
+      console.error('loginWithGoogle failed:', e);
+      return { success: false, error: _friendlyError(e.code, e.message) };
     }
   }
 
@@ -305,6 +325,67 @@ const GeoHubAuth = (() => {
     }
   }
 
+  async function seedDefaultUsers() {
+    try {
+      const snap = await _db.collection('users').get();
+      if (!snap.empty) return;
+
+      const defaults = [
+        {
+          name:     'GeoHub Admin',
+          email:    'admin@geohub.zm',
+          password: 'Admin@2025',
+          role:     'admin',
+          org:      'GeoHub Zambia',
+          title:    'Administrator',
+        },
+        {
+          name:     'John Banda',
+          email:    'john.banda@zema.gov.zm',
+          password: 'User@2025',
+          role:     'standard',
+          org:      'ZEMA',
+          title:    'GIS Analyst',
+        }
+      ];
+
+      for (const user of defaults) {
+        const existing = await _db.collection('users').where('email', '==', user.email.toLowerCase()).get();
+        if (!existing.empty) continue;
+
+        const secondaryApp  = firebase.initializeApp(FIREBASE_CONFIG, 'GeoHubSecondary_' + Date.now());
+        const secondaryAuth = secondaryApp.auth();
+        try {
+          const cred = await secondaryAuth.createUserWithEmailAndPassword(user.email, user.password);
+          const uid  = cred.user.uid;
+          const profile = {
+            name:        user.name,
+            email:       user.email.toLowerCase(),
+            role:        user.role,
+            org:         user.org,
+            title:       user.title,
+            avatar:      _initials(user.name),
+            status:      'active',
+            permissions: _defaultPerms(user.role),
+            created:     firebase.firestore.FieldValue.serverTimestamp(),
+            lastLogin:   null,
+          };
+          await _db.collection('users').doc(uid).set(profile);
+        } catch (e) {
+          // If the auth account already exists, ignore the create error.
+          if (e.code !== 'auth/email-already-in-use') {
+            console.error('seedDefaultUsers:', e.code, e.message);
+          }
+        } finally {
+          try { await secondaryAuth.signOut(); } catch (e) {}
+          try { await secondaryApp.delete(); } catch (e) {}
+        }
+      }
+    } catch (e) {
+      console.error('seedDefaultUsers:', e);
+    }
+  }
+
   async function updateUser(userId, updates) {
     try {
       // Never store passwords in Firestore — silently drop if passed
@@ -370,6 +451,7 @@ const GeoHubAuth = (() => {
     login, loginWithGoogle, resetPassword, changePassword, logout,
     getSession, requireAuth, requireAdmin, hasPermission,
     getUsers, addUser, updateUser, deleteUser, toggleUserStatus,
+    seedDefaultUsers,
     addAuditLog, getAuditLogs,
   };
 })();

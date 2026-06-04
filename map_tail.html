@@ -1,0 +1,2000 @@
+﻿      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend:{ position:'top', labels:{ boxWidth:10, padding:8, font:{size:10} } } },
+      scales: {
+        x: { grid:{color:'rgba(255,255,255,0.06)'}, ticks:{font:{size:9}} },
+        y: { grid:{color:'rgba(255,255,255,0.06)'}, ticks:{font:{size:10}},
+             title:{display:true,text:'Â°C',color:'rgba(255,255,255,0.4)',font:{size:10}} },
+        y2:{ position:'right', grid:{drawOnChartArea:false}, ticks:{font:{size:9}},
+             title:{display:true,text:'Î” Â°C',color:'rgba(251,191,36,.6)',font:{size:9}} }
+      },
+      animation: { duration: 400 }
+    }
+  });
+}
+
+function runChangeDetection() {
+  const province = document.getElementById('tpProvince')?.value || 'all';
+  const ctx = document.getElementById('tpCanvas')?.getContext('2d');
+  if (tpChartObj) { tpChartObj.destroy(); tpChartObj = null; }
+  renderCompareChart(ctx, province);
+  showToast('Change detection chart updated', 'success');
+}
+
+// â”€â”€ Auto-play time slider â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function toggleTimePlay() {
+  if (tsPlaying) { stopTimePlay(); return; }
+  tsPlaying = true;
+  document.getElementById('tsPlayIco').className = 'fas fa-pause';
+  tsTimer = setInterval(() => {
+    const slider = document.getElementById('tsSlider');
+    let val = parseInt(slider.value) + 1;
+    if (val > 2025) val = 2022;
+    slider.value = val;
+    onTimeSlide(val);
+  }, 1400);
+}
+function stopTimePlay() {
+  tsPlaying = false;
+  clearInterval(tsTimer);
+  document.getElementById('tsPlayIco').className = 'fas fa-play';
+}
+
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+//  v7.0 NEW FEATURES
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+
+// â”€â”€ Theme Toggle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+let isLightTheme = false;
+function toggleTheme() {
+  isLightTheme = !isLightTheme;
+  document.body.classList.toggle('light-theme', isLightTheme);
+  const ico = document.getElementById('themeIco');
+  if (ico) ico.className = isLightTheme ? 'fas fa-moon' : 'fas fa-sun';
+  showToast(isLightTheme ? 'Light theme enabled' : 'Dark theme enabled', 'info');
+  localStorage.setItem('ghz_theme', isLightTheme ? 'light' : 'dark');
+}
+// Restore saved theme
+(function(){
+  const saved = localStorage.getItem('ghz_theme');
+  if (saved === 'light') { isLightTheme = true; document.body.classList.add('light-theme');
+    const ico = document.getElementById('themeIco'); if(ico) ico.className='fas fa-moon'; }
+})();
+
+// â”€â”€ Mobile sidebar open/close â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function openMobileSidebar() {
+  document.getElementById('sidebar').classList.add('mobile-open');
+}
+
+// â”€â”€ Dashboard Overview â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+let dashChartObj = null;
+function toggleDashOverlay() {
+  const el = document.getElementById('dashOverlay');
+  if (el.style.display === 'none' || !el.style.display) {
+    el.style.display = 'block';
+    renderDashboard();
+  } else { el.style.display = 'none'; }
+}
+function closeDashOverlay() {
+  document.getElementById('dashOverlay').style.display = 'none';
+}
+function renderDashboard() {
+  // Update timestamp
+  document.getElementById('dashTimestamp').textContent = new Date().toLocaleString();
+
+  // Province population bars
+  const sorted = [...ZAMBIA_PROVINCES].sort((a,b)=>b.population-a.population);
+  const maxPop = sorted[0].population;
+  let barsHtml = '';
+  sorted.forEach(p => {
+    const pct = (p.population / maxPop * 100).toFixed(0);
+    const col = p.color || '#4CAF50';
+    barsHtml += `<div class="dash-bar-row">
+      <div class="dash-bar-label" title="${p.name}">${p.name}</div>
+      <div class="dash-bar-bg"><div class="dash-bar-fill" style="width:${pct}%;background:${col};"></div></div>
+      <div class="dash-bar-val">${(p.population/1e6).toFixed(2)}M</div>
+    </div>`;
+  });
+  document.getElementById('dashProvBars').innerHTML = barsHtml;
+
+  // Rainfall chart
+  const ctx = document.getElementById('dashCanvas');
+  if (!ctx) return;
+  if (dashChartObj) { dashChartObj.destroy(); dashChartObj = null; }
+  const years = ZAMBIA_RAINFALL_2020_2025.years;
+  const colors = ['#38bdf8','#4ade80','#f97316','#a78bfa','#fbbf24','#fb7185'];
+  const datasets = years.map((yr,i) => ({
+    label: String(yr),
+    data: ZAMBIA_RAINFALL_2020_2025.data[yr],
+    borderColor: colors[i],
+    backgroundColor: colors[i]+'22',
+    borderWidth: yr === 2025 ? 2.5 : 1.2,
+    pointRadius: yr === 2025 ? 3 : 1.5,
+    tension: 0.4, fill: false
+  }));
+  dashChartObj = new Chart(ctx, {
+    type: 'line',
+    data: { labels: ZAMBIA_RAINFALL_2020_2025.months, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position:'top', labels:{ boxWidth:8, padding:6, font:{size:9}, color:'rgba(255,255,255,0.65)' } } },
+      scales: {
+        x: { grid:{color:'rgba(255,255,255,0.05)'}, ticks:{font:{size:9},color:'rgba(255,255,255,0.5)'} },
+        y: { grid:{color:'rgba(255,255,255,0.05)'}, ticks:{font:{size:9},color:'rgba(255,255,255,0.5)'},
+             title:{display:true,text:'mm',color:'rgba(255,255,255,0.35)',font:{size:9}} }
+      },
+      interaction:{ mode:'index', intersect:false },
+      animation:{ duration:400 }
+    }
+  });
+}
+
+// â”€â”€ Suitability Analysis â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+let suitType = 'agri';
+let suitLayerGroup = L.layerGroup();
+
+const SUITABILITY_CONFIGS = {
+  agri: {
+    label: 'Agriculture Suitability',
+    factors: [
+      { key:'rainfall',   label:'Rainfall (>800mm)',    weight:40 },
+      { key:'flatness',   label:'Flat terrain',         weight:30 },
+      { key:'forest',     label:'Forest proximity',     weight:20 },
+      { key:'population', label:'Labour availability',  weight:10 }
+    ]
+  },
+  constr: {
+    label: 'Construction Suitability',
+    factors: [
+      { key:'elevation',  label:'Moderate elevation',   weight:35 },
+      { key:'flatness',   label:'Flat terrain',         weight:35 },
+      { key:'flood',      label:'Low flood risk',       weight:20 },
+      { key:'population', label:'Proximity to city',    weight:10 }
+    ]
+  },
+  water: {
+    label: 'Water Access Suitability',
+    factors: [
+      { key:'rainfall',   label:'High rainfall',        weight:40 },
+      { key:'rivers',     label:'River proximity',      weight:35 },
+      { key:'elevation',  label:'Low elevation',        weight:15 },
+      { key:'population', label:'Population density',   weight:10 }
+    ]
+  },
+  urban: {
+    label: 'Urban Growth Suitability',
+    factors: [
+      { key:'population', label:'Existing population',  weight:40 },
+      { key:'flatness',   label:'Flat terrain',         weight:25 },
+      { key:'flood',      label:'Low flood risk',       weight:20 },
+      { key:'rainfall',   label:'Adequate water',       weight:15 }
+    ]
+  }
+};
+
+function setSuitType(type, btn) {
+  suitType = type;
+  document.querySelectorAll('.suit-type-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderSuitWeights();
+}
+
+function renderSuitWeights() {
+  const cfg = SUITABILITY_CONFIGS[suitType];
+  let html = '';
+  cfg.factors.forEach(f => {
+    html += `<div class="suit-weight-row">
+      <span class="suit-weight-label">${f.label}</span>
+      <input class="suit-weight-slider" type="range" min="0" max="100" value="${f.weight}"
+        id="sw_${f.key}" oninput="document.getElementById('swv_${f.key}').textContent=this.value+'%'"/>
+      <span class="suit-weight-val" id="swv_${f.key}">${f.weight}%</span>
+    </div>`;
+  });
+  document.getElementById('suitWeights').innerHTML = html;
+}
+
+function computeDistrictSuitScore(d, type) {
+  const prov = ZAMBIA_PROVINCES.find(p=>p.name===d.province)||{};
+  const elev = simElevation(d);
+  const risk = simFloodRisk(d);
+  const floodScore = {'Minimal':1,'Low':0.75,'Medium':0.45,'High':0.15}[risk]||0.5;
+  const rainfallScore = Math.min(1, (ZAMBIA_RAINFALL_2020_2025.annual_totals[2024]||800)/1300);
+  const flatScore = Math.max(0, 1 - (elev - 600)/1200);
+  const popScore = Math.min(1, d.pop / 800000);
+  const forestScore = Math.min(1, (prov.forest_pct||30)/70);
+  const elevScore = Math.max(0, 1 - Math.abs(elev - 1000)/800);
+  const riverScore = WATER_BODIES.some(w=>{
+    const dist = Math.sqrt((d.lat-w.lat)**2+(d.lng-w.lng)**2);
+    return dist < 2.5;
+  }) ? 0.85 : 0.4;
+
+  const scoreMap = {
+    rainfall: rainfallScore, flatness: flatScore, forest: forestScore,
+    population: popScore, elevation: elevScore, flood: floodScore, rivers: riverScore
+  };
+  const factors = SUITABILITY_CONFIGS[type].factors;
+  let totalWeight = 0, score = 0;
+  factors.forEach(f => {
+    const w = parseInt(document.getElementById(`sw_${f.key}`)?.value || f.weight);
+    score += w * (scoreMap[f.key]||0.5);
+    totalWeight += w;
+  });
+  return totalWeight > 0 ? score / totalWeight : 0.5;
+}
+
+function runSuitabilityAnalysis() {
+  showToast('Running suitability analysisâ€¦', 'info');
+  suitLayerGroup.clearLayers();
+  if (!map.hasLayer(suitLayerGroup)) suitLayerGroup.addTo(map);
+
+  const scores = ZAMBIA_DISTRICTS.map(d => ({
+    d, score: computeDistrictSuitScore(d, suitType)
+  })).sort((a,b)=>b.score-a.score);
+
+  // Render on map
+  const suitColors = (s) => {
+    if (s >= 0.75) return '#16a34a';
+    if (s >= 0.55) return '#65a30d';
+    if (s >= 0.35) return '#ca8a04';
+    return '#dc2626';
+  };
+  scores.forEach(({d, score}) => {
+    L.circleMarker([d.lat, d.lng], {
+      radius: 6 + score * 10, fillColor: suitColors(score),
+      color: '#fff3', weight: 0.5, fillOpacity: 0.78
+    })
+    .bindTooltip(`<b>${d.district}</b><br>Suitability: <b>${(score*100).toFixed(0)}%</b>`, { className:'ghz-tooltip', sticky:true })
+    .addTo(suitLayerGroup);
+  });
+
+  // Show results table (top 20)
+  const cfg = SUITABILITY_CONFIGS[suitType];
+  let html = `<div style="font-size:.67rem;font-weight:800;color:#fbbf24;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">${cfg.label} â€” Top 20 Districts</div>`;
+  scores.slice(0,20).forEach(({d, score}, i) => {
+    const col = suitColors(score);
+    const cls = score>=0.75?'Highly Suitable':score>=0.55?'Suitable':score>=0.35?'Moderate':'Unsuitable';
+    html += `<div class="suit-district-row" onclick="map.flyTo([${d.lat},${d.lng}],10);showToast('${d.district}, ${d.province}','info')">
+      <div class="suit-rank">${i+1}</div>
+      <div class="suit-name">${d.district}<br><span style="font-size:.59rem;color:var(--muted);">${d.province}</span></div>
+      <div><div class="suit-score-bar"><div class="suit-score-fill" style="width:${score*100}%;background:${col};"></div></div></div>
+      <div class="suit-score-val">${(score*100).toFixed(0)}%</div>
+    </div>`;
+  });
+  const el = document.getElementById('suitResults');
+  el.innerHTML = html;
+  el.style.display = 'block';
+  showToast(`Suitability: ${cfg.label} complete`, 'success');
+}
+
+function toggleSuitabilityPanel() {
+  const p = document.getElementById('suitabilityPanel');
+  const btn = document.getElementById('suitabilityToggleBtn');
+  const vis = p.style.display === 'block';
+  p.style.display = vis ? 'none' : 'block';
+  btn?.classList.toggle('active', !vis);
+  if (!vis) renderSuitWeights();
+}
+function closeSuitabilityPanel() {
+  document.getElementById('suitabilityPanel').style.display = 'none';
+  document.getElementById('suitabilityToggleBtn')?.classList.remove('active');
+  suitLayerGroup.clearLayers();
+  if (map.hasLayer(suitLayerGroup)) map.removeLayer(suitLayerGroup);
+}
+
+// â”€â”€ Export Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function openExportModal() {
+  document.getElementById('exportModal').style.display = 'flex';
+  document.getElementById('exportProgress').style.display = 'none';
+}
+function closeExportModal() {
+  document.getElementById('exportModal').style.display = 'none';
+}
+
+// â”€â”€ Rainfall CSV Export â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function exportRainfallCSV() {
+  const R = ZAMBIA_RAINFALL_2020_2025;
+  let csv = 'Year,Month,Month_Num,Rainfall_mm,Annual_Total_mm,Wet_Season_mm,Anomaly_vs_2020_pct\n';
+  R.years.forEach(yr => {
+    R.data[yr].forEach((mm, mi) => {
+      csv += `${yr},${R.months[mi]},${mi+1},${mm.toFixed(2)},${R.annual_totals[yr]},${R.wet_season[yr]},${R.anomaly_pct[yr]||0}\n`;
+    });
+  });
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download = 'Zambia_Rainfall_2020_2025_GeoHub.csv';
+  a.click();
+  showToast('Rainfall CSV exported (72 rows)', 'success');
+  GeoHubAuth.addAuditLog('EXPORT','Exported rainfall CSV',session.id);
+}
+
+// â”€â”€ Drought Risk Report â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function exportDroughtReport() {
+  const DR = DROUGHT_RISK_STATS;
+  let csv = 'Province,Drought_Risk_Index,Risk_Class,National_Mean,Min_Risk,Max_Risk,Coverage_pct\n';
+  Object.entries(DR.by_province).forEach(([prov, risk]) => {
+    const cls = DR.classes.find(c=>risk>=c.min&&risk<c.max)||DR.classes[DR.classes.length-1];
+    csv += `${prov},${risk},${cls?.label||'Unknown'},${DR.mean},${DR.min},${DR.max},${DR.valid_pct}\n`;
+  });
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download = 'Zambia_Drought_Risk_Report_2020_2025.csv';
+  a.click();
+  showToast('Drought risk report exported', 'success');
+}
+
+// â”€â”€ Temperature CSV Export â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function exportTemperatureCSV() {
+  const T = ZAMBIA_TEMPERATURE;
+  let csv = 'Province,Year,Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec,Annual_Mean\n';
+  Object.entries(T.provinces).forEach(([prov, yrData]) => {
+    T.years.forEach(yr => {
+      const months = yrData[yr] || [];
+      const mean = T.annual_means[yr]?.[prov] || 0;
+      csv += `${prov},${yr},${months.join(',')},${mean}\n`;
+    });
+  });
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download = 'Zambia_LST_Temperature_2022_2025.csv';
+  a.click();
+  showToast('Temperature CSV exported (40 rows)', 'success');
+}
+
+// â”€â”€ Batch Export by Province â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+async function batchExportByProvince() {
+  const progressEl = document.getElementById('exportProgress');
+  const fillEl = document.getElementById('exportFill');
+  const txtEl = document.getElementById('exportProgressTxt');
+  progressEl.style.display = 'block';
+
+  const provinces = [...new Set(ZAMBIA_DISTRICTS.map(d=>d.province))];
+  for (let i=0; i<provinces.length; i++) {
+    const prov = provinces[i];
+    const pct = Math.round((i+1)/provinces.length*100);
+    fillEl.style.width = pct+'%';
+    txtEl.textContent = `Exporting ${prov} (${i+1}/${provinces.length})â€¦`;
+    await new Promise(r=>setTimeout(r,120));
+
+    const data = ZAMBIA_DISTRICTS.filter(d=>d.province===prov);
+    let csv = 'ID,District,Province,Latitude,Longitude,Area_km2,Population,Density\n';
+    data.forEach(d => {
+      const dens = (d.pop/d.area_km2).toFixed(1);
+      csv += `${d.id},${d.district},${d.province},${d.lat},${d.lng},${d.area_km2},${d.pop},${dens}\n`;
+    });
+    const a = document.createElement('a');
+    a.href = 'data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+    a.download = `Zambia_${prov.replace(/ /g,'_')}_Districts.csv`;
+    a.click();
+    await new Promise(r=>setTimeout(r,200));
+  }
+  fillEl.style.width = '100%';
+  txtEl.textContent = `âœ“ Batch export complete â€” ${provinces.length} province files`;
+  showToast(`Batch export: ${provinces.length} CSV files downloaded`, 'success');
+  GeoHubAuth.addAuditLog('EXPORT','Batch province CSV export',session.id);
+}
+
+// â”€â”€ Summary Report â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function exportSummaryReport() {
+  let csv = 'ID,District,Province,Region,Latitude,Longitude,Area_km2,Population,Density_per_km2,';
+  csv += 'Est_Elevation_m,Flood_Risk,Drought_Risk_Index,Annual_Rainfall_2024_mm,Avg_LST_2024_C\n';
+  ZAMBIA_DISTRICTS.forEach(d => {
+    const prov = ZAMBIA_PROVINCES.find(p=>p.name===d.province)||{};
+    const elev = simElevation(d);
+    const flood = simFloodRisk(d);
+    const drought = DROUGHT_RISK_STATS.by_province[d.province]||DROUGHT_RISK_STATS.mean;
+    const rainfall = ZAMBIA_RAINFALL_2020_2025.annual_totals[2024]||730;
+    const lst = ZAMBIA_TEMPERATURE.annual_means[2024]?.[d.province]||28;
+    const dens = (d.pop/d.area_km2).toFixed(1);
+    csv += `${d.id},${d.district},${d.province},${d.region},${d.lat},${d.lng},`;
+    csv += `${d.area_km2},${d.pop},${dens},${elev},${flood},${drought.toFixed(3)},${rainfall.toFixed(0)},${lst.toFixed(1)}\n`;
+  });
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download = 'Zambia_Districts_Summary_Report.csv';
+  a.click();
+  showToast('Summary report exported (116 rows)', 'success');
+  GeoHubAuth.addAuditLog('EXPORT','Summary report CSV',session.id);
+}
+
+// â”€â”€ Improved Rainfall Time-Series Chart (uses real CHIRPS data) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function renderRealRainfallChart(ctx, mode) {
+  const R = ZAMBIA_RAINFALL_2020_2025;
+  const colors = ['#38bdf8','#4ade80','#f97316','#a78bfa','#fbbf24','#fb7185'];
+  if (tpChartObj) { tpChartObj.destroy(); tpChartObj = null; }
+
+  if (mode === 'monthly') {
+    const datasets = R.years.map((yr,i) => ({
+      label: String(yr),
+      data: R.data[yr],
+      borderColor: colors[i],
+      backgroundColor: colors[i]+'22',
+      borderWidth: yr===2025 ? 2.5 : 1.2,
+      pointRadius: yr===2025 ? 3 : 1.5,
+      tension: 0.4, fill: false
+    }));
+    document.getElementById('tpChartTitle').innerHTML = `<strong>National Monthly Rainfall â€” CHIRPS 2020â€“2025</strong>`;
+    document.getElementById('tpChartBadge').textContent = 'real data Â· mm/month';
+    tpChartObj = new Chart(ctx, {
+      type: 'line', data: { labels: R.months, datasets },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{legend:{position:'top',labels:{boxWidth:10,padding:8,font:{size:10},color:'rgba(255,255,255,0.65)'}}},
+        scales:{
+          x:{grid:{color:'rgba(255,255,255,0.06)'},ticks:{font:{size:10},color:'rgba(255,255,255,0.5)'}},
+          y:{grid:{color:'rgba(255,255,255,0.06)'},ticks:{font:{size:10},color:'rgba(255,255,255,0.5)'},
+             title:{display:true,text:'mm',color:'rgba(255,255,255,0.4)',font:{size:10}}}
+        },
+        interaction:{mode:'index',intersect:false},animation:{duration:400}
+      }
+    });
+  } else {
+    // Annual totals bar
+    const totals = R.years.map(yr => R.annual_totals[yr]);
+    const barColors = R.years.map((yr,i) => colors[i]+'bb');
+    document.getElementById('tpChartTitle').innerHTML = `<strong>Annual Rainfall Totals â€” Zambia National</strong>`;
+    document.getElementById('tpChartBadge').textContent = 'CHIRPS Â· mm/year';
+    tpChartObj = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: R.years.map(String),
+        datasets: [{
+          label: 'Annual Rainfall (mm)',
+          data: totals,
+          backgroundColor: barColors,
+          borderColor: R.years.map((yr,i)=>colors[i]),
+          borderWidth: 2, borderRadius: 4
+        },{
+          label: 'Wet Season Oct-Mar',
+          data: R.years.map(yr=>R.wet_season[yr]),
+          backgroundColor: R.years.map((_,i)=>colors[i]+'44'),
+          borderColor: R.years.map((_,i)=>colors[i]+'88'),
+          borderWidth: 1.5, borderRadius: 3
+        }]
+      },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{legend:{position:'top',labels:{boxWidth:10,padding:8,font:{size:10},color:'rgba(255,255,255,0.65)'}}},
+        scales:{
+          x:{grid:{color:'rgba(255,255,255,0.06)'},ticks:{font:{size:10},color:'rgba(255,255,255,0.5)'}},
+          y:{grid:{color:'rgba(255,255,255,0.06)'},ticks:{font:{size:10},color:'rgba(255,255,255,0.5)'},
+             title:{display:true,text:'mm',color:'rgba(255,255,255,0.4)',font:{size:10}}}
+        },
+        animation:{duration:400}
+      }
+    });
+  }
+}
+
+// â”€â”€ INIT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Progressive loading with progress bar
+const loaderBar = document.getElementById('loaderBar');
+const loaderStep = document.getElementById('loaderStep');
+function setLoad(pct, msg) {
+  if (loaderBar) loaderBar.style.width = pct + '%';
+  if (loaderStep) loaderStep.textContent = msg;
+  document.getElementById('loaderMsg').textContent = msg;
+}
+
+async function initMap() {
+  setLoad(10, 'Loading 116 districtsâ€¦');
+  await buildDistrictLayer();
+  setLoad(30, 'Building province layersâ€¦');
+  buildProvinceLayer();
+  setLoad(45, 'Loading water bodiesâ€¦');
+  buildWaterLayer();
+  setLoad(55, 'Loading mining sitesâ€¦');
+  buildMiningLayer();
+  setLoad(65, 'Building city markersâ€¦');
+  buildCitiesLayer();
+  setLoad(75, 'Generating layer controlsâ€¦');
+  buildLayerList();
+  buildThematicLayerList();
+  buildProvFilter();
+  setLoad(85, 'Updating legend & toolsâ€¦');
+  updateLegend();
+  renderCCInputs();
+  renderSpatialConfig();
+  setLoad(95, 'Finalisingâ€¦');
+
+  // Initialise coordinate mode labels
+  setCoordMode('dd', document.querySelector('#coordTabsMain [data-mode="dd"]'));
+
+  GeoHubAuth.addAuditLog('MAP_VIEW','Opened Map Viewer v9.0 â€” DrawÂ·ClipÂ·Export + File Loader (SHP/GeoJSON/KML/TIF) + Attribute Table + Simplified labels removed',session.id);
+
+  setTimeout(() => {
+    setLoad(100, 'Ready!');
+    setTimeout(() => {
+      const ov = document.getElementById('mapLoader');
+      ov.style.opacity = '0';
+      setTimeout(()=>ov.style.display='none', 350);
+      showToast(`ðŸŒ v9.0 â€¢ DrawÂ·ClipÂ·Export â€¢ File Loader (SHP/TIF) â€¢ Attribute Table`, 'success');
+    }, 300);
+  }, 700);
+}
+
+// Start init
+initMap();
+
+// Customise draw tooltips
+try {
+  L.drawLocal.draw.handlers.polyline.tooltip.start = 'Click to start measuring distance';
+  L.drawLocal.draw.handlers.polyline.tooltip.cont  = 'Click to continue â€” double-click to finish';
+  L.drawLocal.draw.handlers.polygon.tooltip.start  = 'Click to start drawing area';
+  L.drawLocal.draw.handlers.polygon.tooltip.cont   = 'Click to continue drawing';
+  L.drawLocal.draw.handlers.polygon.tooltip.end    = 'Click first point to close polygon';
+} catch(e){}
+
+// Customise draw tooltips
+try {
+  L.drawLocal.draw.handlers.polyline.tooltip.start = 'Click to start measuring distance';
+  L.drawLocal.draw.handlers.polyline.tooltip.cont  = 'Click to continue â€” double-click to finish';
+  L.drawLocal.draw.handlers.polygon.tooltip.start  = 'Click to start drawing area';
+  L.drawLocal.draw.handlers.polygon.tooltip.cont   = 'Click to continue drawing';
+  L.drawLocal.draw.handlers.polygon.tooltip.end    = 'Click first point to close polygon';
+} catch(e){}
+
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+//  FUNCTION 8 â€” SHAPEFILE / GEOJSON / KML UPLOAD & POLYGON ANALYSIS  v8.0
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+(function(){
+  /* â”€â”€ state â”€â”€ */
+  let shpFmt        = 'shp';          // 'shp' | 'geojson' | 'kml'
+  let shpFiles      = {};             // keyed by extension
+  let shpGeoJSON    = null;           // parsed GeoJSON FeatureCollection
+  let shpLayer      = null;           // Leaflet layer on map
+  let shpAnalysis   = null;           // analysis result object
+
+  const PROV_COLORS_SHP = {
+    'Lusaka':'#4CAF50','Copperbelt':'#38bdf8','Eastern':'#fbbf24','Southern':'#f87171',
+    'Western':'#c084fc','Northern':'#34d399','Luapula':'#fb923c','Muchinga':'#a78bfa',
+    'North-Western':'#67e8f9','Central':'#86efac'
+  };
+
+  /* â”€â”€ open / close â”€â”€ */
+  window.toggleShpUploadPanel = function(){
+    const p = document.getElementById('shpUploadPanel');
+    const showing = p.style.display === 'flex';
+    p.style.display = showing ? 'none' : 'flex';
+    const btn = document.getElementById('shpUploadBtn');
+    if(btn) btn.style.background = showing ? 'rgba(52,211,153,.12)' : 'rgba(52,211,153,.25)';
+  };
+  window.closeShpPanel = function(){
+    document.getElementById('shpUploadPanel').style.display = 'none';
+    const btn = document.getElementById('shpUploadBtn');
+    if(btn) btn.style.background = 'rgba(52,211,153,.12)';
+  };
+
+  /* â”€â”€ format tabs â”€â”€ */
+  window.setShpFmt = function(fmt, el){
+    shpFmt = fmt;
+    document.querySelectorAll('.shp-fmt-tab').forEach(t=>t.classList.remove('active'));
+    el.classList.add('active');
+    const hints = {
+      shp:`<h4>Required Files â€” Shapefile</h4><ul>
+            <li><strong>.shp</strong> â€” geometry (required)</li>
+            <li><strong>.dbf</strong> â€” attributes (required)</li>
+            <li><strong>.prj</strong> â€” projection info (recommended)</li>
+            <li><strong>.shx</strong> â€” shape index (optional)</li></ul>`,
+      geojson:`<h4>Required File â€” GeoJSON</h4><ul>
+            <li><strong>.geojson / .json</strong> â€” GeoJSON FeatureCollection or Feature</li>
+            <li>CRS must be WGS 84 (EPSG:4326)</li>
+            <li>Supports Polygon and MultiPolygon geometries</li></ul>`,
+      kml:`<h4>Required File â€” KML</h4><ul>
+            <li><strong>.kml</strong> â€” KML with Placemark polygons</li>
+            <li>Export from Google Earth / ArcGIS / QGIS</li>
+            <li>Must contain polygon geometries</li></ul>`
+    };
+    document.getElementById('shpFmtHint').innerHTML = hints[fmt];
+    clearShpUpload();
+  };
+
+  /* â”€â”€ drag & drop â”€â”€ */
+  window.shpDragOver  = e=>{ e.preventDefault(); document.getElementById('shpDropzone').classList.add('drag-over'); };
+  window.shpDragLeave = ()=>{ document.getElementById('shpDropzone').classList.remove('drag-over'); };
+  window.shpDrop      = e=>{ e.preventDefault(); document.getElementById('shpDropzone').classList.remove('drag-over'); shpFilesSelected(e.dataTransfer.files); };
+
+  /* â”€â”€ file selection â”€â”€ */
+  window.shpFilesSelected = function(fileList){
+    const files = Array.from(fileList);
+    shpFiles = {};
+    files.forEach(f=>{ shpFiles[f.name.split('.').pop().toLowerCase()] = f; });
+    renderShpFileList(files);
+    validateShpFiles();
+  };
+
+  function renderShpFileList(files){
+    const el = document.getElementById('shpFileList');
+    const extColors = {shp:'#34d399',dbf:'#60a5fa',prj:'#a78bfa',shx:'#fbbf24',geojson:'#4ade80',json:'#4ade80',kml:'#fb923c'};
+    el.innerHTML = files.map(f=>`
+      <div class="shp-file-item">
+        <span class="shp-file-ext" style="background:${extColors[f.name.split('.').pop().toLowerCase()]+'22'||'rgba(255,255,255,.1)'};color:${extColors[f.name.split('.').pop().toLowerCase()]||'#fff'}">
+          ${f.name.split('.').pop().toUpperCase()}
+        </span>
+        <span class="shp-file-name" title="${f.name}">${f.name}</span>
+        <span class="shp-file-size">${formatFileSize(f.size)}</span>
+      </div>`).join('');
+  }
+
+  function validateShpFiles(){
+    let ok = false;
+    if(shpFmt==='shp')     ok = !!(shpFiles['zip'] || (shpFiles['shp'] && shpFiles['dbf']));
+    if(shpFmt==='geojson') ok = !!(shpFiles['geojson'] || shpFiles['json']);
+    if(shpFmt==='kml')     ok = !!shpFiles['kml'];
+    document.getElementById('shpLoadBtn').disabled = !ok;
+  }
+
+  function formatFileSize(b){ return b>1048576?(b/1048576).toFixed(1)+' MB':(b/1024).toFixed(0)+' KB'; }
+
+  /* â”€â”€ clear â”€â”€ */
+  window.clearShpUpload = function(){
+    shpFiles = {}; shpGeoJSON = null; shpAnalysis = null;
+    document.getElementById('shpFileList').innerHTML = '';
+    document.getElementById('shpLoadBtn').disabled = true;
+    document.getElementById('shpProgress').style.display = 'none';
+    document.getElementById('shpResult').style.display = 'none';
+    document.getElementById('shpActionRow').style.display = 'flex';
+    document.getElementById('shpFileInput').value = '';
+    if(shpLayer){ map.removeLayer(shpLayer); shpLayer = null; }
+  };
+
+  /* â”€â”€ progress helpers â”€â”€ */
+  function shpSetProgress(pct, msg){
+    document.getElementById('shpProgressBar').style.width = pct+'%';
+    document.getElementById('shpProgressMsg').textContent = msg;
+  }
+
+  /* â”€â”€ MAIN LOAD â”€â”€ */
+  window.loadShapefile = async function(){
+    document.getElementById('shpProgress').style.display = 'block';
+    document.getElementById('shpActionRow').style.display = 'none';
+    document.getElementById('shpResult').style.display = 'none';
+    shpSetProgress(10,'Reading filesâ€¦');
+
+    try {
+      if(shpFmt==='shp'){
+        shpGeoJSON = await parseShapefile();
+      } else if(shpFmt==='geojson'){
+        shpGeoJSON = await parseGeoJSON();
+      } else {
+        shpGeoJSON = await parseKML();
+      }
+
+      shpSetProgress(50,'Projecting onto mapâ€¦');
+      renderShpOnMap();
+
+      shpSetProgress(75,'Running spatial analysisâ€¦');
+      shpAnalysis = analyseShpGeoJSON(shpGeoJSON);
+
+      shpSetProgress(95,'Building reportâ€¦');
+      await sleep(100);
+      renderShpResult();
+
+      shpSetProgress(100,'Done!');
+      document.getElementById('shpProgress').style.display = 'none';
+      showToast('âœ… Shapefile loaded & analysed â€“ '+shpGeoJSON.features.length+' feature(s)','success');
+
+    } catch(err){
+      document.getElementById('shpProgress').style.display = 'none';
+      document.getElementById('shpActionRow').style.display = 'flex';
+      showToast('âŒ '+err.message,'err');
+      console.error('ShpUpload error:',err);
+    }
+  };
+
+  /* â”€â”€ parsers â”€â”€ */
+  async function parseShapefile(){
+    if(typeof shp === 'undefined') throw new Error('shpjs library not loaded â€” try refreshing the page.');
+    // Support zipped shapefile (.zip containing .shp+.dbf)
+    if(shpFiles['zip']){
+      const zipBuf = await readFileBuffer(shpFiles['zip']);
+      let result;
+      try { result = await shp(zipBuf); } catch(e){ throw new Error('ZIP shapefile parse error: '+e.message); }
+      if(!result) throw new Error('Zip shapefile parsed but no data returned.');
+      if(Array.isArray(result)) result = result[0];
+      if(!result.features) throw new Error('Zip shapefile parsed but no features found.');
+      return result;
+    }
+    if(!shpFiles['shp'] || !shpFiles['dbf'])
+      throw new Error('Select both .shp AND .dbf files together (hold Ctrl/Cmd to multi-select), or upload a .zip shapefile.');
+    const shpBuf = await readFileBuffer(shpFiles['shp']);
+    const dbfBuf = await readFileBuffer(shpFiles['dbf']);
+    let result;
+    try {
+      if(typeof shp.combine === 'function' && typeof shp.parseShp === 'function'){
+        const geoms = shp.parseShp(shpBuf);
+        const attrs = shp.parseDbf(dbfBuf);
+        result = shp.combine([geoms, attrs]);
+      } else {
+        result = await shp(shpBuf);
+      }
+    } catch(e){ throw new Error('Shapefile parse error: '+e.message+'. Try uploading as a .zip instead.'); }
+    if(!result || !result.features) throw new Error('Shapefile parsed but no features found. Try .zip format.');
+    return result;
+  }
+
+  async function parseGeoJSON(){
+    const file = shpFiles['geojson'] || shpFiles['json'];
+    const text = await readFileText(file);
+    let gj;
+    try { gj = JSON.parse(text); } catch(e){ throw new Error('Invalid GeoJSON â€“ JSON parse error'); }
+    if(gj.type==='Feature') gj = {type:'FeatureCollection',features:[gj]};
+    if(gj.type==='FeatureCollection'){
+      if(!gj.features || !gj.features.length) throw new Error('GeoJSON has no features');
+      return gj;
+    }
+    // Bare geometry
+    if(gj.type && gj.coordinates) return {type:'FeatureCollection',features:[{type:'Feature',geometry:gj,properties:{}}]};
+    throw new Error('Unsupported GeoJSON structure');
+  }
+
+  async function parseKML(){
+    const text = await readFileText(shpFiles['kml']);
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(text,'text/xml');
+    const placemarks = doc.querySelectorAll('Placemark');
+    if(!placemarks.length) throw new Error('No Placemarks found in KML');
+    const features = [];
+    placemarks.forEach(pm=>{
+      const name = pm.querySelector('name')?.textContent || 'Polygon';
+      // Try Polygon
+      const poly = pm.querySelector('Polygon');
+      if(!poly) return;
+      const outerCoords = poly.querySelector('outerBoundaryIs coordinates')?.textContent?.trim();
+      if(!outerCoords) return;
+      const coords = outerCoords.split(/\s+/).map(c=>{ const p=c.split(','); return [parseFloat(p[0]),parseFloat(p[1])]; }).filter(c=>!isNaN(c[0]));
+      if(coords.length<3) return;
+      // Close ring
+      if(coords[0][0]!==coords[coords.length-1][0]) coords.push(coords[0]);
+      features.push({type:'Feature',geometry:{type:'Polygon',coordinates:[coords]},properties:{name}});
+    });
+    if(!features.length) throw new Error('No polygon geometries found in KML');
+    return {type:'FeatureCollection',features};
+  }
+
+  /* â”€â”€ file reader helpers â”€â”€ */
+  function readFileBuffer(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=e=>res(e.target.result); r.onerror=rej; r.readAsArrayBuffer(file); }); }
+  function readFileText(file){   return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=e=>res(e.target.result); r.onerror=rej; r.readAsText(file); }); }
+  function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+  /* â”€â”€ render on map â”€â”€ */
+  function renderShpOnMap(){
+    if(shpLayer) map.removeLayer(shpLayer);
+    shpLayer = L.geoJSON(shpGeoJSON, {
+      style: {color:'#34d399',weight:2.5,fillColor:'#10b981',fillOpacity:0.18,dashArray:'5,4'},
+      onEachFeature:(feat,layer)=>{
+        const props = feat.properties || {};
+        const label = props.name||props.Name||props.DISTRICT||props.district||props.NAME||'Uploaded polygon';
+        layer.bindTooltip(`<strong>${label}</strong><br/><span style="font-size:.68rem;color:rgba(255,255,255,.6)">Uploaded polygon</span>`,
+          {permanent:false,className:'leaflet-tooltip',sticky:true});
+        layer.on('click',()=>{
+          showToast(`ðŸ“ Polygon: ${label}`,'info');
+        });
+      }
+    }).addTo(map);
+    // Fly to
+    try{ map.flyToBounds(shpLayer.getBounds(), {padding:[40,40],maxZoom:10,duration:1}); } catch(e){}
+  }
+
+  /* â”€â”€ spatial analysis â”€â”€ */
+  function analyseShpGeoJSON(gj){
+    const features = gj.features;
+
+    // 1. Bounding box
+    let minLng=Infinity,minLat=Infinity,maxLng=-Infinity,maxLat=-Infinity;
+    features.forEach(f=>{ const bb=getBBox(f.geometry); if(bb){ if(bb[0]<minLng)minLng=bb[0]; if(bb[1]<minLat)minLat=bb[1]; if(bb[2]>maxLng)maxLng=bb[2]; if(bb[3]>maxLat)maxLat=bb[3]; } });
+
+    // 2. Approximate area (kmÂ²) using haversine approach on bbox
+    const areaBbox = haversineArea(minLat,minLng,maxLat,maxLng);
+    const centLat  = (minLat+maxLat)/2;
+    const centLng  = (minLng+maxLng)/2;
+
+    // 3. Overlapping Zambia districts
+    const overlapping = [];
+    const DISTRICTS = typeof GeoHubData!=='undefined' ? GeoHubData.districts : (typeof ZAMBIA_DISTRICTS!=='undefined' ? ZAMBIA_DISTRICTS : []);
+    DISTRICTS.forEach(d=>{
+      if(d.lat>=minLat-0.5 && d.lat<=maxLat+0.5 && d.lng>=minLng-0.5 && d.lng<=maxLng+0.5){
+        overlapping.push(d);
+      }
+    });
+
+    // 4. Climate averages for overlapping districts
+    const provinces = [...new Set(overlapping.map(d=>d.province))];
+    const climateData = computeClimateForProvinces(provinces);
+
+    // 5. Rainfall average
+    const rainData = computeRainfallForProvinces(provinces);
+
+    // 6. Drought risk
+    const DROUGHT = typeof GeoHubData!=='undefined' ? GeoHubData.droughtRisk : {};
+    const riskVals = provinces.map(p=>DROUGHT[p]||0.65).filter(v=>v>0);
+    const avgRisk  = riskVals.length ? (riskVals.reduce((a,b)=>a+b,0)/riskVals.length).toFixed(3) : 'N/A';
+
+    // 7. Land cover â€“ weighted average from overlapping districts' province
+    const lcData = computeLandCoverForProvinces(provinces);
+
+    return {
+      featureCount: features.length,
+      bbox:[minLng,minLat,maxLng,maxLat],
+      centroid:[centLat,centLng],
+      areaBbox,
+      overlapping,
+      provinces,
+      climateData,
+      rainData,
+      avgRisk,
+      riskVals,
+      provinces,
+      lcData
+    };
+  }
+
+  function getBBox(geom){
+    if(!geom) return null;
+    const coords=[];
+    function collect(c){ if(typeof c[0]==='number') coords.push(c); else c.forEach(collect); }
+    collect(geom.coordinates||[]);
+    if(!coords.length) return null;
+    return [Math.min(...coords.map(c=>c[0])),Math.min(...coords.map(c=>c[1])),
+            Math.max(...coords.map(c=>c[0])),Math.max(...coords.map(c=>c[1]))];
+  }
+
+  function haversineArea(lat1,lng1,lat2,lng2){
+    const R=6371, dLat=(lat2-lat1)*Math.PI/180, dLng=(lng2-lng1)*Math.PI/180;
+    const wd = R*dLng*Math.cos(((lat1+lat2)/2)*Math.PI/180);
+    const ht = R*dLat;
+    return Math.abs(wd*ht).toFixed(0);
+  }
+
+  function computeClimateForProvinces(provinces){
+    // Get temperature data from GeoHubData or estimate
+    const TEMP_DATA = typeof GeoHubData!=='undefined' && GeoHubData.temperature ? GeoHubData.temperature : null;
+    const result = {annual:{}};
+    const years = [2022,2023,2024,2025];
+    years.forEach(yr=>{
+      const vals=[];
+      provinces.forEach(p=>{
+        if(TEMP_DATA && TEMP_DATA[p] && TEMP_DATA[p][yr]){
+          // annual average
+          const monthly = Object.values(TEMP_DATA[p][yr]);
+          vals.push(monthly.reduce((a,b)=>a+b,0)/monthly.length);
+        } else {
+          // fallback estimates
+          const base = {Lusaka:29.87,Central:29.39,Copperbelt:27.71,Eastern:31.40,Luapula:28.52,
+            'North-Western':28.59,Northern:28.04,Southern:31.57,Western:31.24,Muchinga:29.23};
+          vals.push((base[p]||29.5)+(yr-2022)*0.3);
+        }
+      });
+      result.annual[yr] = vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(2) : 'N/A';
+    });
+    return result;
+  }
+
+  function computeRainfallForProvinces(provinces){
+    const R = typeof GeoHubData!=='undefined' && GeoHubData.rainfallTimeSeries ? GeoHubData.rainfallTimeSeries : null;
+    const years = [2020,2021,2022,2023,2024,2025];
+    const annual_totals = {};
+    years.forEach(yr=>{
+      if(R && R.annual_totals && R.annual_totals[yr]){
+        annual_totals[yr] = R.annual_totals[yr].toFixed(1);
+      } else {
+        const fallback = {2020:1063,2021:725,2022:1197,2023:1062,2024:731,2025:1012};
+        annual_totals[yr] = fallback[yr]||'N/A';
+      }
+    });
+    return annual_totals;
+  }
+
+  function computeLandCoverForProvinces(provinces){
+    const LULC_EST = typeof GeoHubData!=='undefined' && GeoHubData.landCover ? GeoHubData.landCover : null;
+    if(LULC_EST && provinces.length){
+      const avg = {Forest:0,Agriculture:0,Grassland:0,Water:0,Urban:0,Woodland:0};
+      let count=0;
+      provinces.forEach(p=>{
+        const lc = LULC_EST[p];
+        if(lc){ Object.keys(avg).forEach(k=>{ avg[k]+=(lc[k]||0); }); count++; }
+      });
+      if(count){ Object.keys(avg).forEach(k=>avg[k]=(avg[k]/count).toFixed(1)); }
+      return avg;
+    }
+    return {Forest:'28.4',Agriculture:'32.1',Grassland:'18.7',Woodland:'12.3',Water:'4.8',Urban:'3.7'};
+  }
+
+  /* â”€â”€ render result â”€â”€ */
+  function renderShpResult(){
+    const A = shpAnalysis;
+    document.getElementById('shpResult').style.display = 'flex';
+
+    // Header
+    const fileName = Object.values(shpFiles)[0]?.name || 'uploaded file';
+    document.getElementById('shpResultTitle').textContent = fileName;
+    document.getElementById('shpResultSub').textContent =
+      `${A.featureCount} feature${A.featureCount>1?'s':''} Â· ${A.overlapping.length} districts overlapping`;
+
+    // Stats grid
+    const riskClass = A.avgRisk>0.72?'Extreme':A.avgRisk>0.55?'High':A.avgRisk>0.35?'Moderate':'Low';
+    const riskColor = {Extreme:'#f87171',High:'#f97316',Moderate:'#fbbf24',Low:'#4ade80'}[riskClass];
+    document.getElementById('shpStatsGrid').innerHTML = `
+      <div class="shp-stat-card">
+        <div class="shp-stat-lbl">Features / Polygons</div>
+        <div class="shp-stat-val">${A.featureCount}</div>
+        <div class="shp-stat-sub">${shpFmt.toUpperCase()} format</div>
+      </div>
+      <div class="shp-stat-card">
+        <div class="shp-stat-lbl">Approx. Bounding Area</div>
+        <div class="shp-stat-val">${Number(A.areaBbox).toLocaleString()} kmÂ²</div>
+        <div class="shp-stat-sub">bbox estimate</div>
+      </div>
+      <div class="shp-stat-card">
+        <div class="shp-stat-lbl">Centroid (WGS 84)</div>
+        <div class="shp-stat-val" style="font-size:.72rem;">${A.centroid[0].toFixed(4)}Â°, ${A.centroid[1].toFixed(4)}Â°</div>
+        <div class="shp-stat-sub">Lat / Lng</div>
+      </div>
+      <div class="shp-stat-card">
+        <div class="shp-stat-lbl">Avg Drought Risk</div>
+        <div class="shp-stat-val" style="color:${riskColor};">${A.avgRisk}</div>
+        <div class="shp-stat-sub" style="color:${riskColor};">${riskClass} risk</div>
+      </div>
+      <div class="shp-stat-card">
+        <div class="shp-stat-lbl">Provinces Covered</div>
+        <div class="shp-stat-val">${A.provinces.length}</div>
+        <div class="shp-stat-sub">${A.provinces.slice(0,3).join(', ')}${A.provinces.length>3?'â€¦':''}</div>
+      </div>
+      <div class="shp-stat-card">
+        <div class="shp-stat-lbl">Districts Overlapping</div>
+        <div class="shp-stat-val">${A.overlapping.length}</div>
+        <div class="shp-stat-sub">of 116 total</div>
+      </div>`;
+
+    // Districts badge
+    document.getElementById('shpDistBadge').textContent = A.overlapping.length;
+
+    // District list
+    const dList = A.overlapping.slice(0,30).map(d=>{
+      const c = PROV_COLORS_SHP[d.province]||'#86efac';
+      return `<div class="shp-dist-row">
+        <span class="shp-dist-dot" style="background:${c};"></span>
+        <span class="shp-dist-name">${d.name||d.district}</span>
+        <span class="shp-dist-prov">${d.province}</span>
+        <span class="shp-dist-val">Pop ${(d.population/1000).toFixed(0)}K</span>
+      </div>`;
+    }).join('');
+    document.getElementById('shpDistList').innerHTML = dList || '<div style="font-size:.7rem;color:rgba(255,255,255,.4);padding:8px;">No Zambia districts found in bounding box</div>';
+
+    // Climate rows
+    const clim = A.climateData.annual;
+    document.getElementById('shpClimateRows').innerHTML = Object.entries(clim).map(([yr,v])=>`
+      <div class="shp-climate-row">
+        <span class="shp-climate-key"><i class="fas fa-thermometer-half" style="color:#f97316;margin-right:5px;"></i>${yr} Avg Temp</span>
+        <span class="shp-climate-val">${v} Â°C</span>
+      </div>`).join('');
+
+    // Rainfall rows
+    const rain = A.rainData;
+    document.getElementById('shpRainRows').innerHTML = Object.entries(rain).map(([yr,v])=>`
+      <div class="shp-climate-row">
+        <span class="shp-climate-key"><i class="fas fa-cloud-rain" style="color:#38bdf8;margin-right:5px;"></i>${yr} Annual</span>
+        <span class="shp-climate-val">${v} mm</span>
+      </div>`).join('');
+
+    // Drought rows
+    const DROUGHT = typeof GeoHubData!=='undefined' ? GeoHubData.droughtRisk : {};
+    document.getElementById('shpDroughtRows').innerHTML = A.provinces.map(p=>{
+      const rv=(DROUGHT[p]||0.65);
+      const rc=rv>0.72?'Extreme':rv>0.55?'High':rv>0.35?'Moderate':'Low';
+      const col={Extreme:'#f87171',High:'#f97316',Moderate:'#fbbf24',Low:'#4ade80'}[rc];
+      return `<div class="shp-climate-row">
+        <span class="shp-climate-key">${p}</span>
+        <span class="shp-climate-val" style="color:${col};">${rv.toFixed(3)} Â· ${rc}</span>
+      </div>`;
+    }).join('');
+
+    // LULC rows
+    const lc = A.lcData;
+    const lcColors = {Forest:'#22c55e',Agriculture:'#eab308',Grassland:'#84cc16',Woodland:'#16a34a',Water:'#38bdf8',Urban:'#94a3b8'};
+    document.getElementById('shpLulcRows').innerHTML = Object.entries(lc).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`
+      <div class="shp-climate-row">
+        <span class="shp-climate-key" style="display:flex;align-items:center;gap:6px;">
+          <span style="width:8px;height:8px;border-radius:50%;background:${lcColors[k]||'#aaa'};display:inline-block;"></span>${k}
+        </span>
+        <span class="shp-climate-val">${v}%</span>
+      </div>`).join('');
+
+    // Auto-open first two sections
+    openShpSection('shpDistSection');
+    openShpSection('shpClimateSection');
+  }
+
+  /* â”€â”€ section toggle â”€â”€ */
+  window.toggleShpSection = function(id){
+    const el = document.getElementById(id);
+    const open = el.style.display !== 'none';
+    el.style.display = open?'none':'flex';
+    el.style.flexDirection = 'column';
+    const chev = document.getElementById(id.replace('Section','Chev'));
+    if(chev) chev.style.transform = open?'':'rotate(180deg)';
+  };
+  function openShpSection(id){
+    const el = document.getElementById(id);
+    if(el){ el.style.display='flex'; el.style.flexDirection='column'; }
+    const chev = document.getElementById(id.replace('Section','Chev'));
+    if(chev) chev.style.transform = 'rotate(180deg)';
+  }
+
+  /* â”€â”€ EXPORTS â”€â”€ */
+  window.shpExportGeoJSON = function(){
+    if(!shpGeoJSON){ showToast('No shapefile loaded','warn'); return; }
+    const blob=new Blob([JSON.stringify(shpGeoJSON,null,2)],{type:'application/json'});
+    triggerDownload(blob,'uploaded_polygon.geojson');
+    showToast('GeoJSON exported','success');
+  };
+
+  window.shpExportCSV = function(){
+    if(!shpAnalysis){ showToast('No analysis data','warn'); return; }
+    const A=shpAnalysis;
+    const rows=[['Type','Key','Value']];
+    rows.push(['Geometry','Feature Count',A.featureCount]);
+    rows.push(['Geometry','Bounding Area (kmÂ²)',A.areaBbox]);
+    rows.push(['Geometry','Centroid Lat',A.centroid[0].toFixed(6)]);
+    rows.push(['Geometry','Centroid Lng',A.centroid[1].toFixed(6)]);
+    rows.push(['Geometry','Provinces Covered',A.provinces.join('; ')]);
+    rows.push(['Geometry','Districts Overlapping',A.overlapping.length]);
+    rows.push(['Risk','Avg Drought Risk Index',A.avgRisk]);
+    Object.entries(A.climateData.annual).forEach(([yr,v])=>rows.push(['Temperature',`${yr} Annual Avg (Â°C)`,v]));
+    Object.entries(A.rainData).forEach(([yr,v])=>rows.push(['Rainfall',`${yr} Annual (mm)`,v]));
+    A.overlapping.forEach(d=>rows.push(['District',d.name||d.district,d.province]));
+    const csv=rows.map(r=>r.map(c=>`"${c}"`).join(',')).join('\n');
+    triggerDownload(new Blob([csv],{type:'text/csv'}),'shapefile_analysis.csv');
+    showToast('CSV report exported','success');
+  };
+
+  window.shpExportKML = function(){
+    if(!shpGeoJSON){ showToast('No shapefile loaded','warn'); return; }
+    const placemarks=shpGeoJSON.features.map((f,i)=>{
+      const name=f.properties?.name||f.properties?.Name||('Polygon '+(i+1));
+      const coords=geoJSONPolyToKMLCoords(f.geometry);
+      return `<Placemark><name>${name}</name><Polygon><outerBoundaryIs><LinearRing><coordinates>${coords}</coordinates></LinearRing></outerBoundaryIs></Polygon></Placemark>`;
+    }).join('');
+    const kml=`<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>GeoHub Upload</name>${placemarks}</Document></kml>`;
+    triggerDownload(new Blob([kml],{type:'application/vnd.google-earth.kml+xml'}),'uploaded_polygon.kml');
+    showToast('KML exported','success');
+  };
+
+  function geoJSONPolyToKMLCoords(geom){
+    try{ return (geom.type==='Polygon'?geom.coordinates[0]:geom.coordinates[0][0]).map(c=>c[0]+','+c[1]+',0').join(' '); }
+    catch(e){ return ''; }
+  }
+
+  window.shpExportSummary = function(){
+    if(!shpAnalysis){ showToast('No analysis data','warn'); return; }
+    const A=shpAnalysis;
+    const lines=[
+      '====================================================',
+      '  GeoHub Zambia â€” Shapefile Upload Analysis Report',
+      '====================================================',
+      `Date: ${new Date().toLocaleString()}`,
+      `Format: ${shpFmt.toUpperCase()}`,
+      '',
+      'â”€â”€ GEOMETRY â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€',
+      `Features:           ${A.featureCount}`,
+      `Bounding Box Area:  ${Number(A.areaBbox).toLocaleString()} kmÂ²`,
+      `Centroid:           ${A.centroid[0].toFixed(6)}Â°N, ${A.centroid[1].toFixed(6)}Â°E`,
+      `BBox:               [${A.bbox.map(v=>v.toFixed(4)).join(', ')}]`,
+      '',
+      'â”€â”€ ADMINISTRATIVE OVERLAY â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€',
+      `Provinces Covered:  ${A.provinces.length} â€” ${A.provinces.join(', ')}`,
+      `Districts Found:    ${A.overlapping.length}`,
+      ...A.overlapping.map(d=>`  â€¢ ${d.name||d.district} (${d.province}) â€” Pop: ${(d.population||0).toLocaleString()}`),
+      '',
+      'â”€â”€ CLIMATE (Temperature Â°C) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€',
+      ...Object.entries(A.climateData.annual).map(([yr,v])=>`  ${yr}: ${v} Â°C avg`),
+      '',
+      'â”€â”€ RAINFALL (CHIRPS mm/year) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€',
+      ...Object.entries(A.rainData).map(([yr,v])=>`  ${yr}: ${v} mm`),
+      '',
+      'â”€â”€ DROUGHT RISK INDEX â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€',
+      `Average Risk:       ${A.avgRisk}`,
+      '',
+      'â”€â”€ LAND COVER (LULC 2024 estimate) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€',
+      ...Object.entries(A.lcData).map(([k,v])=>`  ${k}: ${v}%`),
+      '',
+      '====================================================',
+      '  Generated by GeoHub Zambia v8.0 | geohub.zm',
+      '===================================================='
+    ].join('\n');
+    triggerDownload(new Blob([lines],{type:'text/plain'}),'shapefile_summary.txt');
+    showToast('Summary exported','success');
+  };
+
+  function triggerDownload(blob,filename){
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+    a.download=filename; document.body.appendChild(a); a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  }
+
+})(); // end IIFE
+
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+//  FUNCTION 9 â€” DRAW Â· CLIP Â· EXPORT  v9.0
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+(function(){
+  let dcpMode         = 'polygon';   // polygon | rectangle | circle | freehand
+  let dcpDrawing      = false;
+  let dcpLayer        = null;        // current drawn layer (Leaflet)
+  let dcpGeoJSON      = null;        // captured GeoJSON
+  let dcpDrawHandler  = null;
+  let dcpFreehandPts  = [];
+  let dcpFreehandLine = null;
+  let dcpStep         = 1;
+  let dcpClipResult   = null;
+
+  /* â”€â”€ panel open/close â”€â”€ */
+  window.toggleDrawClipPanel = function(){
+    const p = document.getElementById('drawClipPanel');
+    const show = p.style.display !== 'flex';
+    p.style.display = show ? 'flex' : 'none';
+    const b = document.getElementById('drawClipBtn');
+    if(b) b.style.background = show ? 'rgba(251,191,36,.25)' : 'rgba(251,191,36,.12)';
+  };
+  window.closeDrawClipPanel = function(){
+    document.getElementById('drawClipPanel').style.display = 'none';
+    const b = document.getElementById('drawClipBtn');
+    if(b) b.style.background = 'rgba(251,191,36,.12)';
+    dcpCancelDraw();
+  };
+
+  /* â”€â”€ draw mode â”€â”€ */
+  window.setDcpMode = function(mode, el){
+    dcpMode = mode;
+    document.querySelectorAll('.dcp-mode-btn').forEach(b=>b.classList.remove('active'));
+    el.classList.add('active');
+  };
+
+  /* â”€â”€ draw event handler (called from the global CREATED listener) â”€â”€ */
+  window._dcpHandleDraw = function(e){
+    let layer = e.layer;
+    if(e.layerType === 'circle'){
+      const centre = layer.getLatLng();
+      const r = layer.getRadius();
+      const pts = [];
+      for(let i=0;i<64;i++){ const a=i/64*Math.PI*2; pts.push([centre.lat+Math.sin(a)*r/111320, centre.lng+Math.cos(a)*r/(111320*Math.cos(centre.lat*Math.PI/180))]); }
+      pts.push(pts[0]);
+      layer = L.polygon(pts.map(p=>L.latLng(p[0],p[1])), {color:'#fbbf24',weight:2.5,fillColor:'#fbbf24',fillOpacity:0.15});
+    }
+    if(dcpLayer) map.removeLayer(dcpLayer);
+    dcpLayer = layer.addTo(map);
+    dcpGeoJSON = layer.toGeoJSON();
+    dcpDrawing = false;
+    document.getElementById('dcpHintBanner').style.display = 'none';
+    computeDcpInfo();
+    setDcpStep(2);
+  };
+
+  /* â”€â”€ start drawing â”€â”€ */
+  window.dcpStartDraw = function(){
+    if(dcpDrawing) return;
+    dcpDrawing = true;
+    if(dcpLayer){ map.removeLayer(dcpLayer); dcpLayer = null; }
+    dcpGeoJSON = null;
+    document.getElementById('dcpInfoBox').style.display = 'none';
+    document.getElementById('dcpHintBanner').style.display = 'flex';
+
+    if(dcpMode === 'polygon'){
+      document.getElementById('dcpHintText').textContent = 'Click to add vertices â€” double-click to finish polygon';
+      window._dcpClaimNextDraw = true;
+      dcpDrawHandler = new L.Draw.Polygon(map, {
+        shapeOptions:{color:'#fbbf24',weight:2.5,fillColor:'#fbbf24',fillOpacity:0.15,dashArray:'6,4'}
+      });
+      dcpDrawHandler.enable();
+    } else if(dcpMode === 'rectangle'){
+      document.getElementById('dcpHintText').textContent = 'Click and drag to draw a rectangle';
+      window._dcpClaimNextDraw = true;
+      dcpDrawHandler = new L.Draw.Rectangle(map, {
+        shapeOptions:{color:'#fbbf24',weight:2.5,fillColor:'#fbbf24',fillOpacity:0.15}
+      });
+      dcpDrawHandler.enable();
+    } else if(dcpMode === 'circle'){
+      document.getElementById('dcpHintText').textContent = 'Click to set centre, drag to set radius';
+      window._dcpClaimNextDraw = true;
+      dcpDrawHandler = new L.Draw.Circle(map, {
+        shapeOptions:{color:'#fbbf24',weight:2.5,fillColor:'#fbbf24',fillOpacity:0.15}
+      });
+      dcpDrawHandler.enable();
+    } else if(dcpMode === 'freehand'){
+      document.getElementById('dcpHintText').textContent = 'Hold and drag to draw freehand â€” release to finish';
+      map.dragging.disable();
+      dcpFreehandPts = [];
+      map.on('mousedown', dcpFhStart);
+    }
+  };
+
+  /* freehand helpers */
+  function dcpFhStart(e){
+    dcpFreehandPts = [[e.latlng.lat,e.latlng.lng]];
+    map.on('mousemove', dcpFhMove);
+    map.on('mouseup', dcpFhEnd);
+  }
+  function dcpFhMove(e){
+    dcpFreehandPts.push([e.latlng.lat,e.latlng.lng]);
+    if(dcpFreehandLine) map.removeLayer(dcpFreehandLine);
+    dcpFreehandLine = L.polyline(dcpFreehandPts.map(p=>L.latLng(p[0],p[1])),{color:'#fbbf24',weight:2.5}).addTo(map);
+  }
+  function dcpFhEnd(){
+    map.off('mousemove',dcpFhMove); map.off('mouseup',dcpFhEnd); map.off('mousedown',dcpFhStart);
+    map.dragging.enable();
+    if(dcpFreehandLine){ map.removeLayer(dcpFreehandLine); dcpFreehandLine=null; }
+    if(dcpFreehandPts.length>2){
+      dcpFreehandPts.push(dcpFreehandPts[0]);
+      const coords = dcpFreehandPts.map(p=>L.latLng(p[0],p[1]));
+      dcpLayer = L.polygon(coords,{color:'#fbbf24',weight:2.5,fillColor:'#fbbf24',fillOpacity:0.15}).addTo(map);
+      dcpGeoJSON = dcpLayer.toGeoJSON();
+    }
+    dcpDrawing = false;
+    document.getElementById('dcpHintBanner').style.display = 'none';
+    if(dcpGeoJSON){ computeDcpInfo(); setDcpStep(2); }
+  }
+
+  window.dcpCancelDraw = function(){
+    dcpDrawing = false;
+    window._dcpClaimNextDraw = false;
+    document.getElementById('dcpHintBanner').style.display = 'none';
+    if(dcpDrawHandler){ try{dcpDrawHandler.disable();}catch(e){} dcpDrawHandler=null; }
+    map.off('mousedown',dcpFhStart); map.off('mousemove',dcpFhMove); map.off('mouseup',dcpFhEnd);
+    map.dragging.enable();
+  };
+
+  window.dcpClearAll = function(){
+    dcpCancelDraw();
+    if(dcpLayer){ map.removeLayer(dcpLayer); dcpLayer=null; }
+    dcpGeoJSON = null; dcpClipResult = null;
+    document.getElementById('dcpInfoBox').style.display = 'none';
+    document.getElementById('dcpClipResult').style.display = 'none';
+    setDcpStep(1);
+    // clear attr table drawn source
+    if(window._attrSources) window._attrSources.drawn = [];
+    if(window._atCurSource === 'drawn') atRefresh();
+    showToast('Drawing cleared','info');
+  };
+
+  window.dcpRedraw = function(){
+    if(dcpLayer){ map.removeLayer(dcpLayer); dcpLayer=null; }
+    dcpGeoJSON=null;
+    document.getElementById('dcpInfoBox').style.display='none';
+    document.getElementById('dcpStep2Body').style.display='none';
+    document.getElementById('dcpClipResult').style.display='none';
+    document.getElementById('dcpStep3Body').style.display='none';
+    setDcpStep(1);
+    dcpStartDraw();
+  };
+
+  window.dcpGoToClip = function(){
+    setDcpStep(2);
+    document.getElementById('dcpStep2Body').style.display='flex';
+    document.getElementById('dcpStep2Body').style.flexDirection='column';
+    document.getElementById('dcpStep2Body').style.gap='7px';
+  };
+
+  /* â”€â”€ step helpers â”€â”€ */
+  function setDcpStep(n){
+    dcpStep = n;
+    [1,2,3].forEach(i=>{
+      const el = document.getElementById('dcpS'+i);
+      el.className = 'dcp-step '+(i<n?'done':i===n?'active':'pending');
+    });
+    if(n>=1){ document.getElementById('dcpInfoBox').style.display = dcpGeoJSON?'block':'none'; }
+    if(n>=2){ document.getElementById('dcpStep2Body').style.display='flex'; document.getElementById('dcpStep2Body').style.flexDirection='column'; }
+    if(n>=3){ document.getElementById('dcpStep3Body').style.display='flex'; document.getElementById('dcpStep3Body').style.flexDirection='column'; }
+  }
+
+  /* â”€â”€ compute geometry info â”€â”€ */
+  function computeDcpInfo(){
+    if(!dcpGeoJSON) return;
+    document.getElementById('dcpInfoBox').style.display = 'block';
+    const coords = dcpGeoJSON.geometry.coordinates[0];
+    const verts = coords.length - 1;
+    // Area (Shoelace + haversine approx)
+    let areaM2 = 0;
+    for(let i=0;i<coords.length-1;i++){
+      const [lng1,lat1]=coords[i], [lng2,lat2]=coords[i+1];
+      areaM2 += (lng1-lng2)*(lat1+lat2);
+    }
+    const areaDeg2 = Math.abs(areaM2)/2;
+    const lat0 = coords.reduce((a,c)=>a+c[1],0)/coords.length;
+    const areaKm2 = areaDeg2 * 111.32 * 111.32 * Math.cos(lat0*Math.PI/180);
+    // Perimeter
+    let perimKm = 0;
+    for(let i=0;i<coords.length-1;i++){
+      const [lng1,lat1]=coords[i],[lng2,lat2]=coords[i+1];
+      const dlat=(lat2-lat1)*111.32, dlng=(lng2-lng1)*111.32*Math.cos(lat0*Math.PI/180);
+      perimKm += Math.sqrt(dlat*dlat+dlng*dlng);
+    }
+    const centLat = coords.reduce((a,c)=>a+c[1],0)/coords.length;
+    const centLng = coords.reduce((a,c)=>a+c[0],0)/coords.length;
+
+    document.getElementById('dcpArea').textContent    = areaKm2.toFixed(2)+' kmÂ²';
+    document.getElementById('dcpPerim').textContent   = perimKm.toFixed(2)+' km';
+    document.getElementById('dcpVerts').textContent   = verts;
+    document.getElementById('dcpCentroid').textContent= centLat.toFixed(5)+'Â°, '+centLng.toFixed(5)+'Â°';
+
+    // Push to attribute table as "drawn" source
+    if(!window._attrSources) window._attrSources = {};
+    window._attrSources.drawn = [{
+      id:1, type: dcpMode, area_km2: areaKm2.toFixed(4),
+      perimeter_km: perimKm.toFixed(4), vertices: verts,
+      centroid_lat: centLat.toFixed(6), centroid_lng: centLng.toFixed(6),
+      crs:'EPSG:4326', created: new Date().toLocaleString()
+    }];
+    if(window._atCurSource === 'drawn') atRefresh();
+  }
+
+  /* â”€â”€ clip analysis â”€â”€ */
+  window.dcpRunClip = function(){
+    if(!dcpGeoJSON){ showToast('Draw a polygon first','warn'); return; }
+    const bbox = getGeoJSONBBox(dcpGeoJSON);
+    const results = [];
+
+    if(document.getElementById('clipDistricts').checked){
+      const DIST = typeof ZAMBIA_DISTRICTS!=='undefined'?ZAMBIA_DISTRICTS:(typeof GeoHubData!=='undefined'?GeoHubData.districts:[]);
+      const inside = DIST.filter(d=>d.lat>=bbox[1]-0.3&&d.lat<=bbox[3]+0.3&&d.lng>=bbox[0]-0.3&&d.lng<=bbox[2]+0.3);
+      results.push(`<div class="dcp-info-row"><span class="dcp-info-key">Districts</span><span class="dcp-info-val" style="color:#60a5fa;">${inside.length} found</span></div>`);
+      results.push(...inside.slice(0,5).map(d=>`<div class="dcp-info-row" style="padding-left:10px;"><span class="dcp-info-key">${d.name||d.district}</span><span class="dcp-info-val" style="font-size:.6rem;">${d.province}</span></div>`));
+      if(inside.length>5) results.push(`<div class="dcp-info-row" style="padding-left:10px;"><span class="dcp-info-key" style="font-style:italic;">â€¦ and ${inside.length-5} more</span></div>`);
+      // update attribute table
+      if(!window._attrSources) window._attrSources = {};
+      window._attrSources.drawn_clip_districts = inside;
+      dcpClipResult = inside;
+    }
+    if(document.getElementById('clipProvinces').checked){
+      const PROV = typeof ZAMBIA_PROVINCES!=='undefined'?ZAMBIA_PROVINCES:(typeof GeoHubData!=='undefined'?GeoHubData.provinces:[]);
+      const inside = PROV.filter(p=>p.lat>=bbox[1]-1&&p.lat<=bbox[3]+1&&p.lng>=bbox[0]-1&&p.lng<=bbox[2]+1);
+      results.push(`<div class="dcp-info-row"><span class="dcp-info-key">Provinces</span><span class="dcp-info-val" style="color:#4ade80;">${inside.length} found</span></div>`);
+    }
+
+    document.getElementById('dcpClipResult').style.display = 'block';
+    document.getElementById('dcpClipSummary').innerHTML = results.join('') || '<div style="font-size:.68rem;color:rgba(255,255,255,.4);">No features found in bounding box</div>';
+    setDcpStep(3);
+    showToast('âœ… Clip analysis complete','success');
+  };
+
+  function getGeoJSONBBox(gj){
+    const coords = gj.geometry.coordinates[0];
+    return [Math.min(...coords.map(c=>c[0])),Math.min(...coords.map(c=>c[1])),
+            Math.max(...coords.map(c=>c[0])),Math.max(...coords.map(c=>c[1]))];
+  }
+
+  /* â”€â”€ export â”€â”€ */
+  window.dcpExport = function(fmt){
+    if(!dcpGeoJSON){ showToast('No polygon drawn','warn'); return; }
+    const name = 'drawn_polygon_'+new Date().toISOString().slice(0,10);
+
+    if(fmt==='geojson'){
+      const fc = {type:'FeatureCollection',features:[{...dcpGeoJSON,properties:{source:'GeoHub Zambia v9.0',mode:dcpMode,created:new Date().toISOString()}}]};
+      triggerDl(new Blob([JSON.stringify(fc,null,2)],{type:'application/json'}),name+'.geojson');
+      showToast('GeoJSON exported âœ…','success');
+    } else if(fmt==='kml'){
+      const coords = dcpGeoJSON.geometry.coordinates[0].map(c=>c[0]+','+c[1]+',0').join(' ');
+      const kml=`<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>GeoHub Draw</name><Placemark><name>Drawn Polygon</name><Polygon><outerBoundaryIs><LinearRing><coordinates>${coords}</coordinates></LinearRing></outerBoundaryIs></Polygon></Placemark></Document></kml>`;
+      triggerDl(new Blob([kml],{type:'application/vnd.google-earth.kml+xml'}),name+'.kml');
+      showToast('KML exported âœ…','success');
+    } else if(fmt==='shp'){
+      // Export as GeoJSON with .shp.geojson (browser-only limitation noted in UI)
+      const fc = {type:'FeatureCollection',features:[dcpGeoJSON]};
+      triggerDl(new Blob([JSON.stringify(fc,null,2)],{type:'application/json'}),name+'.shp.geojson');
+      showToast('Shapefile (GeoJSON) exported âœ…','success');
+    } else if(fmt==='csv'){
+      const coords = dcpGeoJSON.geometry.coordinates[0];
+      const rows = [['vertex_id','longitude','latitude'],...coords.map((c,i)=>[i,c[0].toFixed(8),c[1].toFixed(8)])];
+      triggerDl(new Blob([rows.map(r=>r.join(',')).join('\n')],{type:'text/csv'}),name+'.csv');
+      showToast('CSV coordinates exported âœ…','success');
+    } else if(fmt==='wkt'){
+      const coords = dcpGeoJSON.geometry.coordinates[0].map(c=>c[0]+' '+c[1]).join(',');
+      triggerDl(new Blob(['POLYGON (('+coords+'))'],{type:'text/plain'}),name+'.wkt');
+      showToast('WKT exported âœ…','success');
+    } else if(fmt==='png'){
+      showToast('ðŸ“¸ Use the Screenshot button (ðŸ“·) for map PNG','info');
+    }
+  };
+
+  function triggerDl(blob,fn){
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+    a.download=fn;document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);
+  }
+})();
+
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+//  FUNCTION 10 â€” FILE LOADER  (SHP / GeoJSON / KML / GeoTIFF)  v9.0
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+(function(){
+  let flpFmt    = 'shp';
+  let flpCmap   = 'viridis';
+  let flpOpacity= 0.8;
+  let flpFiles  = {};
+  const loadedLayers = [];    // {id, name, type, leafletLayer, geoJSON}
+  let tifLayer  = null;
+
+  /* â”€â”€ panel open/close â”€â”€ */
+  window.toggleFileLoaderPanel = function(){
+    const p = document.getElementById('fileLoaderPanel');
+    const show = p.style.display !== 'flex';
+    p.style.display = show ? 'flex' : 'none';
+    const b = document.getElementById('fileLoaderBtn');
+    if(b) b.style.background = show ? 'rgba(96,165,250,.25)' : 'rgba(96,165,250,.12)';
+  };
+  window.closeFileLoaderPanel = function(){
+    document.getElementById('fileLoaderPanel').style.display = 'none';
+    const b = document.getElementById('fileLoaderBtn');
+    if(b) b.style.background = 'rgba(96,165,250,.12)';
+  };
+
+  /* â”€â”€ format selector â”€â”€ */
+  window.setFlpFmt = function(fmt, el){
+    flpFmt = fmt;
+    flpFiles = {};
+    document.querySelectorAll('.flp-fmt-card').forEach(c=>{
+      c.classList.remove('active');
+      c.style.borderColor = 'rgba(255,255,255,.08)';
+    });
+    el.classList.add('active');
+    el.style.borderColor = 'rgba(96,165,250,.5)';
+    document.getElementById('flpTifOpts').style.display = fmt==='tif' ? 'flex' : 'none';
+    document.getElementById('flpTifOpts').style.flexDirection = 'column';
+    // Update file input accept
+    const accept = {shp:'.shp,.dbf,.prj,.shx,.zip',geojson:'.geojson,.json',kml:'.kml',tif:'.tif,.tiff'}[fmt]||'*';
+    document.getElementById('flpFileInput').setAttribute('accept',accept);
+  };
+
+  window.setFlpCmap = function(cmap, el){
+    flpCmap = cmap;
+    document.querySelectorAll('.flp-cmap-btn').forEach(b=>b.classList.remove('active'));
+    el.classList.add('active');
+    // re-render tif layer if loaded
+    const tl = loadedLayers.find(l=>l.type==='tif');
+    if(tl && tl.leafletLayer){ map.removeLayer(tl.leafletLayer); applyTifCmap(tl); }
+  };
+
+  window.setFlpTifOpacity = function(val){
+    flpOpacity = val/100;
+    const tl = loadedLayers.find(l=>l.type==='tif');
+    if(tl && tl.leafletLayer) tl.leafletLayer.setOpacity(flpOpacity);
+  };
+
+  /* â”€â”€ drag/drop â”€â”€ */
+  window.flpDragOver  = e=>{ e.preventDefault(); document.getElementById('flpDropzone').classList.add('drag-over'); };
+  window.flpDragLeave = ()=>document.getElementById('flpDropzone').classList.remove('drag-over');
+  window.flpDrop      = e=>{ e.preventDefault(); document.getElementById('flpDropzone').classList.remove('drag-over'); flpFilesSelected(e.dataTransfer.files); };
+
+  /* â”€â”€ file selection â”€â”€ */
+  window.flpFilesSelected = async function(fileList){
+    const files = Array.from(fileList);
+    if(!files.length) return;
+    files.forEach(f=>{ flpFiles[f.name.split('.').pop().toLowerCase()] = f; });
+
+    // Auto-detect format from files if user dropped rather than used the format selector
+    const exts = files.map(f=>f.name.split('.').pop().toLowerCase());
+    if(exts.includes('zip') && flpFmt!=='shp'){ flpFmt='shp'; }
+    else if(exts.includes('shp')){ flpFmt='shp'; }
+    else if(exts.includes('geojson')||exts.includes('json')){ flpFmt='geojson'; }
+    else if(exts.includes('kml')){ flpFmt='kml'; }
+    else if(exts.includes('tif')||exts.includes('tiff')){ flpFmt='tif'; }
+
+    try{
+      showToast('â³ Loading file onto mapâ€¦','info');
+      let gj=null, layerType=flpFmt, layerName=files[0].name;
+
+      if(flpFmt==='shp'){
+        if(typeof shp==='undefined') throw new Error('shpjs library not loaded â€” try refreshing the page');
+        if(flpFiles['zip']){
+          // Zipped shapefile â€” easiest path
+          const zipBuf = await readBuf(flpFiles['zip']);
+          let res;
+          try { res = await shp(zipBuf); } catch(e){ throw new Error('ZIP parse failed: '+e.message); }
+          if(Array.isArray(res)) res = res[0];
+          if(!res || !res.features) throw new Error('No features found in zip shapefile.');
+          gj = res;
+          layerName = flpFiles['zip'].name.replace(/\.zip$/i,'');
+        } else {
+          if(!flpFiles.shp||!flpFiles.dbf) throw new Error('Select both .shp AND .dbf files together (Ctrl+click), or upload a .zip shapefile');
+          const shpBuf=await readBuf(flpFiles.shp);
+          const dbfBuf=await readBuf(flpFiles.dbf);
+          let res;
+          try {
+            if(typeof shp.combine === 'function' && typeof shp.parseShp === 'function'){
+              const geoms = shp.parseShp(shpBuf);
+              const attrs = shp.parseDbf(dbfBuf);
+              res = shp.combine([geoms, attrs]);
+            } else {
+              // fallback: try the main shp() function with the shp buffer
+              res = await shp(shpBuf);
+            }
+          } catch(e){ throw new Error('Shapefile parse failed: '+e.message+'. Try uploading as a .zip file instead.'); }
+          if(!res || !res.features) throw new Error('Shapefile parsed but no features found. Try .zip format.');
+          gj = res;
+          layerName = flpFiles.shp.name.replace(/\.shp$/i,'');
+        }
+      } else if(flpFmt==='geojson'){
+        const f = flpFiles.geojson||flpFiles.json;
+        if(!f) throw new Error('No GeoJSON file selected');
+        let raw;
+        try { raw = JSON.parse(await readTxt(f)); } catch(e){ throw new Error('Invalid JSON â€” check file encoding'); }
+        if(raw.type==='Feature') gj={type:'FeatureCollection',features:[raw]};
+        else if(raw.type==='FeatureCollection') gj=raw;
+        else if(raw.type && raw.coordinates) gj={type:'FeatureCollection',features:[{type:'Feature',geometry:raw,properties:{}}]};
+        else throw new Error('Unrecognised GeoJSON structure');
+        layerName = f.name;
+      } else if(flpFmt==='kml'){
+        if(!flpFiles.kml) throw new Error('No KML file selected');
+        gj = kmlToGeoJSON(await readTxt(flpFiles.kml));
+        layerName = flpFiles.kml.name;
+      } else if(flpFmt==='tif'){
+        const f=flpFiles.tif||flpFiles.tiff;
+        if(!f) throw new Error('No TIFF file selected');
+        await loadGeoTIFF(f, f.name);
+        return;
+      }
+
+      if(!gj||!gj.features||!gj.features.length) throw new Error('No features found in file â€” check format/content');
+      addVectorLayer(gj, layerName, layerType);
+
+    } catch(err){
+      showToast('âŒ ' + err.message, 'err');
+      console.error('[FileLoader]', err);
+    } finally {
+      document.getElementById('flpFileInput').value = '';
+      flpFiles = {};
+    }
+  };
+
+  /* â”€â”€ vector layer â”€â”€ */
+  function addVectorLayer(gj, name, type){
+    const colors=['#60a5fa','#34d399','#fbbf24','#f87171','#a78bfa','#fb923c'];
+    const col = colors[loadedLayers.length % colors.length];
+    const id  = 'fl_'+(Date.now());
+    const leaf = L.geoJSON(gj, {
+      style:{color:col,weight:2,fillColor:col,fillOpacity:0.15},
+      pointToLayer:(f,ll)=>L.circleMarker(ll,{radius:5,color:col,fillColor:col,fillOpacity:0.8}),
+      onEachFeature:(feat,layer)=>{
+        const props = feat.properties||{};
+        const lbl = props.name||props.Name||props.DISTRICT||props.district||props.NAME||'Feature';
+        layer.bindTooltip(`<strong>${lbl}</strong>`,{sticky:true});
+        layer.on('click',()=>{ atSetSource('loaded'); toggleAttrTable(true); });
+      }
+    }).addTo(map);
+    try{ map.flyToBounds(leaf.getBounds(),{padding:[30,30],maxZoom:11,duration:1.2}); }catch(e){}
+    const rec = {id, name, type, leafletLayer:leaf, geoJSON:gj, color:col, visible:true};
+    loadedLayers.push(rec);
+    renderLayerList();
+    // Register in attr table sources
+    if(!window._attrSources) window._attrSources = {};
+    window._attrSources.loaded = gj.features.map((f,i)=>({id:i+1,...(f.properties||{}),geometry_type:f.geometry?.type||'â€”'}));
+    // Update clip panel count
+    document.getElementById('clipLoadedCount').textContent = gj.features.length+' feat.';
+    showToast(`âœ… ${name} loaded â€” ${gj.features.length} features`,'success');
+  }
+
+  /* â”€â”€ GeoTIFF loader â”€â”€ */
+  async function loadGeoTIFF(file, name){
+    if(typeof GeoRaster==='undefined'||typeof GeoRasterLayer==='undefined'){
+      throw new Error('georaster library not loaded â€” try refreshing');
+    }
+    const buf = await readBuf(file);
+    const georaster = await parseGeoRaster(buf);
+    if(tifLayer){ map.removeLayer(tifLayer); }
+    tifLayer = buildTifLayer(georaster);
+    tifLayer.addTo(map);
+    try{ map.flyToBounds(tifLayer.getBounds(),{padding:[30,30],duration:1.2}); }catch(e){}
+    const id='fl_tif_'+(Date.now());
+    loadedLayers.push({id,name,type:'tif',leafletLayer:tifLayer,geoJSON:null,color:'#fb923c',visible:true,georaster});
+    renderLayerList();
+    showToast(`âœ… ${name} loaded as GeoTIFF layer`,'success');
+  }
+
+  function buildTifLayer(georaster){
+    const cmaps = {
+      viridis:(v,mn,mx)=>{ const t=(v-mn)/(mx-mn); return `hsl(${270-t*240},80%,${30+t*40}%)`; },
+      rdylgn: (v,mn,mx)=>{ const t=(v-mn)/(mx-mn); return `hsl(${t*120},80%,45%)`; },
+      rdbu:   (v,mn,mx)=>{ const t=(v-mn)/(mx-mn); return `hsl(${t*240},70%,50%)`; },
+      greens: (v,mn,mx)=>{ const t=(v-mn)/(mx-mn); return `hsl(120,70%,${20+t*55}%)`; },
+      hot:    (v,mn,mx)=>{ const t=(v-mn)/(mx-mn); return `hsl(${60-t*60},100%,${40+t*30}%)`; },
+      greys:  (v,mn,mx)=>{ const t=(v-mn)/(mx-mn); return `hsl(0,0%,${20+t*65}%)`; }
+    };
+    const fn = cmaps[flpCmap]||cmaps.viridis;
+    return new GeoRasterLayer({
+      georaster,
+      opacity: flpOpacity,
+      pixelValuesToColorFn: vals=>{
+        const v=vals[0];
+        if(v===null||v===undefined||isNaN(v)) return null;
+        const mn=georaster.mins[0]||0, mx=georaster.maxs[0]||1;
+        return fn(v,mn,mx);
+      },
+      resolution:128
+    });
+  }
+
+  function applyTifCmap(rec){
+    rec.leafletLayer = buildTifLayer(rec.georaster);
+    rec.leafletLayer.addTo(map);
+  }
+
+  /* â”€â”€ layer list UI â”€â”€ */
+  function renderLayerList(){
+    const hdr = document.getElementById('flpLayerHdr');
+    const list = document.getElementById('flpLayerList');
+    if(!loadedLayers.length){ hdr.style.display='none'; list.innerHTML=''; return; }
+    hdr.style.display='block';
+    const typeIco = {shp:'ðŸ—‚',geojson:'ðŸ“„',kml:'ðŸ“',tif:'ðŸ›°ï¸'};
+    list.innerHTML = loadedLayers.map(l=>`
+      <div class="flp-layer-row" id="flr-${l.id}">
+        <span class="flp-layer-ico">${typeIco[l.type]||'ðŸ“‚'}</span>
+        <span class="flp-layer-name" title="${l.name}">${l.name}</span>
+        <span class="flp-layer-type">${l.type.toUpperCase()}</span>
+        <div class="flp-layer-actions">
+          <button class="flp-layer-act ${l.visible?'active':''}" title="Toggle visibility"
+                  onclick="flpToggleVis('${l.id}',this)"><i class="fas fa-eye"></i></button>
+          <button class="flp-layer-act" title="Zoom to layer"
+                  onclick="flpZoomTo('${l.id}')"><i class="fas fa-search-plus"></i></button>
+          <button class="flp-layer-act" title="Open attribute table"
+                  onclick="atSetSource('loaded');toggleAttrTable(true)"><i class="fas fa-table"></i></button>
+          <button class="flp-layer-act" title="Remove layer"
+                  onclick="flpRemove('${l.id}')" style="color:#f87171!important;"><i class="fas fa-trash-alt"></i></button>
+        </div>
+      </div>`).join('');
+  }
+
+  window.flpToggleVis = function(id, btn){
+    const l=loadedLayers.find(x=>x.id===id); if(!l) return;
+    l.visible=!l.visible;
+    if(l.visible) l.leafletLayer.addTo(map); else map.removeLayer(l.leafletLayer);
+    btn.classList.toggle('active',l.visible);
+  };
+  window.flpZoomTo = function(id){
+    const l=loadedLayers.find(x=>x.id===id); if(!l) return;
+    try{ map.flyToBounds(l.leafletLayer.getBounds(),{padding:[30,30],duration:1}); }catch(e){}
+  };
+  window.flpRemove = function(id){
+    const i=loadedLayers.findIndex(x=>x.id===id); if(i<0) return;
+    map.removeLayer(loadedLayers[i].leafletLayer);
+    loadedLayers.splice(i,1);
+    renderLayerList();
+    if(!window._attrSources) window._attrSources={};
+    window._attrSources.loaded=[];
+    if(window._atCurSource==='loaded') atRefresh();
+    showToast('Layer removed','info');
+  };
+
+  /* â”€â”€ KML parser â”€â”€ */
+  function kmlToGeoJSON(kmlText){
+    const doc=new DOMParser().parseFromString(kmlText,'text/xml');
+    const features=[];
+    doc.querySelectorAll('Placemark').forEach(pm=>{
+      const name=pm.querySelector('name')?.textContent||'Feature';
+      const poly=pm.querySelector('Polygon');
+      const point=pm.querySelector('Point coordinates');
+      const line=pm.querySelector('LineString coordinates');
+      if(poly){
+        const outerC=poly.querySelector('outerBoundaryIs coordinates')?.textContent?.trim();
+        if(!outerC) return;
+        const coords=outerC.split(/\s+/).map(c=>{const p=c.split(',');return[parseFloat(p[0]),parseFloat(p[1])];}).filter(c=>!isNaN(c[0]));
+        if(coords.length>2){ coords.push(coords[0]); features.push({type:'Feature',geometry:{type:'Polygon',coordinates:[coords]},properties:{name}}); }
+      } else if(point){
+        const p=point.textContent.trim().split(',');
+        features.push({type:'Feature',geometry:{type:'Point',coordinates:[parseFloat(p[0]),parseFloat(p[1])]},properties:{name}});
+      } else if(line){
+        const coords=line.textContent.trim().split(/\s+/).map(c=>{const p=c.split(',');return[parseFloat(p[0]),parseFloat(p[1])];});
+        features.push({type:'Feature',geometry:{type:'LineString',coordinates:coords},properties:{name}});
+      }
+    });
+    if(!features.length) throw new Error('No features found in KML');
+    return {type:'FeatureCollection',features};
+  }
+
+  /* â”€â”€ file helpers â”€â”€ */
+  function readBuf(f){return new Promise((r,j)=>{const fr=new FileReader();fr.onload=e=>r(e.target.result);fr.onerror=j;fr.readAsArrayBuffer(f);});}
+  function readTxt(f){return new Promise((r,j)=>{const fr=new FileReader();fr.onload=e=>r(e.target.result);fr.onerror=j;fr.readAsText(f);});}
+
+})();
+
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+//  FUNCTION 11 â€” ATTRIBUTE TABLE  v9.0
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+(function(){
+  window._attrSources  = {};   // populated by other modules
+  window._atCurSource  = 'districts';
+  let   atData         = [];
+  let   atFilteredData = [];
+  let   atSortCol      = null;
+  let   atSortDir      = 'asc';
+  let   atSelected     = new Set();
+
+  /* â”€â”€ init default source â”€â”€ */
+  function initDefaultSources(){
+    const DIST = typeof ZAMBIA_DISTRICTS!=='undefined'?ZAMBIA_DISTRICTS:(typeof GeoHubData!=='undefined'&&GeoHubData.districts?GeoHubData.districts:[]);
+    const PROV = typeof ZAMBIA_PROVINCES!=='undefined'?ZAMBIA_PROVINCES:(typeof GeoHubData!=='undefined'&&GeoHubData.provinces?GeoHubData.provinces:[]);
+    window._attrSources.districts = DIST.map((d,i)=>({
+      '#':i+1, id:d.id||'â€”', district:d.name||d.district, province:d.province,
+      lat:d.lat||'â€”', lng:d.lng||'â€”', area_km2:d.area||'â€”', population:d.population||'â€”',
+      region:d.region||'â€”'
+    }));
+    window._attrSources.provinces = PROV.map((p,i)=>({
+      '#':i+1, province:p.name, code:p.code||'â€”', districts:p.districts||'â€”',
+      area_km2:p.area||'â€”', population:p.population||'â€”',
+      forest_pct:p.forest_pct||'â€”', agri_pct:p.agri_pct||'â€”'
+    }));
+    window._attrSources.uploaded = [];
+    window._attrSources.drawn    = [];
+    window._attrSources.loaded   = [];
+  }
+
+  /* â”€â”€ toggle / open â”€â”€ */
+  window.toggleAttrTable = function(forceOpen){
+    const p=document.getElementById('attrTablePanel');
+    const show = forceOpen || p.style.display!=='flex';
+    p.style.display = show?'flex':'none';
+    const b=document.getElementById('atTableBtn');
+    if(b) b.style.background = show?'rgba(167,139,250,.25)':'rgba(167,139,250,.12)';
+    if(show){ initDefaultSources(); atRefresh(); }
+  };
+  window.closeAttrTable = function(){
+    document.getElementById('attrTablePanel').style.display='none';
+    const b=document.getElementById('atTableBtn');
+    if(b) b.style.background='rgba(167,139,250,.12)';
+  };
+
+  /* â”€â”€ set source â”€â”€ */
+  window.atSetSource = function(src, tabEl){
+    window._atCurSource = src;
+    document.querySelectorAll('.at-src-tab').forEach(t=>t.classList.remove('active'));
+    if(tabEl) tabEl.classList.add('active');
+    else{
+      const tabs={districts:0,provinces:1,uploaded:2,drawn:3,loaded:4};
+      const all=document.querySelectorAll('.at-src-tab');
+      if(all[tabs[src]]) all[tabs[src]].classList.add('active');
+    }
+    initDefaultSources();
+    atRefresh();
+  };
+
+  function atRefresh(){
+    const src = window._atCurSource||'districts';
+    atData = (window._attrSources||{})[src]||[];
+    atFilteredData = [...atData];
+    atSelected.clear();
+    renderAtTable();
+  }
+
+  function renderAtTable(){
+    const empty=document.getElementById('atEmpty');
+    const tbl=document.getElementById('atTbl');
+    const badge=document.getElementById('atBadge');
+
+    if(!atFilteredData.length){
+      empty.style.display='flex'; tbl.style.display='none';
+      const srcLabels={districts:'Districts',provinces:'Provinces',uploaded:'Uploaded features',drawn:'Drawn polygons',loaded:'Loaded file features'};
+      empty.innerHTML=`<div class="at-empty-ico">ðŸ“‹</div><div class="at-empty-txt">No ${srcLabels[window._atCurSource]||'data'} available</div><div class="at-empty-sub">Load a file or draw a polygon</div>`;
+      badge.textContent='0 features';
+      document.getElementById('atRowCount').textContent='0';
+      document.getElementById('atColCount').textContent='0';
+      return;
+    }
+
+    empty.style.display='none'; tbl.style.display='table';
+    badge.textContent=atData.length+' feature'+(atData.length!==1?'s':'');
+
+    const cols = Object.keys(atFilteredData[0]);
+    // Header
+    document.getElementById('atTblHead').innerHTML=cols.map(c=>`
+      <th onclick="atSort('${c}')" class="${atSortCol===c?(atSortDir==='asc'?'sorted-asc':'sorted-desc'):''}">${c.replace(/_/g,' ')}</th>`).join('');
+    // Body
+    document.getElementById('atTblBody').innerHTML=atFilteredData.map((row,ri)=>`
+      <tr class="${atSelected.has(ri)?'selected':''}" onclick="atToggleRow(${ri},this)">
+        ${cols.map(c=>`<td title="${row[c]??''}">${row[c]??'â€”'}</td>`).join('')}
+      </tr>`).join('');
+
+    document.getElementById('atRowCount').textContent=atFilteredData.length;
+    document.getElementById('atColCount').textContent=cols.length;
+    document.getElementById('atSelCount').innerHTML=atSelected.size?`<strong>${atSelected.size}</strong> selected`:'';
+  }
+
+  /* â”€â”€ sorting â”€â”€ */
+  window.atSort = function(col){
+    if(atSortCol===col){ atSortDir=atSortDir==='asc'?'desc':'asc'; }
+    else{ atSortCol=col; atSortDir='asc'; }
+    atFilteredData.sort((a,b)=>{
+      const va=a[col], vb=b[col];
+      if(va===null||va===undefined) return 1;
+      if(vb===null||vb===undefined) return -1;
+      const n = parseFloat(va)-parseFloat(vb);
+      const cmp = isNaN(n) ? String(va).localeCompare(String(vb)) : n;
+      return atSortDir==='asc'?cmp:-cmp;
+    });
+    renderAtTable();
+  };
+
+  /* â”€â”€ search â”€â”€ */
+  window.atSearch = function(q){
+    if(!q){ atFilteredData=[...atData]; renderAtTable(); return; }
+    const lq=q.toLowerCase();
+    atFilteredData=atData.filter(row=>Object.values(row).some(v=>String(v).toLowerCase().includes(lq)));
+    renderAtTable();
+  };
+
+  /* â”€â”€ row select â”€â”€ */
+  window.atToggleRow = function(i, tr){
+    if(atSelected.has(i)) atSelected.delete(i); else atSelected.add(i);
+    tr.classList.toggle('selected', atSelected.has(i));
+    document.getElementById('atSelCount').innerHTML=atSelected.size?`<strong>${atSelected.size}</strong> selected`:'';
+  };
+
+  /* â”€â”€ zoom to selected â”€â”€ */
+  window.atZoomSelected = function(){
+    if(!atSelected.size){ showToast('Click a row to select it first','warn'); return; }
+    const rows=[...atSelected].map(i=>atFilteredData[i]).filter(Boolean);
+    const lats=rows.map(r=>parseFloat(r.lat)).filter(v=>!isNaN(v));
+    const lngs=rows.map(r=>parseFloat(r.lng)).filter(v=>!isNaN(v));
+    if(lats.length){
+      const b=L.latLngBounds(lats.map((la,i)=>L.latLng(la,lngs[i])));
+      map.flyToBounds(b,{padding:[60,60],maxZoom:12,duration:1});
+    } else { showToast('No coordinates in selected rows','warn'); }
+  };
+
+  /* â”€â”€ exports â”€â”€ */
+  window.atExportCSV = function(){
+    if(!atFilteredData.length){ showToast('No data to export','warn'); return; }
+    const cols=Object.keys(atFilteredData[0]);
+    const rows=[cols,...atFilteredData.map(r=>cols.map(c=>`"${r[c]??''}"`))];
+    const dl=new Blob([rows.map(r=>r.join(',')).join('\n')],{type:'text/csv'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(dl);
+    a.download='attribute_table_'+(window._atCurSource||'data')+'.csv';
+    document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);
+    showToast('Attribute table exported as CSV âœ…','success');
+  };
+  window.atExportGeoJSON = function(){
+    const src=window._atCurSource||'districts';
+    const raw=window._attrSources?.[src]||[];
+    if(!raw.length){ showToast('No data to export','warn'); return; }
+    const fc={type:'FeatureCollection',features:raw.map(r=>({type:'Feature',geometry:null,properties:r}))};
+    const dl=new Blob([JSON.stringify(fc,null,2)],{type:'application/json'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(dl);
+    a.download='attribute_'+src+'.geojson';
+    document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);
+    showToast('GeoJSON exported âœ…','success');
+  };
+
+})();
+
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+//  GOOGLE EARTH ENGINE LAYER LOADER
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+(function(){
+  let geeLayer = null;
+  let activeDataset = null;
+
+  const DATASET_LABELS = {
+    lulc:    { label:'Land Use / Land Cover', icon:'fas fa-layer-group' },
+    ndvi:    { label:'NDVI (Vegetation)',      icon:'fas fa-leaf' },
+    chirps:  { label:'Rainfall (CHIRPS)',      icon:'fas fa-cloud-rain' },
+    lst:     { label:'Land Surface Temp',      icon:'fas fa-thermometer-half' },
+    drought: { label:'Drought Risk (VCI)',     icon:'fas fa-exclamation-triangle' },
+    flood:   { label:'Flood / Surface Water',  icon:'fas fa-water' }
+  };
+
+  window.loadGEELayer = async function(dataset) {
+    // Prevent running from file:// protocol
+    if (window.location.protocol === 'file:') {
+      showToast('âš ï¸ Please run the Flask server and access the map at http://localhost:5000/map', 'warn');
+      return;
+    }
+
+    const year  = document.getElementById('geeYear').value;
+    const btn   = document.getElementById('gee-' + dataset);
+
+    // Toggle off if same dataset
+    if (activeDataset === dataset) {
+      window.removeGEELayer();
+      return;
+    }
+
+    // Reset all buttons
+    document.querySelectorAll('[id^="gee-"]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Loadingâ€¦</span>';
+
+    try {
+      const res  = await fetch(`/api/map?dataset=${dataset}&year=${year}`);
+
+      // Parse JSON response
+      const data = await res.json();
+
+      if (data.error) throw new Error(data.error);
+
+      // Remove previous GEE layer
+      if (geeLayer) { map.removeLayer(geeLayer); geeLayer = null; }
+
+      if (!data.tile_url) throw new Error('No tile URL returned from server');
+      const tileUrl = data.tile_url;
+
+      // Create tile layer
+      geeLayer = L.tileLayer(tileUrl, {
+        attribution: 'Google Earth Engine',
+        opacity: 0.8,
+        maxZoom: 14,
+        bounds: L.latLngBounds([-18.08, 21.96], [-8.18, 33.70])
+      });
+
+      geeLayer.addTo(map);
+      activeDataset = dataset;
+
+      // â”€â”€ Show GEE colour/value scale bar â”€â”€
+      showGEEScale(data);
+
+      // Update button label
+      const info = DATASET_LABELS[dataset];
+      btn.innerHTML = `<i class="${info.icon}"></i><span>${info.label.split(' ')[0]}</span>`;
+      showToast(`âœ… ${info.label} (${year}) loaded`, 'success');
+
+    } catch(err) {
+      btn.classList.remove('active');
+      const info = DATASET_LABELS[dataset];
+      btn.innerHTML = `<i class="${info.icon}"></i><span>${dataset.toUpperCase()}</span>`;
+      showToast(`GEE error: ${err.message}`, 'err');
+      console.error('GEE layer error:', err);
+    }
+  };
+
+  window.removeGEELayer = function() {
+    if (geeLayer) { map.removeLayer(geeLayer); geeLayer = null; }
+    activeDataset = null;
+    document.querySelectorAll('[id^="gee-"]').forEach(b => b.classList.remove('active'));
+    document.getElementById('geeScale').style.display = 'none';
+    // Restore original button labels
+    const icons = { lulc:'fas fa-layer-group', ndvi:'fas fa-leaf', chirps:'fas fa-cloud-rain',
+                    lst:'fas fa-thermometer-half', drought:'fas fa-exclamation-triangle', flood:'fas fa-water' };
+    const labels = { lulc:'LULC', ndvi:'NDVI', chirps:'Rainfall', lst:'Temp (LST)', drought:'Drought', flood:'Flood' };
+    Object.keys(labels).forEach(d => {
+      const b = document.getElementById('gee-' + d);
+      if (b) b.innerHTML = `<i class="${icons[d]}"></i><span>${labels[d]}</span>`;
+    });
+    showToast('GEE layer removed', 'info');
+  };
+})();
+
+// â”€â”€ GEE Colour Scale helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function showGEEScale(data) {
+  var palette   = data.palette || [];
+  var valMin    = typeof data.min  === 'number' ? data.min  : null;
+  var valMax    = typeof data.max  === 'number' ? data.max  : null;
+  var label     = data.label || 'GEE Layer';
+  var units     = data.units || '';
+
+  var hex    = palette.length > 0 ? palette : ['#aaa'];
+  var gradient = hex.map(function(h, i) { return h; }).join(', ');
+  var cssGrad  = 'linear-gradient(to right,' + gradient + ')';
+
+  var minStr = (valMin !== null) ? strVal(valMin) + ' ' + units : hex[0] || '';
+  var maxStr = (valMax !== null) ? strVal(valMax) + ' ' + units : hex[hex.length - 1] || '';
+
+  var scaleEl = document.getElementById('geeScale');
+  var gradEl  = scaleEl.querySelector('.gee-scale-grad');
+  scaleEl.style.display = 'block';
+  scaleEl.querySelector('h4').innerHTML = '<i class="fas fa-ruler-combined"></i>' + escHtml(label);
+  gradEl.style.background = cssGrad;
+  scaleEl.querySelector('.gee-scale-ticks').innerHTML = escHtml(minStr) + escHtml(maxStr);
+}
+
+function strVal(v) {
+  if (v === (v|0)) return String(v);
+  if (Math.abs(v) < 0.01 && v !== 0) return v.toExponential(1);
+  return (+v.toFixed(2)).toString();
+}
+
+function escHtml(s) {
+  var d = document.createElement('div');
+  d.appendChild(document.createTextNode(s || ''));
+  return d.innerHTML;
+}
+
+</script>
+</body>
+</html>

@@ -8,9 +8,15 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css"/>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
-<script src="js/auth.js"></script>
-<script src="js/zambia-data.js"></script>
-<script src="js/worldcover.js"></script>
+  <!-- Firebase SDKs Compat -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/zambia-data.js"></script>
+  <script src="js/worldcover.js"></script>
+  <script src="js/climate-data.js"></script>
+  <script src="js/places-data.js"></script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
@@ -774,6 +780,277 @@
       color:rgba(255,255,255,.7);font-size:.82rem;cursor:pointer;transition:all .15s;
       box-shadow:0 2px 6px rgba(0,0,0,.3);}
     #themeToggleBtn:hover{background:rgba(26,107,53,.5);color:#fff;border-color:var(--g4);}
+
+    /* ══ EMBEDDED ANALYTICS OVERLAY ══ */
+    #analyticsOverlay {
+      position: fixed;
+      top: var(--nb);
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 1500;
+      background: rgba(4, 14, 7, 0.98);
+      backdrop-filter: blur(18px);
+      display: none;
+      flex-direction: column;
+      color: #f0f5f0;
+    }
+    .an-header {
+      padding: 10px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(10, 46, 26, 0.4);
+    }
+    .an-header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .an-title {
+      font-size: 0.98rem;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .an-title i {
+      color: var(--g5);
+    }
+    .an-tabs {
+      display: flex;
+      gap: 6px;
+    }
+    .an-tab {
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      cursor: pointer;
+      color: rgba(255,255,255,0.6);
+      border: 1px solid transparent;
+      transition: all 0.12s;
+    }
+    .an-tab:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .an-tab.active {
+      color: #fff;
+      background: var(--g3);
+      border-color: var(--g4);
+    }
+    .an-close {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 0.95rem;
+      padding: 4px;
+      transition: color 0.15s;
+    }
+    .an-close:hover {
+      color: #fff;
+    }
+    .an-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 24px 60px;
+    }
+    .an-pane {
+      display: none;
+    }
+    .an-pane.active {
+      display: block;
+    }
+    .an-ctrl-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 12px;
+      margin-bottom: 16px;
+    }
+    .an-ctrl-bar label {
+      font-size: 0.65rem;
+      font-weight: 800;
+      color: rgba(255, 255, 255, 0.6);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .an-ctrl-sel {
+      padding: 4px 6px;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.72rem;
+      color: #fff;
+      background: rgba(4, 14, 7, 0.9);
+      outline: none;
+      cursor: pointer;
+    }
+    .an-ctrl-sel:focus {
+      border-color: var(--g5);
+    }
+    .an-ctrl-divider {
+      width: 1px;
+      height: 16px;
+      background: var(--border);
+    }
+    .an-grid2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .an-grid3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .an-grid4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+    .an-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 18px;
+    }
+    .an-card-hd {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .an-card-hd h3 {
+      font-size: 0.8rem;
+      font-weight: 800;
+      color: #fff;
+    }
+    .an-card-hd p {
+      font-size: 0.65rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .an-tag {
+      font-size: 0.58rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 20px;
+    }
+    .an-tag-g { background: rgba(76,175,80,0.1); color: var(--g5); border: 1px solid rgba(76,175,80,0.25); }
+    .an-tag-b { background: rgba(37,99,235,0.1); color: #60a5fa; border: 1px solid rgba(37,99,235,0.25); }
+    .an-tag-a { background: rgba(245,158,11,0.1); color: #f59e0b; border: 1px solid rgba(245,158,11,0.25); }
+    .an-tag-p { background: rgba(124,58,237,0.1); color: #a78bfa; border: 1px solid rgba(124,58,237,0.25); }
+    .an-tag-r { background: rgba(239,68,68,0.1); color: #f87171; border: 1px solid rgba(239,68,68,0.25); }
+    
+    .an-chart-wrap { position: relative; height: 190px; }
+    .an-chart-wrap-sm { position: relative; height: 160px; }
+    .an-chart-wrap-lg { position: relative; height: 240px; }
+
+    .an-stat-c {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .an-stat-ico {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+    .an-stat-v { font-size: 1.25rem; font-weight: 900; color: #fff; line-height: 1; }
+    .an-stat-l { font-size: 0.65rem; color: var(--muted); margin-top: 2px; }
+    .an-stat-delta { font-size: 0.58rem; font-weight: 700; margin-top: 3px; display: flex; align-items: center; gap: 2px; }
+
+    .an-prov-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+    .an-bar-cell { display: flex; align-items: center; gap: 6px; }
+    .an-bar-bg { flex: 1; height: 5px; background: rgba(255,255,255,0.05); border-radius: 2.5px; }
+    .an-bar-fill { height: 5px; border-radius: 2.5px; }
+
+    .an-btn {
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.03);
+      color: rgba(255,255,255,0.8);
+    }
+    .an-btn:hover {
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+    }
+    .an-btn-primary {
+      background: var(--g3);
+      border-color: var(--g4);
+      color: #fff;
+    }
+    .an-btn-primary:hover {
+      background: var(--g4);
+    }
+
+    .an-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.73rem;
+    }
+    .an-table th {
+      padding: 8px 10px;
+      background: rgba(255, 255, 255, 0.04);
+      border-bottom: 2px solid var(--border);
+      font-size: 0.65rem;
+      font-weight: 800;
+      color: var(--muted);
+      text-transform: uppercase;
+      text-align: left;
+      cursor: pointer;
+    }
+    .an-table th:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+    .an-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    }
+    .an-table tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .an-mine-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 12px;
+    }
+    .an-mine-card {
+      background: linear-gradient(135deg, rgba(251, 191, 36, 0.08), rgba(245, 158, 11, 0.04));
+      border: 1px solid rgba(245, 158, 11, 0.25);
+      border-radius: 10px;
+      padding: 12px;
+    }
 
     /* ══ DASHBOARD OVERVIEW PANEL ══ */
     #dashOverlay{
@@ -1704,6 +1981,8 @@
         <button class="tool-btn" onclick="toggleDrawClipPanel()" style="border-color:rgba(251,191,36,.25);"><i class="fas fa-cut" style="color:#fbbf24;"></i><span>Draw &amp; Clip</span></button>
         <button class="tool-btn" onclick="toggleFileLoaderPanel()" style="border-color:rgba(96,165,250,.25);"><i class="fas fa-folder-open" style="color:#60a5fa;"></i><span>Load File</span></button>
         <button class="tool-btn" onclick="toggleAttrTable()" style="border-color:rgba(167,139,250,.25);"><i class="fas fa-table" style="color:#a78bfa;"></i><span>Attr Table</span></button>
+        <button class="tool-btn" onclick="toggleFloodPredictionPanel()" id="floodPredictBtn" style="border-color:rgba(6,182,212,.25);background:rgba(6,182,212,.06);"><i class="fas fa-water" style="color:#06b6d4;"></i><span>Flood Predict</span></button>
+        <button class="tool-btn" onclick="toggleConstructionPanel()" id="constructionBtn" style="border-color:rgba(251,146,60,.25);background:rgba(251,146,60,.06);"><i class="fas fa-hard-hat" style="color:#fb923c;"></i><span>Climate Const.</span></button>
       </div>
 
       <!-- Measurement result -->
@@ -2121,6 +2400,421 @@
   </div>
 </div>
 
+<!-- ══ EMBEDDED ANALYTICS OVERLAY ══ -->
+<div id="analyticsOverlay" class="an-overlay">
+  <div class="an-header">
+    <div class="an-header-left">
+      <div class="an-title">
+        <i class="fas fa-chart-line"></i>
+        <span>GeoHub Analytics &amp; Insights</span>
+      </div>
+      <div class="an-tabs">
+        <div class="an-tab active" onclick="switchAnTab('provinces', this)">Provinces &amp; Forests</div>
+        <div class="an-tab" onclick="switchAnTab('districts', this)">District Insights</div>
+        <div class="an-tab" onclick="switchAnTab('gee', this)">GEE Satellite Data</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button class="an-btn" onclick="exportAnAllCSV()"><i class="fas fa-file-csv"></i>Export All CSV</button>
+      <button class="an-btn" onclick="window.print()"><i class="fas fa-print"></i>Print</button>
+      <button class="an-close" onclick="toggleAnalyticsOverlay()"><i class="fas fa-times"></i></button>
+    </div>
+  </div>
+  <div class="an-body">
+    <!-- PANE 1: PROVINCES & FORESTS -->
+    <div id="anPaneProvinces" class="an-pane active">
+      <div class="an-ctrl-bar">
+        <label>Province</label>
+        <select class="an-ctrl-sel" id="anProvSel" onchange="updateAnCharts()">
+          <option value="">All Provinces</option>
+        </select>
+        <div class="an-ctrl-divider"></div>
+        <label>Dataset</label>
+        <select class="an-ctrl-sel" id="anDsSel" onchange="updateAnCharts()">
+          <option value="forest">Forest Cover</option>
+          <option value="rainfall">Rainfall</option>
+          <option value="landcover">Land Cover</option>
+          <option value="population">Population</option>
+        </select>
+        <div class="an-ctrl-divider"></div>
+        <label>Year Range</label>
+        <select class="an-ctrl-sel" id="anYrSel" onchange="updateAnCharts()">
+          <option value="2018-2024">2018–2024</option>
+          <option value="2020-2024">2020–2024</option>
+          <option value="2022-2024">2022–2024</option>
+        </select>
+        <div class="an-ctrl-divider"></div>
+        <label>Chart Type</label>
+        <select class="an-ctrl-sel" id="anChartTypeSel" onchange="buildAnForestChart()">
+          <option value="line">Line</option>
+          <option value="bar">Bar</option>
+          <option value="area">Area Fill</option>
+        </select>
+        <button class="an-btn an-btn-primary" style="margin-left:auto;" onclick="updateAnCharts()"><i class="fas fa-sync-alt"></i>Refresh</button>
+      </div>
+
+      <div class="an-grid4">
+        <div class="an-stat-c">
+          <div class="an-stat-ico" style="background:rgba(76,175,80,0.12);"><i class="fas fa-tree" style="color:var(--g5);"></i></div>
+          <div>
+            <div class="an-stat-v">435,000</div>
+            <div class="an-stat-l">Forest Cover km² (2024)</div>
+            <div class="an-stat-delta" style="color:#f87171;"><i class="fas fa-arrow-down"></i> 12% since 2018</div>
+          </div>
+        </div>
+        <div class="an-stat-c">
+          <div class="an-stat-ico" style="background:rgba(37,99,235,0.12);"><i class="fas fa-cloud-rain" style="color:#60a5fa;"></i></div>
+          <div>
+            <div class="an-stat-v">880 mm</div>
+            <div class="an-stat-l">Avg Annual Rainfall — Lusaka</div>
+            <div class="an-stat-delta" style="color:#34d399;"><i class="fas fa-arrow-up"></i> Normal range ±5%</div>
+          </div>
+        </div>
+        <div class="an-stat-c">
+          <div class="an-stat-ico" style="background:rgba(245,158,11,0.12);"><i class="fas fa-industry" style="color:#fbbf24;"></i></div>
+          <div>
+            <div class="an-stat-v">756K t</div>
+            <div class="an-stat-l">Total Copper Production/yr</div>
+            <div class="an-stat-delta" style="color:#34d399;"><i class="fas fa-arrow-up"></i> 6 active mines</div>
+          </div>
+        </div>
+        <div class="an-stat-c">
+          <div class="an-stat-ico" style="background:rgba(124,58,237,0.12);"><i class="fas fa-users" style="color:#c084fc;"></i></div>
+          <div>
+            <div class="an-stat-v">20.0M</div>
+            <div class="an-stat-l">National Population (2022)</div>
+            <div class="an-stat-delta" style="color:#34d399;"><i class="fas fa-arrow-up"></i> +3.1% growth rate</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="an-grid2">
+        <div class="an-card">
+          <div class="an-card-hd">
+            <div><h3>Forest Cover Trend 2018–2024</h3><p>Annual estimates — Zambia Forestry Dept / FAO</p></div>
+            <span class="an-tag an-tag-g">FAO</span>
+          </div>
+          <div class="an-chart-wrap"><canvas id="anForestChart"></canvas></div>
+        </div>
+        <div class="an-card">
+          <div class="an-card-hd">
+            <div><h3>Monthly Rainfall 2023</h3><p>CHIRPS satellite estimates — 4 stations (mm)</p></div>
+            <span class="an-tag an-tag-b">CHIRPS</span>
+          </div>
+          <div class="an-chart-wrap"><canvas id="anRainfallChart"></canvas></div>
+        </div>
+      </div>
+
+      <div class="an-grid2">
+        <div class="an-card">
+          <div class="an-card-hd">
+            <div><h3>National Land Cover 2024</h3><p>LCCS Classification — 752,612 km² total</p></div>
+            <span class="an-tag an-tag-a">LCCS 2024</span>
+          </div>
+          <div class="an-chart-wrap"><canvas id="anLcChart"></canvas></div>
+        </div>
+        <div class="an-card">
+          <div class="an-card-hd">
+            <div><h3>Population by Province</h3><p>Census 2022 — 10 provinces sorted by size</p></div>
+            <span class="an-tag an-tag-p">Census 2022</span>
+          </div>
+          <div class="an-chart-wrap"><canvas id="anPopChart"></canvas></div>
+        </div>
+      </div>
+
+      <div class="an-grid2">
+        <div class="an-card">
+          <div class="an-card-hd">
+            <div><h3>Rainfall Comparison — All Stations 2023</h3><p>Monthly mm — Lusaka, Ndola, Livingstone, Chipata</p></div>
+            <span class="an-tag an-tag-b">CHIRPS</span>
+          </div>
+          <div class="an-chart-wrap"><canvas id="anRainStackedChart"></canvas></div>
+        </div>
+        <div class="an-card">
+          <div class="an-card-hd">
+            <div><h3>Population Density vs Forest Cover</h3><p>Scatter by province — Census 2022 &amp; FAO</p></div>
+            <span class="an-tag an-tag-g">Multi-source</span>
+          </div>
+          <div class="an-chart-wrap"><canvas id="anScatterChart"></canvas></div>
+        </div>
+      </div>
+
+      <div class="an-grid3">
+        <div class="an-card">
+          <div class="an-card-hd">
+            <div><h3>Deforestation Rate</h3><p>Annual avg vs national target (2024)</p></div>
+            <span class="an-tag an-tag-r">Alert</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:15px;margin-top:10px;">
+            <div class="an-chart-wrap-sm" style="width:100px;height:100px;flex-shrink:0;">
+              <svg width="100" height="100" viewBox="0 0 120 120" style="transform:rotate(-90deg);">
+                <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="10"/>
+                <circle cx="60" cy="60" r="50" fill="none" stroke="#f87171" stroke-width="10"
+                  stroke-dasharray="314.16" stroke-dashoffset="188.5"
+                  stroke-linecap="round" id="anGaugeArc"/>
+              </svg>
+              <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+                <strong style="font-size:1rem;font-weight:900;color:#f87171;">40%</strong>
+                <small style="font-size:0.55rem;color:var(--muted);">of target</small>
+              </div>
+            </div>
+            <div>
+              <div style="font-size:0.8rem;font-weight:700;color:#fff;">1.8% per year</div>
+              <div style="font-size:0.68rem;color:var(--muted);margin-top:2px;line-height:1.4;">Exceeds national target of 0.5%/yr. Total loss 2018–24:</div>
+              <div style="font-size:1.05rem;font-weight:900;color:#f87171;margin-top:4px;">−59,500 km²</div>
+              <div style="font-size:0.6rem;color:var(--muted);">≈ 7.9% of 2018 cover</div>
+            </div>
+          </div>
+          <div style="margin-top:10px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:6px 10px;font-size:0.68rem;color:#f87171;font-weight:600;">
+            <i class="fas fa-exclamation-triangle"></i> High risk — Copperbelt &amp; Lusaka
+          </div>
+        </div>
+        <div class="an-card" style="grid-column:span 2;">
+          <div class="an-card-hd">
+            <div><h3>Annual Forest Loss &amp; Gain 2018–2024</h3><p>Net change trajectory — FAO / Zambia Forestry Dept</p></div>
+            <button class="an-btn" onclick="exportAnForestCSV()"><i class="fas fa-download"></i>CSV</button>
+          </div>
+          <div class="an-chart-wrap-lg"><canvas id="anForestBarChart"></canvas></div>
+        </div>
+      </div>
+
+      <div class="an-card" style="margin-bottom:16px;">
+        <div class="an-card-hd">
+          <div><h3>Province Overview</h3><p>NSDI 2022 — Population, area and land cover by province</p></div>
+          <span class="an-tag an-tag-g">NSDI 2022</span>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="an-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Province</th>
+                <th>Capital</th>
+                <th style="text-align:center;">Districts</th>
+                <th>Area km²</th>
+                <th>Population</th>
+                <th>Forest %</th>
+                <th>Urban %</th>
+                <th>Density /km²</th>
+              </tr>
+            </thead>
+            <tbody id="anProvTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="an-card">
+        <div class="an-card-hd">
+          <div><h3>Major Mining Operations</h3><p>Zambia Development Agency 2023 — Copper/gold production</p></div>
+          <span class="an-tag an-tag-p">ZDA 2023</span>
+        </div>
+        <div class="an-mine-grid" id="anMineGrid"></div>
+      </div>
+    </div>
+
+    <!-- PANE 2: DISTRICT INSIGHTS -->
+    <div id="anPaneDistricts" class="an-pane">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:12px;flex-wrap:wrap;">
+        <div>
+          <h3 style="font-size:0.92rem;font-weight:800;color:#fff;">District Performance &amp; Population</h3>
+          <p style="font-size:0.68rem;color:var(--muted);">NSDI GRID3 2022 — Interactive sorting and province filters</p>
+        </div>
+        <div style="position:relative;width:240px;">
+          <i class="fas fa-search" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:0.7rem;"></i>
+          <input class="sb-inp" type="text" id="anDistSearch" placeholder="Search districts…" oninput="filterAnDistTable(this.value)" style="width:100%;padding:4px 8px 4px 26px;font-size:0.75rem;"/>
+        </div>
+      </div>
+
+      <div class="an-grid4">
+        <div class="an-stat-c">
+          <div class="an-stat-ico" style="background:rgba(76,175,80,0.12);"><i class="fas fa-map" style="color:var(--g5);"></i></div>
+          <div><div class="an-stat-v">116</div><div class="an-stat-l">Total Districts</div></div>
+        </div>
+        <div class="an-stat-c">
+          <div class="an-stat-ico" style="background:rgba(37,99,235,0.12);"><i class="fas fa-users" style="color:#60a5fa;"></i></div>
+          <div><div class="an-stat-v">20.0M</div><div class="an-stat-l">National Population (2022)</div></div>
+        </div>
+        <div class="an-stat-c">
+          <div class="an-stat-ico" style="background:rgba(245,158,11,0.12);"><i class="fas fa-border-all" style="color:#f59e0b;"></i></div>
+          <div><div class="an-stat-v">752K</div><div class="an-stat-l">Total Area km²</div></div>
+        </div>
+        <div class="an-stat-c">
+          <div class="an-stat-ico" style="background:rgba(124,58,237,0.12);"><i class="fas fa-flag" style="color:#a78bfa;"></i></div>
+          <div><div class="an-stat-v">10</div><div class="an-stat-l">Provinces</div></div>
+        </div>
+      </div>
+
+      <div class="an-grid2">
+        <div class="an-card">
+          <div class="an-card-hd">
+            <div><h3>Top 10 Districts by Population</h3><p>Census 2022 — Highest population districts</p></div>
+            <span class="an-tag an-tag-p">Census 2022</span>
+          </div>
+          <div class="an-chart-wrap"><canvas id="anDistPopChart"></canvas></div>
+        </div>
+        <div class="an-card">
+          <div class="an-card-hd">
+            <div><h3>Top 10 Districts by Area</h3><p>NSDI GRID3 2022 — Largest districts km²</p></div>
+            <span class="an-tag an-tag-a">NSDI GRID3 2022</span>
+          </div>
+          <div class="an-chart-wrap"><canvas id="anDistAreaChart"></canvas></div>
+        </div>
+      </div>
+
+      <div class="an-grid2">
+        <div class="an-card">
+          <div class="an-card-hd">
+            <div><h3>District Population Density</h3><p>People per km² — all 116 districts</p></div>
+            <span class="an-tag an-tag-p">Census 2022</span>
+          </div>
+          <div class="an-chart-wrap-sm"><canvas id="anDistDensChart"></canvas></div>
+        </div>
+        <div class="an-card">
+          <div class="an-card-hd">
+            <div><h3>District Population vs Area</h3><p>Each dot = one district — sized by population</p></div>
+            <span class="an-tag an-tag-p">NSDI 2022</span>
+          </div>
+          <div class="an-chart-wrap-sm"><canvas id="anDistPopAreaChart"></canvas></div>
+        </div>
+      </div>
+
+      <div class="an-card">
+        <div class="an-card-hd" style="flex-wrap:wrap;gap:8px;">
+          <div><h3>All Districts — Full List</h3><p>116 districts · Click column headers to sort · Filter by province</p></div>
+          <div class="dist-filter-pills" id="anDistFilterPills" style="margin-left:0;">
+            <button class="dist-pill active" onclick="filterAnDistProvince('', this)">All</button>
+          </div>
+        </div>
+        <div style="font-size:0.65rem;color:var(--muted);margin-bottom:6px;" id="anDistTableCount">Showing 116 districts</div>
+        <div style="overflow-x:auto;max-height:400px;overflow-y:auto;">
+          <table class="an-table" id="anDistTable">
+            <thead>
+              <tr>
+                <th onclick="sortAnDistTable('id')">ID</th>
+                <th onclick="sortAnDistTable('district')">District</th>
+                <th onclick="sortAnDistTable('province')">Province</th>
+                <th onclick="sortAnDistTable('pop')">Population</th>
+                <th onclick="sortAnDistTable('area_km2')">Area km²</th>
+                <th onclick="sortAnDistTable('density')">Density /km²</th>
+                <th>Pop Share</th>
+              </tr>
+            </thead>
+            <tbody id="anDistTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANE 3: GEE SATELLITE DATA -->
+    <div id="anPaneGee" class="an-pane">
+      <div style="margin-bottom:12px;">
+        <h3 style="font-size:0.92rem;font-weight:800;color:#fff;">GEE Layer Data &amp; Climate Trajectories</h3>
+        <p style="font-size:0.68rem;color:var(--muted);">Google Earth Engine aggregations — CHIRPS, MODIS, and VCI drought indices</p>
+      </div>
+
+      <div class="an-grid4">
+        <div class="an-stat-c">
+          <div class="an-stat-ico" style="background:rgba(37,99,235,0.12);"><i class="fas fa-cloud-rain" style="color:#60a5fa;"></i></div>
+          <div>
+            <div class="an-stat-v">1,064 mm</div>
+            <div class="an-stat-l">Avg Annual Rainfall (2020–2024)</div>
+            <div class="an-stat-delta" style="color:#f87171;"><i class="fas fa-arrow-down"></i> Driest in 2024</div>
+          </div>
+        </div>
+        <div class="an-stat-c">
+          <div class="an-stat-ico" style="background:rgba(245,158,11,0.12);"><i class="fas fa-thermometer-half" style="color:#f59e0b;"></i></div>
+          <div>
+            <div class="an-stat-v">30.4°C</div>
+            <div class="an-stat-l">National Avg LST (2024)</div>
+            <div class="an-stat-delta" style="color:#f87171;"><i class="fas fa-arrow-up"></i> +1.1°C vs 2022</div>
+          </div>
+        </div>
+        <div class="an-stat-c">
+          <div class="an-stat-ico" style="background:rgba(239,68,68,0.12);"><i class="fas fa-exclamation-triangle" style="color:#f87171;"></i></div>
+          <div>
+            <div class="an-stat-v">0.72</div>
+            <div class="an-stat-l">National Mean Drought Risk (VCI)</div>
+            <div class="an-stat-delta" style="color:#f87171;"><i class="fas fa-arrow-up"></i> High risk zone</div>
+          </div>
+        </div>
+        <div class="an-stat-c">
+          <div class="an-stat-ico" style="background:rgba(76,175,80,0.12);"><i class="fas fa-layer-group" style="color:var(--g5);"></i></div>
+          <div>
+            <div class="an-stat-v">752,612 km²</div>
+            <div class="an-stat-l">Total Land Area</div>
+            <div class="an-stat-delta" style="color:#34d399;"><i class="fas fa-check"></i> 116 districts covered</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="an-grid2">
+        <div class="an-card">
+          <div class="an-card-hd">
+            <div><h3>National Annual Rainfall 2020–2025</h3><p>CHIRPS national aggregate — total mm per year</p></div>
+            <span class="an-tag an-tag-b">CHIRPS/GEE</span>
+          </div>
+          <div class="an-chart-wrap"><canvas id="anGeeRainChart"></canvas></div>
+        </div>
+        <div class="an-card">
+          <div class="an-card-hd">
+            <div><h3>Annual Mean LST by Province (2022–2025)</h3><p>MODIS MOD11A2 land surface temp °C — peak dry season values</p></div>
+            <span class="an-tag an-tag-a">MODIS LST/GEE</span>
+          </div>
+          <div class="an-chart-wrap-sm"><canvas id="anGeeLstChart"></canvas></div>
+        </div>
+      </div>
+
+      <div class="an-grid2">
+        <div class="an-card">
+          <div class="an-card-hd">
+            <div><h3>Drought Risk (VCI) by Province</h3><p>Vegetation Condition Index — 0 low / 100 high (2020–2025 mean)</p></div>
+            <span class="an-tag an-tag-r">Drought/GEE</span>
+          </div>
+          <div class="an-chart-wrap-sm"><canvas id="anGeeDroughtChart"></canvas></div>
+        </div>
+        <div class="an-card">
+          <div class="an-card-hd">
+            <div><h3>Monthly Rainfall 2024 (CHIRPS)</h3><p>National aggregate — seasonal distribution</p></div>
+            <span class="an-tag an-tag-b">CHIRPS/GEE</span>
+          </div>
+          <div class="an-chart-wrap-sm"><canvas id="anGeeRainMonthlyChart"></canvas></div>
+        </div>
+      </div>
+
+      <div class="an-card" style="margin-bottom:16px;">
+        <div class="an-card-hd">
+          <div><h3>GEE Layer Scale &amp; Metadata</h3><p>Colour palettes, unit ranges, and data sources for each Earth Engine layer displayed on the map</p></div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="an-table">
+            <thead>
+              <tr>
+                <th>Dataset</th><th>Units</th><th>Min</th><th>Max</th><th>Colour Palette (sample)</th><th>Source</th>
+              </tr>
+            </thead>
+            <tbody id="anGeeMetaBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="an-card">
+        <div class="an-card-hd">
+          <div><h3>Annual Forest Change 2018–2024</h3><p>Net cover, annual loss and gain (km²)</p></div>
+          <button class="an-btn" onclick="exportAnForestCSV()"><i class="fas fa-download"></i>CSV</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="an-table">
+            <thead>
+              <tr><th>Year</th><th>Total Cover km²</th><th>Annual Loss km²</th><th>Annual Gain km²</th><th>Net Change km²</th><th>Cover %</th><th>Trend</th></tr>
+            </thead>
+            <tbody id="anForestTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ══ DASHBOARD OVERVIEW PANEL ══ -->
 <div id="dashOverlay">
   <div class="dash-head">
@@ -2205,6 +2899,49 @@
 </div>
 
 <!-- ══ EXPORT MODAL ══ -->
+<!-- FLOOD PREDICTION PANEL -->
+<div id="floodPredictPanel" style="position:fixed;top:calc(var(--nb)+10px);right:12px;width:340px;background:var(--card-bg);border:1px solid rgba(6,182,212,.25);border-radius:14px;z-index:598;display:none;overflow:hidden;backdrop-filter:blur(14px);box-shadow:0 10px 40px rgba(0,0,0,.6);">
+  <div style="background:linear-gradient(90deg,rgba(6,182,212,.15),rgba(14,116,144,.05));padding:11px 14px;border-bottom:1px solid rgba(6,182,212,.15);display:flex;align-items:center;justify-content:space-between;">
+    <h3 style="font-size:.86rem;font-weight:800;color:#fff;display:flex;align-items:center;gap:7px;"><i class="fas fa-water" style="color:#06b6d4;"></i>Flood Prediction & Analysis</h3>
+    <button onclick="closeFloodPredictionPanel()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.85rem;"><i class="fas fa-times"></i></button>
+  </div>
+  <div style="padding:12px 14px;">
+    <div style="font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:rgba(6,182,212,.7);margin-bottom:6px;">Flood Risk Model — Multi-Factor Analysis</div>
+    <div id="floodPredictContent"></div>
+    <div style="display:flex;gap:6px;margin-top:8px;">
+      <button onclick="runFloodPrediction()" style="flex:1;padding:7px;background:linear-gradient(135deg,#0e7490,#0891b2);border:none;border-radius:7px;color:#fff;font-family:'Inter',sans-serif;font-size:.75rem;font-weight:700;cursor:pointer;"><i class="fas fa-play"></i> Run Prediction</button>
+      <button onclick="toggleFloodLayer()" style="padding:7px 10px;background:rgba(6,182,212,.12);border:1px solid rgba(6,182,212,.25);border-radius:7px;color:#06b6d4;font-family:'Inter',sans-serif;font-size:.75rem;font-weight:700;cursor:pointer;" id="floodLayerBtn"><i class="fas fa-layer-group"></i></button>
+    </div>
+    <div style="display:flex;gap:6px;margin-top:6px;">
+      <button onclick="showFloodPlaces('affected')" style="flex:1;padding:5px;background:rgba(220,38,38,.12);border:1px solid rgba(220,38,38,.25);border-radius:6px;color:#fca5a5;font-family:'Inter',sans-serif;font-size:.68rem;font-weight:700;cursor:pointer;"><i class="fas fa-exclamation-triangle"></i> Affected</button>
+      <button onclick="showFloodPlaces('potential')" style="flex:1;padding:5px;background:rgba(234,179,8,.12);border:1px solid rgba(234,179,8,.25);border-radius:6px;color:#fbbf24;font-family:'Inter',sans-serif;font-size:.68rem;font-weight:700;cursor:pointer;"><i class="fas fa-chart-line"></i> Potential</button>
+      <button onclick="showFloodPlaces('all')" style="padding:5px 8px;background:rgba(6,182,212,.12);border:1px solid rgba(6,182,212,.25);border-radius:6px;color:#06b6d4;font-family:'Inter',sans-serif;font-size:.68rem;font-weight:700;cursor:pointer;"><i class="fas fa-globe"></i> All</button>
+    </div>
+    <div id="floodResults" style="display:none;margin-top:8px;"></div>
+  </div>
+</div>
+
+<div id="constructionPanel" style="position:fixed;top:calc(var(--nb)+10px);right:12px;width:340px;background:var(--card-bg);border:1px solid rgba(251,146,60,.25);border-radius:14px;z-index:597;display:none;overflow:hidden;backdrop-filter:blur(14px);box-shadow:0 10px 40px rgba(0,0,0,.6);">
+  <div style="background:linear-gradient(90deg,rgba(251,146,60,.15),rgba(234,88,12,.05));padding:11px 14px;border-bottom:1px solid rgba(251,146,60,.15);display:flex;align-items:center;justify-content:space-between;">
+    <h3 style="font-size:.86rem;font-weight:800;color:#fff;display:flex;align-items:center;gap:7px;"><i class="fas fa-hard-hat" style="color:#fb923c;"></i>Climate-Resilient Construction</h3>
+    <button onclick="closeConstructionPanel()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.85rem;"><i class="fas fa-times"></i></button>
+  </div>
+  <div style="padding:12px 14px;">
+    <div style="font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:rgba(251,146,60,.7);margin-bottom:6px;">Construction Suitability Under Climate Change</div>
+    <div id="constructionContent"></div>
+    <div style="display:flex;gap:6px;margin-top:8px;">
+      <button onclick="runConstructionAnalysis()" style="flex:1;padding:7px;background:linear-gradient(135deg,#c2410c,#ea580c);border:none;border-radius:7px;color:#fff;font-family:'Inter',sans-serif;font-size:.75rem;font-weight:700;cursor:pointer;"><i class="fas fa-play"></i> Run Analysis</button>
+      <button onclick="toggleConstructionLayer()" style="padding:7px 10px;background:rgba(251,146,60,.12);border:1px solid rgba(251,146,60,.25);border-radius:7px;color:#fb923c;font-family:'Inter',sans-serif;font-size:.75rem;font-weight:700;cursor:pointer;" id="constructionLayerBtn" title="Toggle layer"><i class="fas fa-layer-group"></i></button>
+    </div>
+    <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
+      <button onclick="showConstructionPlaces('best')" style="flex:1;min-width:70px;padding:5px;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.25);border-radius:6px;color:#86efac;font-family:'Inter',sans-serif;font-size:.68rem;font-weight:700;cursor:pointer;"><i class="fas fa-check-circle"></i> Best Districts</button>
+      <button onclick="showConstructionPlaces('at-risk')" style="flex:1;min-width:70px;padding:5px;background:rgba(220,38,38,.12);border:1px solid rgba(220,38,38,.25);border-radius:6px;color:#fca5a5;font-family:'Inter',sans-serif;font-size:.68rem;font-weight:700;cursor:pointer;"><i class="fas fa-warning"></i> At-Risk</button>
+      <button onclick="showConstructionPlaces('all')" style="flex:1;min-width:70px;padding:5px;background:rgba(251,146,60,.12);border:1px solid rgba(251,146,60,.25);border-radius:6px;color:#fed7aa;font-family:'Inter',sans-serif;font-size:.68rem;font-weight:700;cursor:pointer;"><i class="fas fa-globe"></i> All Districts</button>
+    </div>
+    <div id="constructionResults" style="display:none;margin-top:8px;"></div>
+  </div>
+</div>
+
 <div id="exportModal" onclick="if(event.target===this)closeExportModal()">
   <div class="export-card">
     <div class="export-card-head">
@@ -2687,23 +3424,32 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/shpjs@4.0.4/dist/shp.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/georaster@1.6.0/georaster.browser.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/georaster-layer-for-leaflet@0.18.2/dist/georaster-layer-for-leaflet.browser.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/georaster@1.6.0/dist/georaster.browser.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/georaster-layer-for-leaflet@1.0.0/dist/georaster-layer-for-leaflet.min.js"></script>
 <script>
-/* ═══════════════════════════════════════════════════════════════════════════
-   GeoHub Zambia — Map Viewer  v3.0
-   Coordinate Systems: DD | DMS | UTM | MGRS
-   Features: Full coordinate converter · Measurement panel · Buffer tool ·
-   Population heatmap · Province filter · 116 NSDI districts · KML export
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-// ── Auth ──────────────────────────────────────────────────────────────────
-const session = GeoHubAuth.requireAuth('index.html');
-if (!session) throw new Error('Not authenticated');
-document.getElementById('nbAv').textContent   = session.avatar;
-document.getElementById('nbName').textContent = session.name;
-if (session.role === 'admin') document.getElementById('adminLink').style.display = 'inline';
-function doLogout(){ GeoHubAuth.logout(); window.location.href = 'index.html'; }
+try {
+  session = GeoHubAuth.requireAuth('index.html');
+} catch(e) { /* auth not available yet */ }
+if (!session) {
+  // Try to get from localStorage directly as fallback
+  const cached = localStorage.getItem('ghz_session');
+  if (cached) {
+    try { session = JSON.parse(cached); } catch(e) {}
+  }
+}
+if (session) {
+  document.getElementById('nbAv').textContent   = session.avatar;
+  document.getElementById('nbName').textContent = session.name;
+  if (session.role === 'admin') document.getElementById('adminLink').style.display = 'inline';
+} else {
+  // Still allow page to function - show default UI
+  document.getElementById('nbAv').textContent   = 'G';
+  document.getElementById('nbName').textContent = 'GeoHub User';
+}
+function doLogout(){ 
+  if (GeoHubAuth) try { GeoHubAuth.logout(); } catch(e) {}
+  window.location.href = 'index.html'; 
+}
 
 // ── State ──────────────────────────────────────────────────────────────────
 let coordMode   = 'dd';
@@ -2817,6 +3563,20 @@ function getDistrictColor(d) {
   return '#4CAF50';
 }
 
+// Normalize district names for matching (handles hyphen/case variations)
+function normalizeDistrictName(name) {
+  if (!name) return name;
+  let normalized = name;
+  normalized = normalized.replace(/-/g, ' ');  // Convert hyphens to spaces: Itezhi-tezhi -> Itezhi tezhi
+  normalized = normalized.replace(/'/g, '');    // Remove apostrophes: Shang'ombo -> Shangombo
+  // Handle specific known variations
+  if (normalized.includes('Itezhi') && normalized.includes('tezhi')) normalized = 'Itezhi-Tezhi';
+  if (normalized.includes('Kapiri') && normalized.includes('Mposhi')) normalized = 'Kapiri Mposhi';
+  if (normalized.includes('Mpulungu')) normalized = 'Mafinga';  // Mpulungu in GeoJSON maps to Mafinga in Muchinga
+  if (normalized.includes('Chipili')) normalized = 'Chembe';  // Chipili maps to Chembe
+  return normalized;
+}
+
 async function buildDistrictLayer() {
   LAYERS.districts.group.clearLayers();
   districtMarkers = [];
@@ -2827,7 +3587,7 @@ async function buildDistrictLayer() {
     L.geoJSON(geojson, {
       style: function(feature) {
         const props = feature.properties;
-        const districtName = props.ADM2_NAME;
+        const districtName = normalizeDistrictName(props.ADM2_NAME);
         const provinceName = props.ADM1_NAME;
         const distData = ZAMBIA_DISTRICTS.find(d => d.district === districtName && d.province === provinceName);
         const color = distData ? getDistrictColor(distData) : '#4CAF50';
@@ -2835,7 +3595,7 @@ async function buildDistrictLayer() {
       },
       onEachFeature: function(feature, layer) {
         const props = feature.properties;
-        const districtName = props.ADM2_NAME;
+        const districtName = normalizeDistrictName(props.ADM2_NAME);
         const provinceName = props.ADM1_NAME;
         const distData = ZAMBIA_DISTRICTS.find(d => d.district === districtName && d.province === provinceName);
         if (distData) {
@@ -4042,18 +4802,38 @@ map.on('click', function(e) {
   }
 });
 
-// ── District search ────────────────────────────────────────────────────────
+// ── District + Places of Interest search ────────────────────────────────────
 document.getElementById('distSearch').addEventListener('input', function() {
   const q = this.value.toLowerCase().trim();
   const res = document.getElementById('searchResults');
   if (!q) { res.style.display='none'; return; }
+  
+  // Load place data on first search
+  if (!window.GeoHubPlaces?.data?.loaded && q.length >= 2) {
+    window.GeoHubPlaces?.loadAll().catch(()=>{});
+  }
+  
   const hits = ZAMBIA_DISTRICTS.filter(d =>
     d.district.toLowerCase().includes(q)||d.province.toLowerCase().includes(q)||d.id.toLowerCase().includes(q)
-  ).slice(0,10);
-  if (!hits.length) { res.style.display='none'; return; }
-  res.innerHTML = hits.map(d => `
-    <div class="sr-item" onclick="flyToDistrict('${d.id}')">
-      ${d.district}<small>${d.province}</small>
+  ).slice(0,5);
+  
+  // Search places (schools, health facilities, etc.)
+  let placesHits = [];
+  if (window.GeoHubPlaces && q.length >= 2) {
+    placesHits = window.GeoHubPlaces.search(q).slice(0, 10);
+  }
+  
+  // Combine results (districts first, then places)
+  let allResults = [
+    ...hits.map(d => ({ type:'district', label:d.district, sub:d.province, id:d.id, icon:'🏛️', lat:d.lat, lng:d.lng })),
+    ...placesHits.map(p => ({ type:'place', label:p.name, sub:`${p.province || ''} · ${p.subType || p.type}`, id:p.id, icon: window.GeoHubPlaces?.getIcon(p.category, p.subType) || '📍', lat:p.lat, lng:p.lng, place:p }))
+  ];
+  
+  if (!allResults.length) { res.style.display='none'; return; }
+  
+  res.innerHTML = allResults.map(r => `
+    <div class="sr-item" onclick="flyToPlace(${r.lat}, ${r.lng}, '${r.label.replace(/'/g, '\\\'')}', '${r.type}')">
+      ${r.icon} ${r.label}<small>${r.sub}</small>
     </div>`).join('');
   res.style.display = 'block';
 });
@@ -4061,6 +4841,34 @@ document.addEventListener('click', e => {
   if (!e.target.closest('#distSearch')&&!e.target.closest('#searchResults'))
     document.getElementById('searchResults').style.display = 'none';
 });
+/** Place a marker and fly to a POI (school, health facility, etc.) */
+let placeMarkerLayer = L.layerGroup().addTo(map);
+
+function flyToPlace(lat, lng, name, type) {
+  map.flyTo([lat, lng], 14, { duration: 1.2 });
+  document.getElementById('distSearch').value = name;
+  document.getElementById('searchResults').style.display = 'none';
+  
+  // Clear previous place markers
+  placeMarkerLayer.clearLayers();
+  
+  // Choose icon based on type
+  let icon = '📍';
+  if (type === 'district') icon = '🏛️';
+  else icon = '🏫';
+  
+  const marker = L.marker([lat, lng]).addTo(placeMarkerLayer);
+  marker.bindPopup(`<div style="font-family:'Inter',sans-serif;min-width:200px;">
+    <strong>${icon} ${name}</strong><br>
+    <small style="color:#6b7280;">${type === 'district' ? 'District (NSDI GRID3 2022)' : 'Point of Interest'}</small>
+    <br><br>
+    <span style="font-size:.72rem;">${lat.toFixed(5)}°, ${lng.toFixed(5)}°</span>
+    <div style="margin-top:6px;">${GeoHubClimate ? `<span style="font-size:.68rem;color:#6b7280;">Climate data available for this area</span>` : ''}</div>
+  </div>`).openPopup();
+  
+  showToast(`📍 ${name}`, 'info');
+}
+
 function flyToDistrict(id) {
   const d = ZAMBIA_DISTRICTS.find(x => x.id===id);
   if (!d) return;
@@ -5213,7 +6021,6 @@ function renderSpatialConfig() {
       <select class="sp-inp" id="spDistSel">
         <option value="">All Districts in province</option>
       </select>
-      <div id="spProvSel" style="display:none;"></div>
       <button class="sp-run-btn" onclick="runDistrictStats()">
         <i class="fas fa-play"></i>Run District Statistics
       </button>`;
@@ -6259,30 +7066,43 @@ async function initMap() {
   // Initialise coordinate mode labels
   setCoordMode('dd', document.querySelector('#coordTabsMain [data-mode="dd"]'));
 
-  GeoHubAuth.addAuditLog('MAP_VIEW','Opened Map Viewer v9.0 — Draw·Clip·Export + File Loader (SHP/GeoJSON/KML/TIF) + Attribute Table + Simplified labels removed',session.id);
+  if (window.GeoHubAuth && typeof GeoHubAuth.addAuditLog === 'function' && session && session.id) {
+    try {
+      GeoHubAuth.addAuditLog('MAP_VIEW','Opened Map Viewer v9.0 — Draw·Clip·Export + File Loader (SHP/GeoJSON/KML/TIF) + Attribute Table + Simplified labels removed',session.id);
+    } catch(e) {
+      console.warn('Audit log failed:', e);
+    }
+  }
 
   setTimeout(() => {
     setLoad(100, 'Ready!');
     setTimeout(() => {
       const ov = document.getElementById('mapLoader');
-      ov.style.opacity = '0';
-      setTimeout(()=>ov.style.display='none', 350);
+      if (ov) {
+        ov.style.opacity = '0';
+        setTimeout(()=>ov.style.display='none', 350);
+      }
       showToast(`🌍 v9.0 • Draw·Clip·Export • File Loader (SHP/TIF) • Attribute Table`, 'success');
     }, 300);
   }, 700);
 }
 
-// Start init
-initMap();
+function hideMapLoader() {
+  const ov = document.getElementById('mapLoader');
+  if (ov) {
+    ov.style.opacity = '0';
+    setTimeout(() => { ov.style.display = 'none'; }, 350);
+  }
+}
 
-// Customise draw tooltips
-try {
-  L.drawLocal.draw.handlers.polyline.tooltip.start = 'Click to start measuring distance';
-  L.drawLocal.draw.handlers.polyline.tooltip.cont  = 'Click to continue — double-click to finish';
-  L.drawLocal.draw.handlers.polygon.tooltip.start  = 'Click to start drawing area';
-  L.drawLocal.draw.handlers.polygon.tooltip.cont   = 'Click to continue drawing';
-  L.drawLocal.draw.handlers.polygon.tooltip.end    = 'Click first point to close polygon';
-} catch(e){}
+function handleInitError(err) {
+  console.error('Map init failed', err);
+  showToast('Map failed to load. Check the browser console for details.', 'error');
+  hideMapLoader();
+}
+
+// Start init
+initMap().catch(handleInitError);
 
 // Customise draw tooltips
 try {
@@ -7337,7 +8157,11 @@ try {
       throw new Error('georaster library not loaded — try refreshing');
     }
     const buf = await readBuf(file);
-    const georaster = await parseGeoRaster(buf);
+    const parseFn = window.parseGeoRaster || window.parseGeoraster;
+    if (typeof parseFn !== 'function') {
+      throw new Error('GeoRaster parser is not available');
+    }
+    const georaster = await parseFn(buf);
     if(tifLayer){ map.removeLayer(tifLayer); }
     tifLayer = buildTifLayer(georaster);
     tifLayer.addTo(map);
@@ -7717,6 +8541,469 @@ try {
     showToast('GEE layer removed', 'info');
   };
 })();
+
+// ── FLOOD PLACES — Zambia Flood-Affected & Potential Flood Zones ──────────
+const FLOOD_PLACES = {
+  affected: [
+    // Historically flood-affected locations (from Disaster Management data)
+    { name:"Barotse Floodplain (Western)", lat:-15.283, lng:23.117, risk:"Extreme", type:"Floodplain", desc:"Annual Zambezi flooding — worst 2023, 2024" },
+    { name:"Shangombo District", lat:-16.233, lng:22.383, risk:"Extreme", type:"District", desc:"Severe flooding 2023 — 12,000+ displaced" },
+    { name:"Sesheke District", lat:-17.467, lng:24.300, risk:"High", type:"District", desc:"Zambezi flood zone — repeated inundation" },
+    { name:"Lukulu District", lat:-14.383, lng:23.233, risk:"Extreme", type:"District", desc:"Barotse floodplain — annual flooding" },
+    { name:"Kalabo District", lat:-14.967, lng:22.667, risk:"Extreme", type:"District", desc:"Zambezi delta — accessible only by boat in wet season" },
+    { name:"Senanga District", lat:-16.117, lng:23.267, risk:"High", type:"District", desc:"Upper Zambezi — flood-prone alluvial plains" },
+    { name:"Kafue Flats", lat:-15.500, lng:27.000, risk:"High", type:"Wetland", desc:"Kafue River floodplain — 6,500 km² seasonal inundation" },
+    { name:"Mongu Town", lat:-15.283, lng:23.167, risk:"Extreme", type:"Urban", desc:"Flooded annually — raised 'Kuomboka' road built" },
+    { name:"Luangwa Valley", lat:-12.500, lng:32.000, risk:"High", type:"Valley", desc:"Luangwa River — seasonal flooding affects villages" },
+    { name:"Mfuwe Area", lat:-13.033, lng:31.783, risk:"High", type:"Rural", desc:"Luangwa Valley — flood recession agriculture" },
+    { name:"Lake Bangweulu Basin", lat:-11.500, lng:29.800, risk:"Extreme", type:"Wetland", desc:"Expansive wetland — villages flood annually" },
+    { name:"Samfya District", lat:-11.367, lng:29.550, risk:"High", type:"District", desc:"Bangweulu shoreline — lake level rise causes flooding" },
+    { name:"Nchelenge District", lat:-9.350, lng:28.733, risk:"High", type:"District", desc:"Lake Mweru — shoreline erosion & flooding" },
+    { name:"Kawambwa District", lat:-9.783, lng:29.083, risk:"High", type:"District", desc:"Luapula River — seasonal overflow" },
+    { name:"Gwembe District", lat:-16.533, lng:27.633, risk:"High", type:"District", desc:"Lake Kariba — lake level rise & shoreline changes" },
+    { name:"Siavonga District", lat:-16.533, lng:28.717, risk:"High", type:"District", desc:"Lake Kariba dam — lake level fluctuations" },
+    { name:"Sinazongwe District", lat:-17.233, lng:27.467, risk:"High", type:"District", desc:"Lake Kariba — fishing communities at risk" },
+    { name:"Kazungula District", lat:-17.750, lng:25.250, risk:"Extreme", type:"District", desc:"Zambezi/Chobe confluence — severe 2023 flooding" },
+    { name:"Itezhi-Tezhi", lat:-15.850, lng:26.100, risk:"High", type:"Town", desc:"Kafue River — dam releases cause downstream flooding" },
+    { name:"Livingstone", lat:-17.852, lng:25.854, risk:"Moderate", type:"City", desc:"Zambezi River — occasional flooding near riverbanks" },
+  ],
+  potential: [
+    // Areas with future flood potential due to climate change
+    { name:"Lower Kafue River", lat:-15.950, lng:28.250, risk:"Increasing", type:"River Zone", desc:"Projected 25% more intense wet-season flows by 2050" },
+    { name:"Chongwe River Basin", lat:-15.335, lng:28.683, risk:"Increasing", type:"Basin", desc:"Urban expansion increases flood exposure in Lusaka" },
+    { name:"Lusaka Urban (Ng'ombe)", lat:-15.421, lng:28.268, risk:"Increasing", type:"Urban", desc:"Drainage congestion — extreme rainfall events ↑" },
+    { name:"Lusaka Urban (Kanyama)", lat:-15.440, lng:28.250, risk:"Increasing", type:"Urban", desc:"Informal settlements on flood-prone land" },
+    { name:"Lusaka (Garden Compound)", lat:-15.435, lng:28.275, risk:"Increasing", type:"Urban", desc:"Poor drainage — flash flooding risk growing" },
+    { name:"Ndola (Kawama)", lat:-12.969, lng:28.637, risk:"Moderate", type:"Urban", desc:"Copperbelt urban flooding — drainage overwhelmed" },
+    { name:"Kitwe (Wusakile)", lat:-12.810, lng:28.213, risk:"Moderate", type:"Urban", desc:"Mining subsidence — ponding and flood risk" },
+    { name:"Solwezi River Zones", lat:-12.183, lng:26.400, risk:"Increasing", type:"Urban", desc:"Mining town expansion into flood-prone areas" },
+    { name:"Chipata (Msandile)", lat:-13.550, lng:32.650, risk:"Moderate", type:"Urban", desc:"Eastern Province — flash flood risk ↑" },
+    { name:"Chama District", lat:-11.217, lng:33.167, risk:"Increasing", type:"District", desc:"Luangwa headwaters — projected rainfall increase" },
+    { name:"Lundazi District", lat:-12.300, lng:33.183, risk:"Increasing", type:"District", desc:"Eastern highlands — extreme rainfall events" },
+    { name:"Mpika", lat:-11.833, lng:31.450, risk:"Increasing", type:"Town", desc:"Muchinga escarpment — runoff flash flooding" },
+    { name:"Chinsali", lat:-10.550, lng:32.083, risk:"Increasing", type:"Town", desc:"Muchinga — projected wetter by 2050 (SSP5-8.5)" },
+    { name:"Lake Tanganyika Shore", lat:-8.900, lng:31.100, risk:"Increasing", type:"Shoreline", desc:"Lake level rise projections — Mpulungu affected" },
+    { name:"Mweru Wantipa Basin", lat:-8.750, lng:29.750, risk:"High", type:"Basin", desc:"Lake fluctuations — climate variability" },
+    { name:"Kabompo River Valley", lat:-13.583, lng:24.200, risk:"Increasing", type:"Valley", desc:"North-Western — forest loss ↑ flood risk" },
+    { name:"Zambezi Source Region", lat:-11.733, lng:24.433, risk:"Increasing", type:"Watershed", desc:"Mwinilunga — changing rainfall patterns" },
+    { name:"Kafue National Park", lat:-14.500, lng:26.000, risk:"Increasing", type:"Park", desc:"Wetland ecosystems stressed by changing hydrology" },
+  ]
+};
+
+// ── FLOOD PREDICTION PANEL FUNCTIONS ──────────────────────────────────────
+let floodLayerGroup = L.layerGroup();
+let floodLayerVisible = false;
+let constructionPlaceLayer = L.layerGroup();
+let constructionLayerVisible = false;
+
+function toggleFloodPredictionPanel() {
+  const p = document.getElementById('floodPredictPanel');
+  const open = p.style.display === 'block';
+  p.style.display = open ? 'none' : 'block';
+  if (!open) renderFloodPredictContent();
+}
+
+function closeFloodPredictionPanel() {
+  document.getElementById('floodPredictPanel').style.display = 'none';
+}
+
+function renderFloodPredictContent() {
+  const html = `
+    <div style="margin-bottom:8px;">
+      <div style="font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:rgba(6,182,212,.7);margin-bottom:4px;">Flood Risk Factors</div>
+      <div id="floodFactors" style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">
+        <div style="background:rgba(6,182,212,.06);border:1px solid rgba(6,182,212,.12);border-radius:7px;padding:7px;text-align:center;">
+          <div style="font-size:.7rem;color:rgba(255,255,255,.5);">Elevation</div>
+          <div style="font-size:.82rem;font-weight:800;color:#06b6d4;" id="floodElevAvg">—</div>
+        </div>
+        <div style="background:rgba(6,182,212,.06);border:1px solid rgba(6,182,212,.12);border-radius:7px;padding:7px;text-align:center;">
+          <div style="font-size:.7rem;color:rgba(255,255,255,.5);">Water Proximity</div>
+          <div style="font-size:.82rem;font-weight:800;color:#06b6d4;" id="floodWaterProx">—</div>
+        </div>
+        <div style="background:rgba(6,182,212,.06);border:1px solid rgba(6,182,212,.12);border-radius:7px;padding:7px;text-align:center;">
+          <div style="font-size:.7rem;color:rgba(255,255,255,.5);">Rainfall</div>
+          <div style="font-size:.82rem;font-weight:800;color:#06b6d4;" id="floodRain">—</div>
+        </div>
+        <div style="background:rgba(6,182,212,.06);border:1px solid rgba(6,182,212,.12);border-radius:7px;padding:7px;text-align:center;">
+          <div style="font-size:.7rem;color:rgba(255,255,255,.5);">Flatness</div>
+          <div style="font-size:.82rem;font-weight:800;color:#06b6d4;" id="floodFlatness">—</div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-bottom:8px;">
+      <div style="font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:rgba(6,182,212,.7);margin-bottom:4px;">Scenario</div>
+      <select id="floodScenario" style="width:100%;padding:6px 8px;background:rgba(255,255,255,.06);border:1px solid var(--border2);border-radius:7px;color:#fff;font-family:'Inter',sans-serif;font-size:.73rem;outline:none;">
+        <option value="current">Current Conditions</option>
+        <option value="2050_ssp245">2050 Moderate (SSP2-4.5)</option>
+        <option value="2050_ssp585">2050 High Emissions (SSP5-8.5)</option>
+      </select>
+    </div>
+  `;
+  document.getElementById('floodPredictContent').innerHTML = html;
+  // Compute averages
+  const avgElev = Math.round(ZAMBIA_DISTRICTS.reduce((a,d)=>a+simElevation(d),0)/ZAMBIA_DISTRICTS.length);
+  const nearWater = ZAMBIA_DISTRICTS.filter(d=>WATER_BODIES.some(w=>Math.sqrt((d.lat-w.lat)**2+(d.lng-w.lng)**2)<2)).length;
+  document.getElementById('floodElevAvg').textContent = avgElev + ' m';
+  document.getElementById('floodWaterProx').textContent = nearWater + ' / 116';
+  document.getElementById('floodRain').textContent = (ZAMBIA_RAINFALL_2020_2025.annual_totals[2024]||730).toFixed(0) + ' mm';
+  document.getElementById('floodFlatness').textContent = ZAMBIA_DISTRICTS.filter(d=>d.area_km2<3000).length + ' flat';
+}
+
+function runFloodPrediction() {
+  showToast('Computing flood risk model…', 'info');
+  const scenario = document.getElementById('floodScenario')?.value || 'current';
+  
+  // Calculate flood risk score for each district based on elevation, water proximity, rainfall, flatness
+  const floodScores = ZAMBIA_DISTRICTS.map(d => {
+    const elev = simElevation(d);
+    const nearWater = WATER_BODIES.some(w => Math.sqrt((d.lat-w.lat)**2+(d.lng-w.lng)**2) < 2.5);
+    const flatRisk = d.area_km2 < 3000 ? 0.8 : d.area_km2 < 6000 ? 0.5 : 0.2;
+    const elevRisk = elev < 600 ? 0.9 : elev < 900 ? 0.6 : elev < 1200 ? 0.3 : 0.1;
+    const waterRisk = nearWater ? 0.85 : 0.3;
+    
+    // Scenario adjustments
+    let scenarioMul = 1.0;
+    if (scenario === '2050_ssp245') scenarioMul = 1.25;
+    if (scenario === '2050_ssp585') scenarioMul = 1.55;
+    
+    const score = Math.min(1, (elevRisk * 0.35 + waterRisk * 0.30 + flatRisk * 0.20 + (1 - Math.min(d.pop/3000000,1)) * 0.15) * scenarioMul);
+    return { d, score };
+  }).sort((a,b)=>b.score-a.score);
+  
+  // Show results
+  const topFlood = floodScores.slice(0, 10);
+  const highCount = floodScores.filter(x=>x.score>0.7).length;
+  const medCount = floodScores.filter(x=>x.score>0.4&&x.score<=0.7).length;
+  
+  const resultsHtml = `
+    <div style="background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.2);border-radius:8px;padding:10px;">
+      <div style="font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#06b6d4;margin-bottom:5px;">📊 Results — ${scenario.replace(/_/g,' ').toUpperCase()}</div>
+      <div class="qp-stat"><span class="qp-k">High Risk Districts</span><span class="qp-v" style="color:#dc2626;">${highCount}</span></div>
+      <div class="qp-stat"><span class="qp-k">Medium Risk</span><span class="qp-v" style="color:#f97316;">${medCount}</span></div>
+      <div class="qp-stat"><span class="qp-k">Low Risk</span><span class="qp-v" style="color:#86efac;">${floodScores.length - highCount - medCount}</span></div>
+      <div style="font-size:.6rem;color:var(--muted);margin:5px 0;">Top 10 flood-prone districts:</div>
+      ${topFlood.map(({d,score},i)=>{
+        const col = score>0.7?'#dc2626':score>0.4?'#f97316':'#fbbf24';
+        return `<div class="qp-stat"><span class="qp-k" style="font-size:.65rem;">${i+1}. ${d.district}</span><span class="qp-v" style="color:${col};font-size:.7rem;">${(score*100).toFixed(0)}%</span></div>`;
+      }).join('')}
+    </div>
+  `;
+  document.getElementById('floodResults').innerHTML = resultsHtml;
+  document.getElementById('floodResults').style.display = 'block';
+  
+  // Visualize on map
+  showFloodOnMap(floodScores);
+  showToast('Flood prediction complete', 'success');
+}
+
+function showFloodOnMap(scores) {
+  floodLayerGroup.clearLayers();
+  if (!map.hasLayer(floodLayerGroup)) floodLayerGroup.addTo(map);
+  
+  scores.forEach(({d, score}) => {
+    const r = 5 + score * 12;
+    const col = score > 0.7 ? '#dc2626' : score > 0.4 ? '#f97316' : '#38bdf8';
+    L.circleMarker([d.lat, d.lng], {
+      radius: r, fillColor: col, color: '#fff', weight: 0.5, fillOpacity: 0.6 + score * 0.3
+    })
+    .bindTooltip(`<b>${d.district}</b><br>Flood Risk: ${(score*100).toFixed(0)}%`, { className:'ghz-tooltip', sticky:true })
+    .addTo(floodLayerGroup);
+  });
+  floodLayerVisible = true;
+  document.getElementById('floodLayerBtn').innerHTML = '<i class="fas fa-eye-slash"></i>';
+  showToast('Flood risk layer shown on map', 'success');
+}
+
+function toggleFloodLayer() {
+  if (floodLayerVisible) {
+    if (map.hasLayer(floodLayerGroup)) map.removeLayer(floodLayerGroup);
+    floodLayerVisible = false;
+    document.getElementById('floodLayerBtn').innerHTML = '<i class="fas fa-layer-group"></i>';
+  } else {
+    if (!map.hasLayer(floodLayerGroup)) floodLayerGroup.addTo(map);
+    floodLayerVisible = true;
+    document.getElementById('floodLayerBtn').innerHTML = '<i class="fas fa-eye-slash"></i>';
+  }
+}
+
+// ── FLOOD PLACES MAP VISUALIZATION ────────────────────────────────────────
+let floodPlaceLayer = L.layerGroup();
+
+function showFloodPlaces(mode) {
+  floodPlaceLayer.clearLayers();
+  if (!map.hasLayer(floodPlaceLayer)) floodPlaceLayer.addTo(map);
+  
+  let places = [];
+  if (mode === 'affected' || mode === 'all') places = places.concat(FLOOD_PLACES.affected);
+  if (mode === 'potential' || mode === 'all') places = places.concat(FLOOD_PLACES.potential);
+  
+  const colors = { Extreme:'#dc2626', High:'#f97316', Moderate:'#fbbf24', Increasing:'#f59e0b' };
+  
+  places.forEach(p => {
+    const col = colors[p.risk] || '#f97316';
+    const ico = p.type === 'Urban' ? '🏙️' : p.type === 'Wetland' ? '🌿' : p.type === 'Floodplain' ? '🌊' : '📍';
+    const size = p.risk === 'Extreme' ? 12 : p.risk === 'High' ? 9 : p.risk === 'Increasing' ? 8 : 6;
+    
+    L.circleMarker([p.lat, p.lng], {
+      radius: size, fillColor: col, color: '#fff', weight: 1.5, fillOpacity: 0.7
+    })
+    .bindPopup(`
+      <div style="font-family:'Inter',sans-serif;min-width:200px;">
+        <strong>${ico} ${p.name}</strong><br>
+        <span style="display:inline-block;padding:1px 6px;border-radius:10px;font-size:.68rem;font-weight:700;background:${col}22;color:${col};border:1px solid ${col}44;">${p.risk} Risk</span>
+        <span style="font-size:.65rem;color:#6b7280;margin-left:4px;">${p.type}</span>
+        <p style="font-size:.72rem;margin-top:4px;color:#374151;">${p.desc}</p>
+        <div style="font-size:.65rem;color:#6b7280;margin-top:4px;">📍 ${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}</div>
+      </div>
+    `)
+    .bindTooltip(`${ico} ${p.name}`, { className:'ghz-tooltip', sticky:true })
+    .addTo(floodPlaceLayer);
+  });
+  
+  // Zoom to fit all markers
+  const bounds = places.reduce((b, p) => b.extend([p.lat, p.lng]), L.latLngBounds([-8, 22], [-18, 34]));
+  map.fitBounds(bounds, { padding: [30, 30], maxZoom: 7, duration: 1.2 });
+  
+  // Update results panel
+  const countHtml = mode === 'all' ? `${FLOOD_PLACES.affected.length} affected + ${FLOOD_PLACES.potential.length} potential` :
+    mode === 'affected' ? `${FLOOD_PLACES.affected.length} flood-affected locations` :
+    `${FLOOD_PLACES.potential.length} potential flood zones`;
+    
+  document.getElementById('floodResults').innerHTML = `
+    <div style="background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.2);border-radius:8px;padding:10px;">
+      <div style="font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#06b6d4;margin-bottom:5px;">📍 ${countHtml}</div>
+      ${places.slice(0, 8).map(p => {
+        const col = colors[p.risk] || '#f97316';
+        return `<div class="qp-stat" onclick="map.flyTo([${p.lat},${p.lng}],10);showToast('${p.name}','info')" style="cursor:pointer;">
+          <span class="qp-k" style="font-size:.65rem;">${p.name}</span>
+          <span class="qp-v" style="color:${col};font-size:.65rem;">${p.risk}</span>
+        </div>`;
+      }).join('')}
+      ${places.length > 8 ? `<div style="font-size:.6rem;color:var(--muted);padding:3px 0;">+ ${places.length - 8} more locations</div>` : ''}
+    </div>
+  `;
+  document.getElementById('floodResults').style.display = 'block';
+  showToast(`Showing ${places.length} flood ${mode === 'potential' ? 'potential zones' : 'locations'}`, 'success');
+}
+
+function clearFloodPlaces() {
+  if (map.hasLayer(floodPlaceLayer)) map.removeLayer(floodPlaceLayer);
+  floodPlaceLayer.clearLayers();
+}
+
+function showConstructionPlaces(mode) {
+  constructionPlaceLayer.clearLayers();
+  if (!map.hasLayer(constructionPlaceLayer)) constructionPlaceLayer.addTo(map);
+  
+  const scenario = document.getElementById('constructionScenario')?.value || 'ssp245';
+  const scores = ZAMBIA_DISTRICTS.map(d => {
+    const prov = ZAMBIA_PROVINCES.find(p=>p.name===d.province)||{};
+    const elev = simElevation(d);
+    const risk = simFloodRisk(d);
+    const floodRisk = {'Minimal':0.1,'Low':0.3,'Medium':0.6,'High':0.9}[risk]||0.5;
+    const tempScore = d.lat > -13 ? 0.8 : 0.5;
+    const terrainScore = elev > 600 && elev < 1400 ? 0.8 : 0.4;
+    const popScore = Math.min(1, d.pop/500000);
+    const climatePenalty = scenario === 'ssp585' ? 0.25 : 0.15;
+    const total = (tempScore*0.25 + terrainScore*0.25 + (1-floodRisk)*0.25 + popScore*0.15) * (1 - climatePenalty) + 0.1;
+    return { d, score: Math.min(0.95, total), risk };
+  }).sort((a,b)=>b.score-a.score);
+  
+  let places = [];
+  if (mode === 'best' || mode === 'all') places = places.concat(scores.slice(0, 15).map(s => ({ district: s.d.district, province: s.d.province, lat: s.d.lat, lng: s.d.lng, score: s.score, risk: 'Best', type: 'Best Construction Zone' })));
+  if (mode === 'at-risk' || mode === 'all') {
+    const atRisk = scores.filter(s => s.score < 0.35).slice(0, 15);
+    places = places.concat(atRisk.map(s => ({ district: s.d.district, province: s.d.province, lat: s.d.lat, lng: s.d.lng, score: s.score, risk: 'High Climate Risk', type: 'Climate-Vulnerable Zone' })));
+  }
+  
+  const colors = { 'Best':'#22c55e', 'High Climate Risk':'#dc2626', 'Moderate':'#fb923c' };
+  
+  places.forEach(p => {
+    const col = colors[p.risk] || '#fb923c';
+    const size = p.risk === 'Best' ? 10 : p.risk === 'High Climate Risk' ? 8 : 6;
+    
+    L.circleMarker([p.lat, p.lng], {
+      radius: size, fillColor: col, color: '#fff', weight: 1.5, fillOpacity: 0.7
+    })
+    .bindPopup(`
+      <div style="font-family:'Inter',sans-serif;min-width:200px;">
+        <strong>${p.district}</strong><br>
+        <span style="display:inline-block;padding:1px 6px;border-radius:10px;font-size:.68rem;font-weight:700;background:${col}22;color:${col};border:1px solid ${col}44;">${p.risk}</span>
+        <span style="font-size:.65rem;color:#6b7280;margin-left:4px;">${p.province}</span>
+        <p style="font-size:.72rem;margin-top:4px;color:#374151;">Suitability Score: ${(p.score*100).toFixed(0)}%<br>${p.type}</p>
+        <div style="font-size:.65rem;color:#6b7280;margin-top:4px;">📍 ${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}</div>
+      </div>
+    `)
+    .bindTooltip(`${p.district} — ${p.risk}`, { className:'ghz-tooltip', sticky:true })
+    .addTo(constructionPlaceLayer);
+  });
+  
+  const bounds = places.reduce((b, p) => b.extend([p.lat, p.lng]), L.latLngBounds([-8, 22], [-18, 34]));
+  map.fitBounds(bounds, { padding: [30, 30], maxZoom: 7, duration: 1.2 });
+  
+  const countHtml = mode === 'best' ? `${Math.min(15, scores.filter(s => s.score >= 0.65).length)} best construction zones` :
+    mode === 'at-risk' ? `${scores.filter(s => s.score < 0.35).length} climate-vulnerable zones` :
+    `${places.length} construction zones`;
+    
+  document.getElementById('constructionResults').innerHTML = `
+    <div style="background:rgba(251,146,60,.08);border:1px solid rgba(251,146,60,.2);border-radius:8px;padding:10px;">
+      <div style="font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#fb923c;margin-bottom:5px;">🏗️ ${countHtml}</div>
+      ${places.slice(0, 8).map(p => `
+        <div class="qp-stat" onclick="map.flyTo([${p.lat},${p.lng}],10);showToast('${p.district}','info')" style="cursor:pointer;">
+          <span class="qp-k" style="font-size:.65rem;">${p.district}</span>
+          <span class="qp-v" style="color:${colors[p.risk]};font-size:.65rem;">${(p.score*100).toFixed(0)}%</span>
+        </div>
+      `).join('')}
+      ${places.length > 8 ? `<div style="font-size:.6rem;color:var(--muted);padding:3px 0;">+ ${places.length - 8} more zones</div>` : ''}
+    </div>
+  `;
+  document.getElementById('constructionResults').style.display = 'block';
+  showToast(`Showing ${places.length} construction ${mode === 'best' ? 'zones with best suitability' : 'zones'}`, 'success');
+}
+
+function clearConstructionPlaces() {
+  if (map.hasLayer(constructionPlaceLayer)) map.removeLayer(constructionPlaceLayer);
+  constructionPlaceLayer.clearLayers();
+}
+
+function toggleConstructionLayer() {
+  if (constructionLayerVisible) {
+    clearConstructionPlaces();
+    constructionLayerVisible = false;
+    document.getElementById('constructionLayerBtn').style.opacity = '0.6';
+    showToast('Construction layer hidden', 'info');
+  } else {
+    const mode = document.getElementById('constructionResults').style.display === 'none' ? 'best' : 'all';
+    showConstructionPlaces(mode);
+    constructionLayerVisible = true;
+    document.getElementById('constructionLayerBtn').style.opacity = '1';
+    showToast('Construction layer visible', 'info');
+  }
+}
+
+// ── CONSTRUCTION PANEL FUNCTIONS ──────────────────────────────────────────
+function toggleConstructionPanel() {
+  const p = document.getElementById('constructionPanel');
+  const open = p.style.display === 'block';
+  p.style.display = open ? 'none' : 'block';
+  if (!open) renderConstructionContent();
+}
+
+function closeConstructionPanel() {
+  document.getElementById('constructionPanel').style.display = 'none';
+}
+
+function renderConstructionContent() {
+  const html = `
+    <div style="margin-bottom:8px;">
+      <div style="font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:rgba(251,146,60,.7);margin-bottom:4px;">Climate Impact on Construction</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:8px;">
+        <div style="background:rgba(251,146,60,.06);border:1px solid rgba(251,146,60,.12);border-radius:7px;padding:7px;text-align:center;">
+          <div style="font-size:.7rem;color:rgba(255,255,255,.5);">Temp Rise 2050</div>
+          <div style="font-size:.82rem;font-weight:800;color:#fb923c;">+2.2°C</div>
+        </div>
+        <div style="background:rgba(251,146,60,.06);border:1px solid rgba(251,146,60,.12);border-radius:7px;padding:7px;text-align:center;">
+          <div style="font-size:.7rem;color:rgba(255,255,255,.5);">Rainfall Change</div>
+          <div style="font-size:.82rem;font-weight:800;color:#fb923c;">−5%</div>
+        </div>
+        <div style="background:rgba(251,146,60,.06);border:1px solid rgba(251,146,60,.12);border-radius:7px;padding:7px;text-align:center;">
+          <div style="font-size:.7rem;color:rgba(255,255,255,.5);">Extreme Heat Days</div>
+          <div style="font-size:.82rem;font-weight:800;color:#fb923c;">78/yr</div>
+        </div>
+        <div style="background:rgba(251,146,60,.06);border:1px solid rgba(251,146,60,.12);border-radius:7px;padding:7px;text-align:center;">
+          <div style="font-size:.7rem;color:rgba(255,255,255,.5);">Cooling Demand</div>
+          <div style="font-size:.82rem;font-weight:800;color:#fb923c;">+65%</div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-bottom:8px;">
+      <div style="font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:rgba(251,146,60,.7);margin-bottom:4px;">Construction Recommendations</div>
+      <select id="constructionScenario" style="width:100%;padding:6px 8px;background:rgba(255,255,255,.06);border:1px solid var(--border2);border-radius:7px;color:#fff;font-family:'Inter',sans-serif;font-size:.73rem;outline:none;margin-bottom:6px;">
+        <option value="ssp245">Moderate Climate (SSP2-4.5)</option>
+        <option value="ssp585">High Emissions (SSP5-8.5)</option>
+      </select>
+      <div style="background:rgba(251,146,60,.04);border:1px solid rgba(251,146,60,.1);border-radius:7px;padding:8px;font-size:.68rem;color:rgba(255,255,255,.6);line-height:1.5;">
+        <strong style="color:#fb923c;">⚠ Key Risks:</strong><br>
+        • Foundation integrity affected by drier soils<br>
+        • Higher cooling loads increase operational costs<br>
+        • More intense rainfall events require improved drainage<br>
+        • Heat stress reduces outdoor worker productivity
+      </div>
+    </div>
+  `;
+  document.getElementById('constructionContent').innerHTML = html;
+}
+
+function runConstructionAnalysis() {
+  showToast('Running climate-resilient construction analysis…', 'info');
+  const scenario = document.getElementById('constructionScenario')?.value || 'ssp245';
+  const cp = window.GeoHubClimate?.predictive;
+  
+  const tempAnomaly = scenario === 'ssp585' ? '+3.0°C' : '+2.2°C';
+  const rainChange = scenario === 'ssp585' ? '−8.5%' : '−5.0%';
+  const hotDays = scenario === 'ssp585' ? '95' : '78';
+  
+  // Calculate construction suitability scores factoring in climate change
+  const scores = ZAMBIA_DISTRICTS.map(d => {
+    const prov = ZAMBIA_PROVINCES.find(p=>p.name===d.province)||{};
+    const elev = simElevation(d);
+    const risk = simFloodRisk(d);
+    const floodRisk = {'Minimal':0.1,'Low':0.3,'Medium':0.6,'High':0.9}[risk]||0.5;
+    const tempScore = d.lat > -13 ? 0.8 : 0.5; // Northern provinces cooler
+    const terrainScore = elev > 600 && elev < 1400 ? 0.8 : 0.4;
+    const popScore = Math.min(1, d.pop/500000);
+    
+    // Climate penalty
+    const climatePenalty = scenario === 'ssp585' ? 0.25 : 0.15;
+    const total = (tempScore*0.25 + terrainScore*0.25 + (1-floodRisk)*0.25 + popScore*0.15) * (1 - climatePenalty) + 0.1;
+    return { d, score: Math.min(0.95, total) };
+  }).sort((a,b)=>b.score-a.score);
+  
+  const resultsHtml = `
+    <div style="background:rgba(251,146,60,.08);border:1px solid rgba(251,146,60,.2);border-radius:8px;padding:10px;">
+      <div style="font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#fb923c;margin-bottom:5px;">🏗️ Results — ${scenario === 'ssp585' ? 'High Emissions' : 'Moderate Climate'}</div>
+      <div class="qp-stat"><span class="qp-k">Scenario Temp Anomaly</span><span class="qp-v" style="color:#fb923c;">${tempAnomaly}</span></div>
+      <div class="qp-stat"><span class="qp-k">Rainfall Change</span><span class="qp-v" style="color:#38bdf8;">${rainChange}</span></div>
+      <div class="qp-stat"><span class="qp-k">Days >35°C by 2050</span><span class="qp-v" style="color:#dc2626;">${hotDays}/yr</span></div>
+      <div style="font-size:.6rem;color:var(--muted);margin:5px 0;">Top districts for resilient construction:</div>
+      ${scores.slice(0,5).map(({d,score},i)=>`
+        <div class="qp-stat"><span class="qp-k" style="font-size:.65rem;">${i+1}. ${d.district}</span><span class="qp-v" style="color:#16a34a;font-size:.7rem;">${(score*100).toFixed(0)}%</span></div>
+      `).join('')}
+      <div style="margin-top:6px;padding:5px;background:rgba(251,146,60,.06);border-radius:5px;font-size:.64rem;color:rgba(255,255,255,.5);">
+        <strong style="color:#fb923c;">🏗️ Recommendations:</strong><br>
+        1. Use elevated foundations (flood protection)<br>
+        2. Specify heat-reflective roofing materials<br>
+        3. Install rainwater harvesting (drier future)<br>
+        4. Increase drainage capacity (+25%)
+      </div>
+    </div>
+  `;
+  document.getElementById('constructionResults').innerHTML = resultsHtml;
+  document.getElementById('constructionResults').style.display = 'block';
+  showToast('Construction analysis complete', 'success');
+}
+
+function toggleConstructionLayer() {
+  if (constructionLayerVisible) {
+    if (map.hasLayer(constructionPlaceLayer)) map.removeLayer(constructionPlaceLayer);
+    constructionPlaceLayer.clearLayers();
+    constructionLayerVisible = false;
+    document.getElementById('constructionLayerBtn').style.opacity = '0.6';
+    showToast('Construction layer hidden', 'info');
+  } else {
+    const hasResults = document.getElementById('constructionResults').style.display !== 'none';
+    const mode = hasResults ? 'all' : 'best';
+    showConstructionPlaces(mode);
+    constructionLayerVisible = true;
+    document.getElementById('constructionLayerBtn').style.opacity = '1';
+    showToast('Construction layer visible', 'info');
+  }
+}
+
+function clearConstructionPlaces() {
+  if (map.hasLayer(constructionPlaceLayer)) map.removeLayer(constructionPlaceLayer);
+  constructionPlaceLayer.clearLayers();
+}
 
 // ── GEE Colour Scale helper ────────────────────────────────────────────────
 function showGEEScale(data) {

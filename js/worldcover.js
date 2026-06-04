@@ -40,7 +40,9 @@ var colorMap = new ColorMapVisualizer({
 
 // Evaluate the color map for each pixel using the classification data
 // For WorldCover, the data is a single-band classification layer
-return colorMap.process(data);
+if (typeof data !== 'undefined' && typeof colorMap !== 'undefined') {
+  colorMap.process(data);
+}
 
 // Export scale for external use
 // WORLDCOVER_SCALE is available globally for legend rendering

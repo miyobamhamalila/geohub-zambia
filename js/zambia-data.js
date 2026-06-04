@@ -21,6 +21,17 @@ const ZAMBIA_METADATA = {
 };
 
 // All 116 Zambia districts with real coordinates (centroids), province, area, population
+// NOTE: Districts Mpika, Chinsali, Isoka, Nakonde are assigned to Muchinga province only
+// (not duplicated under Northern) to match the current 10-province structure.
+// Normalized district name mapping for GeoJSON matching (handles hyphen/case variations)
+const DISTRICT_NAME_MAP = {
+  'Itezhi-tezhi': 'Itezhi-Tezhi',
+  'Kapiri-Mposhi': 'Kapiri Mposhi',
+  "Shang'ombo": 'Shangombo',
+  'Chipili': 'Chembe',  // Note: Chembe district in GeoJSON maps to Chipili in JS
+  'Mpulungu': 'Mafinga' // Note: Mpulungu in GeoJSON maps to Mafinga in Muchinga
+};
+
 const ZAMBIA_DISTRICTS = [
   // LUSAKA PROVINCE
   { id:"ZM-LS-001", district:"Lusaka",         province:"Lusaka",       prov_code:"LS", lat:-15.417, lng:28.283, area_km2:360,   pop:2731696, region:"Southern" },
@@ -68,17 +79,13 @@ const ZAMBIA_DISTRICTS = [
   { id:"ZM-EP-009", district:"Vubwi",          province:"Eastern",      prov_code:"EP", lat:-13.967, lng:32.767, area_km2:2560,  pop:76000,   region:"Eastern" },
   { id:"ZM-EP-010", district:"Zumbo",          province:"Eastern",      prov_code:"EP", lat:-15.617, lng:30.433, area_km2:3200,  pop:54000,   region:"Eastern" },
 
-  // NORTHERN PROVINCE
+  // NORTHERN PROVINCE (6 districts — Mpika/Chinsali/Isoka/Nakonde moved to Muchinga)
   { id:"ZM-NP-001", district:"Kasama",         province:"Northern",     prov_code:"NP", lat:-10.217, lng:31.183, area_km2:5560,  pop:313000,  region:"Northern" },
   { id:"ZM-NP-002", district:"Mbala",          province:"Northern",     prov_code:"NP", lat:-8.850,  lng:31.367, area_km2:9200,  pop:192000,  region:"Northern" },
   { id:"ZM-NP-003", district:"Luwingu",        province:"Northern",     prov_code:"NP", lat:-10.250, lng:29.917, area_km2:8330,  pop:145000,  region:"Northern" },
   { id:"ZM-NP-004", district:"Mporokoso",      province:"Northern",     prov_code:"NP", lat:-9.367,  lng:30.117, area_km2:14040, pop:129000,  region:"Northern" },
-  { id:"ZM-NP-005", district:"Mpika",          province:"Northern",     prov_code:"NP", lat:-11.833, lng:31.450, area_km2:36380, pop:234000,  region:"Northern" },
-  { id:"ZM-NP-006", district:"Chinsali",       province:"Northern",     prov_code:"NP", lat:-10.550, lng:32.083, area_km2:10830, pop:164000,  region:"Northern" },
-  { id:"ZM-NP-007", district:"Isoka",          province:"Northern",     prov_code:"NP", lat:-10.150, lng:32.633, area_km2:10460, pop:149000,  region:"Northern" },
-  { id:"ZM-NP-008", district:"Kaputa",         province:"Northern",     prov_code:"NP", lat:-8.467,  lng:29.667, area_km2:16990, pop:97000,   region:"Northern" },
-  { id:"ZM-NP-009", district:"Mungwi",         province:"Northern",     prov_code:"NP", lat:-10.833, lng:31.367, area_km2:5980,  pop:118000,  region:"Northern" },
-  { id:"ZM-NP-010", district:"Nakonde",        province:"Northern",     prov_code:"NP", lat:-9.333,  lng:32.750, area_km2:2640,  pop:130000,  region:"Northern" },
+  { id:"ZM-NP-005", district:"Kaputa",         province:"Northern",     prov_code:"NP", lat:-8.467,  lng:29.667, area_km2:16990, pop:97000,   region:"Northern" },
+  { id:"ZM-NP-006", district:"Mungwi",         province:"Northern",     prov_code:"NP", lat:-10.833, lng:31.367, area_km2:5980,  pop:118000,  region:"Northern" },
 
   // WESTERN PROVINCE
   { id:"ZM-WP-001", district:"Mongu",          province:"Western",      prov_code:"WP", lat:-15.283, lng:23.117, area_km2:5840,  pop:249000,  region:"Western" },
@@ -126,7 +133,7 @@ const ZAMBIA_DISTRICTS = [
   { id:"ZM-NW-008", district:"Mufumbwe",       province:"North-Western",prov_code:"NW", lat:-13.783, lng:24.767, area_km2:7760,  pop:79000,   region:"Northern" },
   { id:"ZM-NW-009", district:"Mushindamo",     province:"North-Western",prov_code:"NW", lat:-12.433, lng:26.033, area_km2:9440,  pop:61000,   region:"Northern" },
 
-  // MUCHINGA PROVINCE
+  // MUCHINGA PROVINCE (includes Chinsali, Mpika, Nakonde, Isoka — NOT duplicated in Northern)
   { id:"ZM-MC-001", district:"Chinsali",       province:"Muchinga",     prov_code:"MC", lat:-10.550, lng:32.083, area_km2:10830, pop:164000,  region:"Northern" },
   { id:"ZM-MC-002", district:"Mpika",          province:"Muchinga",     prov_code:"MC", lat:-11.833, lng:31.450, area_km2:36380, pop:234000,  region:"Northern" },
   { id:"ZM-MC-003", district:"Nakonde",        province:"Muchinga",     prov_code:"MC", lat:-9.333,  lng:32.750, area_km2:2640,  pop:130000,  region:"Northern" },
@@ -136,12 +143,13 @@ const ZAMBIA_DISTRICTS = [
 ];
 
 // Province summary (derived from NSDI districts data)
+// Updated district counts: Northern=6, Muchinga=6 (after deduplication)
 const ZAMBIA_PROVINCES = [
   { name:"Lusaka",       code:"LS", districts:6,  area_km2:21896,  pop:3360000, color:"#e67e22", capital:"Lusaka",      forest_pct:12, urban_pct:34, water_pct:3,  agri_pct:38, bare_pct:13 },
   { name:"Copperbelt",   code:"CB", districts:10, area_km2:31328,  pop:2098000, color:"#27ae60", capital:"Ndola",       forest_pct:42, urban_pct:18, water_pct:4,  agri_pct:28, bare_pct:8  },
   { name:"Southern",     code:"SP", districts:12, area_km2:85283,  pop:1856000, color:"#f1c40f", capital:"Livingstone", forest_pct:22, urban_pct:4,  water_pct:9,  agri_pct:52, bare_pct:13 },
   { name:"Eastern",      code:"EP", districts:10, area_km2:69106,  pop:1858000, color:"#3498db", capital:"Chipata",     forest_pct:38, urban_pct:3,  water_pct:3,  agri_pct:49, bare_pct:7  },
-  { name:"Northern",     code:"NP", districts:10, area_km2:147826, pop:1462000, color:"#1abc9c", capital:"Kasama",      forest_pct:58, urban_pct:2,  water_pct:8,  agri_pct:28, bare_pct:4  },
+  { name:"Northern",     code:"NP", districts:6,  area_km2:60100,  pop:994000,  color:"#1abc9c", capital:"Kasama",      forest_pct:58, urban_pct:2,  water_pct:8,  agri_pct:28, bare_pct:4  },
   { name:"Western",      code:"WP", districts:11, area_km2:126386, pop:1052000, color:"#9b59b6", capital:"Mongu",       forest_pct:28, urban_pct:2,  water_pct:14, agri_pct:44, bare_pct:12 },
   { name:"Central",      code:"CP", districts:9,  area_km2:94395,  pop:1619000, color:"#e74c3c", capital:"Kabwe",       forest_pct:45, urban_pct:5,  water_pct:4,  agri_pct:38, bare_pct:8  },
   { name:"Luapula",      code:"LP", districts:9,  area_km2:50567,  pop:1220000, color:"#fd79a8", capital:"Mansa",       forest_pct:48, urban_pct:3,  water_pct:18, agri_pct:27, bare_pct:4  },

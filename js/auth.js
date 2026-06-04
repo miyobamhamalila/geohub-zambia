@@ -147,43 +147,33 @@ const GeoHubAuth = (() => {
 
   // ── Login (email/password) ─────────────────────────────────────────────
   async function login(email, password) {
-    const isAdminCreds = email === 'miyobamhmalila@gmail.com' && password === 'miyoba2019';
     try {
       let cred;
-      let profile;
       try {
         cred = await _auth.signInWithEmailAndPassword(email, password);
       } catch (e) {
-        if (e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password') {
-          if (!isAdminCreds) {
-            try {
-              cred = await _auth.createUserWithEmailAndPassword(email, password);
-            } catch (ce) {
-              return { success: false, error: _friendlyError(ce.code) };
-            }
-          } else {
-            cred = await _auth.createUserWithEmailAndPassword(email, password);
-          }
-        } else {
-          return { success: false, error: _friendlyError(e.code) };
-        }
+        // Do NOT auto-create users on wrong password.
+        return { success: false, error: _friendlyError(e.code) };
       }
-      profile = await _getProfile(cred.user.uid);
+
+      let profile = await _getProfile(cred.user.uid);
       if (!profile) {
+        // First login for this Firebase Auth user: create a standard profile.
         profile = {
           name:        cred.user.displayName || email.split('@')[0],
           email:       cred.user.email,
-          role:        isAdminCreds ? 'admin' : 'standard',
+          role:        'standard',
           org:         '',
           title:       '',
           avatar:      _initials(cred.user.displayName || email),
           status:      'active',
-          permissions: _defaultPerms(isAdminCreds ? 'admin' : 'standard'),
+          permissions: _defaultPerms('standard'),
           created:     firebase.firestore.FieldValue.serverTimestamp(),
           lastLogin:   firebase.firestore.FieldValue.serverTimestamp(),
         };
         await _db.collection('users').doc(cred.user.uid).set(profile);
       }
+
       const session = _buildSession(cred.user.uid, profile, cred.user.email);
       localStorage.setItem(SESSION_KEY, JSON.stringify(session));
       return { success: true, user: session };
@@ -191,6 +181,7 @@ const GeoHubAuth = (() => {
       return { success: false, error: _friendlyError(e.code) };
     }
   }
+
 
   // ── Google sign-in ────────────────────────────────────────────────────────
   async function loginWithGoogle() {

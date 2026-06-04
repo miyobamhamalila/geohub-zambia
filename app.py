@@ -34,6 +34,13 @@ def initialize_earth_engine():
     creds_env_b64 = os.getenv('GOOGLE_APPLICATION_CREDENTIALS_JSON_BASE64')
     creds_env_json = os.getenv('GOOGLE_APPLICATION_CREDENTIALS_JSON')
 
+    # Debug (safe): do NOT log secret contents, only presence/length
+    print('EE DEBUG: GOOGLE_APPLICATION_CREDENTIALS_JSON_BASE64 present:', bool(creds_env_b64))
+    if creds_env_b64:
+        print('EE DEBUG: GOOGLE_APPLICATION_CREDENTIALS_JSON_BASE64 length:', len(creds_env_b64))
+    print('EE DEBUG: GOOGLE_APPLICATION_CREDENTIALS_JSON present:', bool(creds_env_json))
+
+
     service_account_info = None
 
     # 1 & 2: Build credentials dict directly from env — no file writes

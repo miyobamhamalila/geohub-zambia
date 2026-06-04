@@ -267,10 +267,11 @@
         Sign in with Google
       </button>
 
-      <div class="divider"><span>or sign in with email</span></div>
+      <div class="divider"><span>or sign in / create account</span></div>
 
       <!-- Email/Password form -->
       <form id="loginForm" onsubmit="handleLogin(event)" novalidate>
+
         <div class="fld">
           <label>Email Address</label>
           <div class="inp-wrap">
@@ -294,7 +295,13 @@
           <i class="fas fa-sign-in-alt" id="loginIco"></i>
           <span id="loginTxt">Sign In</span>
         </button>
+
+        <div style="margin-top:12px;text-align:center;color:var(--muted);font-size:.76rem;">
+          <span>New here?</span>
+          <a href="#" onclick="toggleAuthMode('signup'); return false;" style="color:var(--g3);font-weight:800;text-decoration:none;">Create an account</a>
+        </div>
       </form>
+
 
       <div class="card-foot">
         Secured · NSDI Zambia · GIS Platform 2025
@@ -311,7 +318,94 @@
 </div>
 
 <script>
+  function toggleAuthMode(mode) {
+    const title = document.querySelector('.card-head h2');
+    const submitBtn = document.getElementById('loginBtn');
+    const txt = document.getElementById('loginTxt');
+    const ico = document.getElementById('loginIco');
+    const emailInp = document.getElementById('emailInp');
+    const passInp = document.getElementById('passInp');
+
+    // Simple UX: change text only; signup uses same fields.
+    if (mode === 'signup') {
+      title.textContent = 'Create Account';
+      submitBtn.title = 'Create account';
+      txt.textContent = 'Sign Up';
+      ico.className = 'fas fa-user-plus';
+      emailInp.placeholder = 'your@email.com';
+      passInp.placeholder = 'Create a password';
+      document.getElementById('loginForm').onsubmit = handleSignup;
+    } else {
+      title.textContent = 'Sign In to GeoHub';
+      submitBtn.title = 'Sign In';
+      txt.textContent = 'Sign In';
+      ico.className = 'fas fa-sign-in-alt';
+      emailInp.placeholder = 'your@email.com';
+      passInp.placeholder = 'Enter your password';
+      document.getElementById('loginForm').onsubmit = handleLogin;
+    }
+  }
+
+  async function handleSignup(e) {
+    e.preventDefault();
+    const email = document.getElementById('emailInp').value.trim();
+    const pass  = document.getElementById('passInp').value;
+    const btn   = document.getElementById('loginBtn');
+    const sp    = document.getElementById('loginSpinner');
+    const ico   = document.getElementById('loginIco');
+    const txt   = document.getElementById('loginTxt');
+
+    document.getElementById('emailInp').classList.remove('err');
+    document.getElementById('passInp').classList.remove('err');
+
+    if (!email) {
+      document.getElementById('emailInp').classList.add('err');
+      document.getElementById('emailErr').style.display = 'block';
+      return;
+    }
+    if (!pass) {
+      document.getElementById('passInp').classList.add('err');
+      document.getElementById('passErr').style.display = 'block';
+      return;
+    }
+
+    btn.disabled = true;
+    sp.style.display = 'block';
+    ico.style.display = 'none';
+    txt.textContent = 'Creating account…';
+
+    try {
+      const result = await GeoHubAuth.signup(email, pass);
+      sp.style.display = 'none';
+      ico.style.display = '';
+      btn.disabled = false;
+      txt.textContent = 'Sign Up';
+
+      if (!result.success) {
+        showToast(result.error || 'Signup failed.');
+        document.getElementById('emailInp').classList.add('err');
+        document.getElementById('passInp').classList.add('err');
+        return;
+      }
+
+      showToast(`Account created. Welcome, ${result.user.name.split(' ')[0]}!`);
+      setTimeout(() => {
+        if (result.user.role === 'admin') window.location.href = 'admin.html';
+        else window.location.href = 'dashboard.html';
+      }, 900);
+    } catch (e) {
+      sp.style.display = 'none';
+      ico.style.display = '';
+      btn.disabled = false;
+      txt.textContent = 'Sign Up';
+      showToast(e.message || 'An unexpected error occurred.');
+    }
+  }
+
   async function handleLogin(e) {
+    toggleAuthMode('login');
+
+
     e.preventDefault();
     const email = document.getElementById('emailInp').value.trim();
     const pass  = document.getElementById('passInp').value;

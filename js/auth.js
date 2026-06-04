@@ -146,9 +146,40 @@ const GeoHubAuth = (() => {
   function onReady(cb) { _whenReady(cb); }
 
   // ── Login (email/password) ─────────────────────────────────────────────
+  async function signup(email, password) {
+    try {
+      const cred = await _auth.createUserWithEmailAndPassword(email, password);
+      const uid = cred.user.uid;
+
+      // Create standard Firestore profile for the new user
+      const profile = {
+        name:        cred.user.displayName || email.split('@')[0],
+        email:       cred.user.email,
+        role:        'standard',
+        org:         '',
+        title:       '',
+        avatar:      _initials(cred.user.displayName || email),
+        status:      'active',
+        permissions: _defaultPerms('standard'),
+        created:     firebase.firestore.FieldValue.serverTimestamp(),
+        lastLogin:   firebase.firestore.FieldValue.serverTimestamp(),
+      };
+
+      // If somehow the doc exists, just set/overwrite with standard defaults.
+      await _db.collection('users').doc(uid).set(profile, { merge: true });
+
+      const session = _buildSession(uid, profile, cred.user.email);
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      return { success: true, user: session };
+    } catch (e) {
+      return { success: false, error: _friendlyError(e.code) };
+    }
+  }
+
   async function login(email, password) {
     try {
       let cred;
+
       try {
         cred = await _auth.signInWithEmailAndPassword(email, password);
       } catch (e) {
@@ -455,7 +486,7 @@ const GeoHubAuth = (() => {
   // ── Public API ────────────────────────────────────────────────────────────
   return {
     init, onReady,
-    login, loginWithGoogle, resetPassword, changePassword, logout,
+    signup, login, loginWithGoogle, resetPassword, changePassword, logout,
     getSession, requireAuth, requireAdmin, hasPermission,
     getUsers, addUser, updateUser, deleteUser, toggleUserStatus,
     seedDefaultUsers,

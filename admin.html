@@ -6,6 +6,7 @@
   <title>GeoHub Zambia – Admin Panel</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css"/>
+<!-- Auth -->
   <!-- Firebase SDKs Compat -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
@@ -340,8 +341,8 @@ function switchTab(id, el) {
 }
 
 // ── Admin stats ───────────────────────────────────────────────────────────
-function renderStats() {
-  const users = GeoHubAuth.getUsers();
+async function renderStats() {
+  const users = await GeoHubAuth.getUsers();
   const active = users.filter(u => u.status === 'active').length;
   const admins = users.filter(u => u.role === 'admin').length;
   const logs   = GeoHubAuth.getAuditLogs();

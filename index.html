@@ -7,11 +7,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css"/>
 <!-- Auth -->
-  <!-- Firebase SDKs Compat -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <script src="js/auth.js"></script>
+  <script src="js/zambia-data.js"></script>
+  <script src="js/climate-data.js"></script>
+  <script src="js/features.js"></script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
@@ -262,12 +261,16 @@
         <p>Access the Zambia Spatial Data Platform</p>
       </div>
 
-      <button id="googleLoginBtn" class="btn-google" onclick="handleGoogleLogin()">
-        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo" style="width:18px;height:18px;"/>
-        <span id="googleLoginTxt">Sign in with Google</span>
-      </button>
+      <div class="role-tabs" id="roleTabs">
+        <div class="role-tab active" data-role="standard" onclick="selectRole('standard')">Standard User</div>
+        <div class="role-tab" data-role="admin" onclick="selectRole('admin')">Admin Access</div>
+      </div>
 
-      <div class="divider"><span>or sign in / create account with email</span></div>
+      <div style="display:none;margin-bottom:16px;" id="adminKeyRow">
+        <input type="text" id="adminKeyInp" class="inp" placeholder="Enter admin key to unlock admin role"/>
+      </div>
+
+      <div class="divider"><span>Sign in / create account with email</span></div>
 
       <!-- Email/Password form -->
       <form id="loginForm" onsubmit="handleLogin(event)" novalidate>
@@ -318,6 +321,21 @@
 </div>
 
 <script>
+let selectedRole = 'standard';
+   const ADMIN_KEY = 'geohub_admin_2025';
+
+   function selectRole(role) {
+     selectedRole = role;
+     document.querySelectorAll('.role-tab').forEach(tab => tab.classList.remove('active'));
+     document.querySelector('.role-tab[data-role="' + role + '"]').classList.add('active');
+     var adminKeyRow = document.getElementById('adminKeyRow');
+     if (role === 'admin') {
+       adminKeyRow.style.display = 'block';
+     } else {
+       adminKeyRow.style.display = 'none';
+     }
+   }
+
   function toggleAuthMode(mode) {
     const title = document.querySelector('.card-head h2');
     const submitBtn = document.getElementById('loginBtn');
@@ -434,6 +452,8 @@
     txt.textContent = 'Signing in…';
 
     try {
+      const adminKey = document.getElementById('adminKeyInp').value.trim();
+      const effectiveRole = selectedRole === 'admin' && adminKey === ADMIN_KEY ? 'admin' : 'standard';
       const result = await GeoHubAuth.login(email, pass);
       sp.style.display = 'none';
       ico.style.display = '';
@@ -447,9 +467,16 @@
         return;
       }
 
+      if (effectiveRole === 'admin' && result.user.role !== 'admin') {
+        showToast('Admin access requires valid admin key.');
+        document.getElementById('adminKeyInp').parentElement.classList.add('err');
+        return;
+      }
+
+      const finalRole = effectiveRole === 'admin' ? 'admin' : result.user.role;
       showToast(`Welcome back, ${result.user.name.split(' ')[0]}!`);
       setTimeout(() => {
-        if (result.user.role === 'admin') {
+        if (finalRole === 'admin') {
           window.location.href = 'admin.html';
         } else {
           window.location.href = 'dashboard.html';

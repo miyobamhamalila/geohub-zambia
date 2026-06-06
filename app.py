@@ -511,75 +511,34 @@ def get_map():
     dataset = request.args.get('dataset')
     year = request.args.get('year')
 
-    if dataset == 'lulc':
-        try:
-            tile_url_template = get_lulc_tile_url(year)
-            # Return our proxy URL with placeholders
-            proxy_url = f"/api/tile?dataset=lulc&year={year}&z={{z}}&x={{x}}&y={{y}}"
-            return jsonify({
-                'tile_url': proxy_url, 'dataset': 'lulc', 'year': year,
-                'label': 'Land Use / Land Cover', 'units': '',
-                'palette': GEE_PALETTES['lulc'], 'min': GEE_MIN['lulc'], 'max': GEE_MAX['lulc'],
-            })
-        except Exception as e:
-            return jsonify({'error': str(e)}), 500
+    # Map dataset -> (function, info_key) 
+    dataset_funcs = {
+        'lulc':    get_lulc_tile_url,
+        'ndvi':    get_ndvi_tile_url,
+        'chirps':  get_chirps_tile_url,
+        'lst':     get_lst_tile_url,
+        'drought': get_drought_tile_url,
+        'flood':   get_flood_tile_url,
+    }
 
-    elif dataset == 'ndvi':
-        try:
-            proxy_url = f"/api/tile?dataset=ndvi&year={year}&z={{z}}&x={{x}}&y={{y}}"
-            return jsonify({
-                'tile_url': proxy_url, 'dataset': 'ndvi', 'year': year,
-                'label': 'NDVI (Vegetation)', 'units': '',
-                'palette': GEE_PALETTES['ndvi'], 'min': GEE_MIN['ndvi'], 'max': GEE_MAX['ndvi'],
-            })
-        except Exception as e:
-            return jsonify({'error': str(e)}), 500
+    if dataset not in dataset_funcs:
+        return jsonify({'error': 'Invalid dataset'}), 400
 
-    elif dataset == 'chirps':
-        try:
-            proxy_url = f"/api/tile?dataset=chirps&year={year}&z={{z}}&x={{x}}&y={{y}}"
-            return jsonify({
-                'tile_url': proxy_url, 'dataset': 'chirps', 'year': year,
-                'label': 'Rainfall (CHIRPS)', 'units': 'mm',
-                'palette': GEE_PALETTES['chirps'], 'min': GEE_MIN['chirps'], 'max': GEE_MAX['chirps'],
-            })
-        except Exception as e:
-            return jsonify({'error': str(e)}), 500
-
-    elif dataset == 'lst':
-        try:
-            proxy_url = f"/api/tile?dataset=lst&year={year}&z={{z}}&x={{x}}&y={{y}}"
-            return jsonify({
-                'tile_url': proxy_url, 'dataset': 'lst', 'year': year,
-                'label': 'Land Surface Temp', 'units': '°C',
-                'palette': GEE_PALETTES['lst'], 'min': GEE_MIN['lst'], 'max': GEE_MAX['lst'],
-            })
-        except Exception as e:
-            return jsonify({'error': str(e)}), 500
-
-    elif dataset == 'drought':
-        try:
-            proxy_url = f"/api/tile?dataset=drought&year={year}&z={{z}}&x={{x}}&y={{y}}"
-            return jsonify({
-                'tile_url': proxy_url, 'dataset': 'drought', 'year': year,
-                'label': 'Drought Risk (VCI)', 'units': 'VCI',
-                'palette': GEE_PALETTES['drought'], 'min': GEE_MIN['drought'], 'max': GEE_MAX['drought'],
-            })
-        except Exception as e:
-            return jsonify({'error': str(e)}), 500
-
-    elif dataset == 'flood':
-        try:
-            proxy_url = f"/api/tile?dataset=flood&year={year}&z={{z}}&x={{x}}&y={{y}}"
-            return jsonify({
-                'tile_url': proxy_url, 'dataset': 'flood', 'year': year,
-                'label': 'Flood / Surface Water', 'units': 'Water',
-                'palette': GEE_PALETTES['flood'], 'min': GEE_MIN['flood'], 'max': GEE_MAX['flood'],
-            })
-        except Exception as e:
-            return jsonify({'error': str(e)}), 500
-
-    return jsonify({'error': 'Invalid dataset'}), 400
+    try:
+        # Get the real GEE tile URL directly (has embedded auth token from getMapId)
+        tile_url = dataset_funcs[dataset](year)
+        return jsonify({
+            'tile_url': tile_url,
+            'dataset': dataset,
+            'year': year,
+            'label': GEE_LABELS.get(dataset, dataset),
+            'units': GEE_UNITS.get(dataset, ''),
+            'palette': GEE_PALETTES.get(dataset, []),
+            'min': GEE_MIN.get(dataset),
+            'max': GEE_MAX.get(dataset),
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)

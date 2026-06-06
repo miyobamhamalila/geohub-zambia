@@ -1,26 +1,12 @@
 /**
- * GeoHub Zambia – Local Authentication (No Firebase)
- * Email/Password auth with localStorage | Works offline | Admin support
+ * GeoHub Zambia – Authentication
+ * Email/Password auth via localStorage
  */
 
 const GeoHubAuth = (() => {
     const SESSION_KEY = 'ghz_session';
     const USERS_KEY = 'ghz_users';
     const AUDIT_KEY = 'ghz_audit';
-    const _ready = true;
-    const _readyCbs = [];
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyBDQPZB1_QQluhiZ3DUWoK3lEHCDtJLpWs",
-        authDomain: "geohub-zambia-cb18f.firebaseapp.com",
-        projectId: "geohub-zambia-cb18f",
-        storageBucket: "geohub-zambia-cb18f.firebasestorage.app",
-        messagingSenderId: "188435108246",
-        appId: "1:188435108246:web:e8ad1339ffde53676c8db7"
-    };
-
-    let auth = null;
-    let db = null;
 
     function _whenReady(cb) { cb(); }
 
@@ -89,18 +75,6 @@ const GeoHubAuth = (() => {
     }
 
     function init() {
-        if (typeof firebase !== 'undefined') {
-            try {
-                if (!firebase.apps.length) {
-                    firebase.initializeApp(firebaseConfig);
-                }
-                auth = firebase.auth();
-                db = firebase.firestore();
-            } catch (err) {
-                console.error("Firebase init failed:", err);
-            }
-        }
-
         if (!_getUsers()['admin@geohub.zm']) {
             _addUser('admin@geohub.zm', 'Admin@2025', 'GeoHub Admin', 'admin');
             _addUser('john.banda@zema.gov.zm', 'User@2025', 'John Banda', 'standard');
@@ -113,201 +87,46 @@ const GeoHubAuth = (() => {
     function onReady(cb) { _whenReady(cb); }
 
     async function signup(email, password) {
-        if (auth && db) {
-            try {
-                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-                const uid = userCredential.user.uid;
-                const name = email.split('@')[0];
-                const user = {
-                    id: uid,
-                    name,
-                    email: email.toLowerCase(),
-                    role: 'standard',
-                    org: '',
-                    title: '',
-                    avatar: _initials(name),
-                    status: 'active',
-                    permissions: _defaultPerms('standard'),
-                    created: new Date().toISOString(),
-                    lastLogin: new Date().toISOString()
-                };
-                
-                await db.collection('users').doc(uid).set(user);
-                
-                const users = _getUsers();
-                users[email.toLowerCase()] = {
-                    ...user,
-                    password: _hashPassword(password)
-                };
-                _setUsers(users);
-                
-                const session = _buildSession(user);
-                localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-                addAuditLog('SIGNUP', `New user signed up (Firebase): ${name}`, session.id);
-                return { success: true, user: session };
-            } catch (err) {
-                return { success: false, error: err.message };
-            }
-        } else {
-            const users = _getUsers();
-            if (users[email.toLowerCase()]) {
-                return { success: false, error: 'An account with this email already exists.' };
-            }
-            const name = email.split('@')[0];
-            const user = {
-                id: 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-                name, email: email.toLowerCase(), password: _hashPassword(password),
-                role: 'standard', org: '', title: '', avatar: _initials(name),
-                status: 'active', permissions: _defaultPerms('standard'),
-                created: new Date().toISOString(), lastLogin: null
-            };
-            users[email.toLowerCase()] = user;
-            _setUsers(users);
-            const session = _buildSession(user);
-            localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-            addAuditLog('SIGNUP', `New user signed up (Local fallback): ${name}`, session.id);
-            return { success: true, user: session };
+        const users = _getUsers();
+        if (users[email.toLowerCase()]) {
+            return { success: false, error: 'An account with this email already exists.' };
         }
+        const name = email.split('@')[0];
+        const user = {
+            id: 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+            name, email: email.toLowerCase(), password: _hashPassword(password),
+            role: 'standard', org: '', title: '', avatar: _initials(name),
+            status: 'active', permissions: _defaultPerms('standard'),
+            created: new Date().toISOString(), lastLogin: null
+        };
+        users[email.toLowerCase()] = user;
+        _setUsers(users);
+        const session = _buildSession(user);
+        localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+        addAuditLog('SIGNUP', `New user signed up (Local): ${name}`, session.id);
+        return { success: true, user: session };
     }
 
     async function login(email, password) {
-        if (auth && db) {
-            try {
-                const userCredential = await auth.signInWithEmailAndPassword(email, password);
-                const uid = userCredential.user.uid;
-                
-                const doc = await db.collection('users').doc(uid).get();
-                let user = null;
-                if (doc.exists) {
-                    user = doc.data();
-                    await db.collection('users').doc(uid).update({
-                        lastLogin: new Date().toISOString()
-                    });
-                } else {
-                    const name = email.split('@')[0];
-                    user = {
-                        id: uid,
-                        name,
-                        email: email.toLowerCase(),
-                        role: 'standard',
-                        org: '',
-                        title: '',
-                        avatar: _initials(name),
-                        status: 'active',
-                        permissions: _defaultPerms('standard'),
-                        created: new Date().toISOString(),
-                        lastLogin: new Date().toISOString()
-                    };
-                    await db.collection('users').doc(uid).set(user);
-                }
-
-                if (user.status === 'inactive') {
-                    await auth.signOut();
-                    return { success: false, error: 'This account has been disabled.' };
-                }
-
-                const users = _getUsers();
-                users[email.toLowerCase()] = {
-                    ...user,
-                    password: _hashPassword(password)
-                };
-                _setUsers(users);
-
-                const session = _buildSession(user);
-                localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-                addAuditLog('LOGIN', `User logged in (Firebase): ${user.name}`, session.id);
-                return { success: true, user: session };
-            } catch (err) {
-                const localUser = _verifyUser(email, password);
-                if (localUser) {
-                    if (localUser.status === 'inactive') {
-                        return { success: false, error: 'This account has been disabled.' };
-                    }
-                    localUser.lastLogin = new Date().toISOString();
-                    const users = _getUsers();
-                    users[email.toLowerCase()] = localUser;
-                    _setUsers(users);
-                    const session = _buildSession(localUser);
-                    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-                    addAuditLog('LOGIN', `User logged in (Local fallback): ${localUser.name}`, session.id);
-                    return { success: true, user: session };
-                }
-                return { success: false, error: err.message };
-            }
-        } else {
-            const user = _verifyUser(email, password);
-            if (!user) {
-                return { success: false, error: 'No account found with this email or incorrect password.' };
-            }
-            if (user.status === 'inactive') {
-                return { success: false, error: 'This account has been disabled.' };
-            }
-            user.lastLogin = new Date().toISOString();
-            const users = _getUsers();
-            users[email.toLowerCase()] = user;
-            _setUsers(users);
-            const session = _buildSession(user);
-            localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-            addAuditLog('LOGIN', `User logged in (Local): ${user.name}`, session.id);
-            return { success: true, user: session };
+        const user = _verifyUser(email, password);
+        if (!user) {
+            return { success: false, error: 'No account found with this email or incorrect password.' };
         }
+        if (user.status === 'inactive') {
+            return { success: false, error: 'This account has been disabled.' };
+        }
+        user.lastLogin = new Date().toISOString();
+        const users = _getUsers();
+        users[email.toLowerCase()] = user;
+        _setUsers(users);
+        const session = _buildSession(user);
+        localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+        addAuditLog('LOGIN', `User logged in (Local): ${user.name}`, session.id);
+        return { success: true, user: session };
     }
 
     async function loginWithGoogle() {
-        if (auth && db) {
-            try {
-                const provider = new firebase.auth.GoogleAuthProvider();
-                const result = await auth.signInWithPopup(provider);
-                const user = result.user;
-                const uid = user.uid;
-                
-                const doc = await db.collection('users').doc(uid).get();
-                let userData = null;
-                if (doc.exists) {
-                    userData = doc.data();
-                    await db.collection('users').doc(uid).update({
-                        lastLogin: new Date().toISOString()
-                    });
-                } else {
-                    const name = user.displayName || user.email.split('@')[0];
-                    userData = {
-                        id: uid,
-                        name,
-                        email: user.email.toLowerCase(),
-                        role: 'standard',
-                        org: '',
-                        title: '',
-                        avatar: _initials(name),
-                        status: 'active',
-                        permissions: _defaultPerms('standard'),
-                        created: new Date().toISOString(),
-                        lastLogin: new Date().toISOString()
-                    };
-                    await db.collection('users').doc(uid).set(userData);
-                }
-
-                if (userData.status === 'inactive') {
-                    await auth.signOut();
-                    return { success: false, error: 'This account has been disabled.' };
-                }
-
-                const users = _getUsers();
-                users[user.email.toLowerCase()] = {
-                    ...(users[user.email.toLowerCase()] || {}),
-                    ...userData
-                };
-                _setUsers(users);
-
-                const session = _buildSession(userData);
-                localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-                addAuditLog('LOGIN', `User logged in with Google (Firebase): ${userData.name}`, session.id);
-                return { success: true, user: session };
-            } catch (err) {
-                return { success: false, error: err.message };
-            }
-        } else {
-            return { success: false, error: 'Google sign-in requires Firebase configuration.' };
-        }
+        return { success: false, error: 'Google sign-in is not available.' };
     }
 
     async function resetPassword(email) {
@@ -328,13 +147,6 @@ const GeoHubAuth = (() => {
     }
 
     async function logout() {
-        if (auth) {
-            try {
-                await auth.signOut();
-            } catch (e) {
-                console.error("Firebase signOut failed:", e);
-            }
-        }
         const s = getSession();
         if (s) addAuditLog('LOGOUT', `User logged out: ${s.name}`, s.id);
         localStorage.removeItem(SESSION_KEY);
@@ -429,17 +241,10 @@ const GeoHubAuth = (() => {
         return JSON.parse(localStorage.getItem(AUDIT_KEY) || '[]');
     }
 
-    function migrateFirebaseUser(email, role) {
-        const users = _getUsers();
-        if (!users[email.toLowerCase()]) {
-            _addUser(email, 'Admin@2025', 'GeoHub Admin', role);
-        }
-    }
-
     return {
         init, onReady, signup, login, loginWithGoogle, resetPassword, changePassword, logout,
         getSession, requireAuth, requireAdmin, hasPermission, getUsers, addUser, updateUser,
-        deleteUser, toggleUserStatus, seedDefaultUsers, addAuditLog, getAuditLogs, migrateFirebaseUser
+        deleteUser, toggleUserStatus, seedDefaultUsers, addAuditLog, getAuditLogs
     };
 })();
 

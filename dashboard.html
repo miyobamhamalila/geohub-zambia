@@ -9,12 +9,12 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <!-- Auth -->
-  <!-- Firebase SDKs Compat -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/zambia-data.js"></script>
+  <script src="js/climate-data.js"></script>
+  <script src="js/features.js"></script>
+  <script src="js/agriculture.js"></script>
+  <script src="js/tutorial.js"></script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
@@ -366,8 +366,7 @@
     <a class="nb-lnk" href="map.html"><i class="fas fa-map-marked-alt"></i>Map Viewer</a>
     <a class="nb-lnk" href="analytics.html"><i class="fas fa-chart-bar"></i>Analytics</a>
     <a class="nb-lnk" href="data.html"><i class="fas fa-cloud-upload-alt"></i>Data Upload</a>
-    <a class="nb-lnk" href="settings.html"><i class="fas fa-cog"></i>Settings</a>
-    <span id="adminLink" style="display:none;"><a class="nb-lnk" href="admin.html"><i class="fas fa-user-shield"></i>Admin</a></span>
+     <a class="nb-lnk" href="settings.html"><i class="fas fa-cog"></i>Settings</a>
   </div>
   <div class="nb-right">
     <div class="nb-clock" id="nbClock">--:--:--</div>
@@ -2200,5 +2199,250 @@ window.addEventListener('load', () => {
   }
 });
 </script>
+
+<!-- ══════════════════════════════════════════════════════════════
+     GEOFEA HUB — Floating Features Button + Panel
+     ══════════════════════════════════════════════════════════════ -->
+<style>
+.ghz-features-btn {
+  position:fixed;bottom:80px;right:20px;z-index:9800;
+  width:56px;height:56px;border-radius:50%;
+  background:linear-gradient(135deg,#1a6b35,#2d9e5f);
+  border:none;color:#fff;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-size:24px;box-shadow:0 6px 24px rgba(26,107,53,.45);
+  transition:all .25s ease;overflow:hidden;
+}
+.ghz-features-btn:hover{transform:scale(1.1);box-shadow:0 8px 32px rgba(26,107,53,.55);}
+.ghz-features-btn .badge{
+  position:absolute;top:-4px;right:-4px;
+  width:22px;height:22px;border-radius:50%;
+  background:#ef4444;color:#fff;font-size:11px;font-weight:900;
+  display:flex;align-items:center;justify-content:center;
+  border:2px solid #fff;animation:pulse 2s infinite;
+}
+.ghz-features-panel{
+  position:fixed;bottom:80px;right:80px;z-index:9700;
+  background:rgba(6,15,10,.98);border:1px solid #1e3a22;
+  border-radius:16px;width:380px;max-height:500px;
+  backdrop-filter:blur(16px);box-shadow:0 12px 48px rgba(0,0,0,.6);
+  overflow:hidden;display:none;font-family:'Inter',sans-serif;
+  animation:slideUp .35s cubic-bezier(.16,1,.3,1) both;
+}
+.ghz-fp-head{
+  background:linear-gradient(90deg,rgba(26,107,53,.22),rgba(45,158,95,.08));
+  padding:12px 16px;border-bottom:1px solid #1e3a22;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.ghz-fp-head h3{font-size:.88rem;font-weight:800;color:#fff;display:flex;align-items:center;gap:8px;}
+.ghz-fp-head h3 i{color:var(--g5);}
+.ghz-fp-close{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.85rem;padding:4px;}
+.ghz-fp-close:hover{color:#fff;}
+.ghz-fp-body{padding:6px 8px;overflow-y:auto;max-height:420px;}
+.ghz-fp-body::-webkit-scrollbar{width:3px;}
+.ghz-fp-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:2px;}
+.ghz-fp-item{
+  display:flex;align-items:center;gap:10px;padding:9px 10px;
+  border-radius:10px;cursor:pointer;transition:all .15s;
+  border-bottom:1px solid rgba(255,255,255,.04);
+}
+.ghz-fp-item:last-child{border-bottom:none;}
+.ghz-fp-item:hover{background:rgba(76,175,80,.12);}
+.ghz-fp-item .ico{
+  width:36px;height:36px;border-radius:9px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:17px;flex-shrink:0;
+}
+.ghz-fp-item .txt{flex:1;}
+.ghz-fp-item .txt strong{display:block;font-size:.78rem;font-weight:700;color:rgba(255,255,255,.9);}
+.ghz-fp-item .txt small{font-size:.64rem;color:var(--muted);}
+.ghz-fp-item .tag{
+  font-size:.58rem;font-weight:700;padding:2px 7px;
+  border-radius:10px;flex-shrink:0;
+}
+@keyframes slideUp{from{opacity:0;transform:translateY(16px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
+</style>
+
+<button class="ghz-features-btn" id="ghzFeaturesBtn" onclick="toggleFeaturesHub()" title="GeoHub Features Hub">
+  <span class="badge">10</span>
+  <i class="fas fa-rocket"></i>
+</button>
+
+<div class="ghz-features-panel" id="ghzFeaturesPanel">
+  <div class="ghz-fp-head">
+    <h3><i class="fas fa-rocket"></i>GeoHub Features</h3>
+    <button class="ghz-fp-close" onclick="toggleFeaturesHub()"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="ghz-fp-body" id="ghzFpBody">
+    <!-- Built by JS -->
+  </div>
+</div>
+
+<script>
+// ── Features Hub ─────────────────────────────────────────────────────────
+var _ghzHubOpen = false;
+
+function toggleFeaturesHub() {
+  _ghzHubOpen = !_ghzHubOpen;
+  document.getElementById('ghzFeaturesPanel').style.display = _ghzHubOpen ? 'block' : 'none';
+  document.getElementById('ghzFeaturesBtn').style.transform = _ghzHubOpen ? 'rotate(45deg)' : '';
+  if (_ghzHubOpen) buildFeaturesHub();
+}
+
+function buildFeaturesHub() {
+  var body = document.getElementById('ghzFpBody');
+  if (!body) return;
+  var features = [
+    { icon:'🤖', name:'AI Chat Assistant', desc:'Ask about districts, climate, navigation', tag:'New', tagColor:'#10b981', action: function(){ if(GeoHubFeatures) GeoHubFeatures.openChatAssistant(); toggleFeaturesHub(); }},
+    { icon:'📊', name:'Compare Districts', desc:'Side-by-side up to 4 districts', tag:'Data', tagColor:'#3b82f6', action: function(){ openComparePanel(); toggleFeaturesHub(); }},
+    { icon:'📄', name:'Export PDF Report', desc:'Generate district profile reports', tag:'Export', tagColor:'#8b5cf6', action: function(){ openExportPDFPanel(); toggleFeaturesHub(); }},
+    { icon:'🌤️', name:'Weather Alerts', desc:'Current conditions for 10 provinces', tag:'Live', tagColor:'#f97316', action: function(){ openWeatherPanel(); toggleFeaturesHub(); }},
+    { icon:'💾', name:'Saved Map States', desc:'Save & restore map configurations', tag:'Save', tagColor:'#14b8a6', action: function(){ showToast('Use Shift + S on the Map page to save state','info'); }},
+    { icon:'⌨️', name:'Keyboard Shortcuts', desc:'Press ? to view all shortcuts', tag:'Shortcut', tagColor:'#6b7280', action: function(){ showShortcuts(); }},
+    { icon:'🌐', name:'Language (EN/NY/BE)', desc:'Switch between English, Nyanja, Bemba', tag:'i18n', tagColor:'#f43f5e', action: function(){ showLanguageSelector(); }},
+    { icon:'📖', name:'Zambia Data Story', desc:'Animated slideshow of key stats', tag:'Story', tagColor:'#f59e0b', action: function(){ openDataStory(); toggleFeaturesHub(); }},
+    { icon:'📍', name:'Find Place (Geocode)', desc:'Search districts or click map for info', tag:'Search', tagColor:'#06b6d4', action: function(){ openGeocodePanel(); toggleFeaturesHub(); }},
+    { icon:'💧', name:'Water Bodies Layer', desc:'Major lakes, rivers & waterfalls', tag:'Layer', tagColor:'#2563eb', action: function(){ window.location.href='map.html'; }},
+    { icon:'🚜', name:'Agriculture Hub', desc:'Crop suitability, yield, fertilizer & more', tag:'NEW', tagColor:'#eab308', action: function(){ if(GeoHubAgriculture) GeoHubAgriculture.openAgricultureHub(); toggleFeaturesHub(); }},
+    { icon:'❓', name:'Help & Tutorials', desc:'Guided tours, guides & FAQ', tag:'Help', tagColor:'#6366f1', action: function(){ GeoHubTutorial.openHelpHub(); toggleFeaturesHub(); }},
+  ];
+  body.innerHTML = features.map(function(f){
+    return '<div class="ghz-fp-item" onclick="(' + f.action.toString() + ')()">' +
+      '<div class="ico" style="background:' + f.tagColor + '22;">' + f.icon + '</div>' +
+      '<div class="txt"><strong>' + f.name + '</strong><small>' + f.desc + '</small></div>' +
+      '<span class="tag" style="background:' + f.tagColor + '22;color:' + f.tagColor + ';border:1px solid ' + f.tagColor + '33;">' + f.tag + '</span>' +
+    '</div>';
+  }).join('');
+}
+
+// ── Comparison panel ────────────────────────────────────────────────────
+function openComparePanel() {
+  if (typeof ZAMBIA_DISTRICTS === 'undefined') { showToast('Data not loaded','err'); return; }
+  var content = '<div style="padding:10px 14px;">';
+  content += '<div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;">';
+  content += '<input id="cmpInput" placeholder="Type district name…" style="flex:1;padding:6px 10px;background:rgba(255,255,255,.07);border:1px solid #243d28;border-radius:7px;color:#fff;font-family:Inter;font-size:.75rem;outline:none;" onkeydown="if(event.key===\'Enter\')addCmpDistrict()"/>';
+  content += '<button onclick="addCmpDistrict()" style="padding:6px 12px;background:linear-gradient(135deg,#1a6b35,#2d9e5f);border:none;border-radius:7px;color:#fff;font-weight:700;cursor:pointer;font-size:.72rem;"><i class="fas fa-plus"></i></button>';
+  content += '</div>';
+  content += '<div id="cmpDistricts" style="margin-bottom:8px;"></div>';
+  content += '<div id="cmpTable">' + (GeoHubFeatures ? GeoHubFeatures.renderComparisonHTML() : '<div style="color:var(--muted);font-size:.74rem;padding:8px;">Add districts to compare</div>') + '</div>';
+  content += '<button onclick="GeoHubFeatures.clearComparison();openComparePanel();" style="margin-top:8px;width:100%;padding:6px;background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.25);border-radius:7px;color:#fca5a5;font-size:.7rem;font-weight:700;cursor:pointer;"><i class="fas fa-times"></i> Clear</button>';
+  content += '</div>';
+  GeoHubFeatures.createFloatingPanel('cmpPanel', 'District Comparison', 'fas fa-balance-scale', content, { position: 'top:calc(var(--nb,62px)+10px);right:12px;', width: '420px', maxHeight: '80vh' });
+  renderCmpList();
+}
+
+function addCmpDistrict() {
+  var inp = document.getElementById('cmpInput');
+  if (!inp || !inp.value.trim()) return;
+  var name = inp.value.trim();
+  var result = GeoHubFeatures.addToComparison(name);
+  if (!result.success) { showToast(result.error || 'Could not add district','warn'); return; }
+  inp.value = '';
+  renderCmpList();
+  updateCmpTable();
+}
+
+function renderCmpList() {
+  var el = document.getElementById('cmpDistricts');
+  if (!el) return;
+  var list = GeoHubFeatures.getComparison();
+  el.innerHTML = list.map(function(d){
+    return '<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;margin:2px;border-radius:5px;font-size:.68rem;font-weight:600;background:rgba(76,175,80,.1);border:1px solid rgba(76,175,80,.2);color:rgba(255,255,255,.8);">' +
+      d.district +
+      '<button onclick="GeoHubFeatures.removeFromComparison(\'' + d.district + '\');renderCmpList();updateCmpTable();" style="background:none;border:none;color:#f87171;cursor:pointer;font-size:.65rem;padding:0 3px;">&times;</button>' +
+    '</span>';
+  }).join('');
+}
+
+function updateCmpTable() {
+  var el = document.getElementById('cmpTable');
+  if (el) el.innerHTML = GeoHubFeatures.renderComparisonHTML();
+}
+
+// ── Export PDF Panel ────────────────────────────────────────────────────
+function openExportPDFPanel() {
+  var dists = ZAMBIA_DISTRICTS.map(function(d){ return d.district; }).sort();
+  var content = '<div style="padding:10px 14px;">';
+  content += '<div style="font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:rgba(76,175,80,.7);margin-bottom:8px;">Select a district to export</div>';
+  content += '<select id="pdfDistSel" style="width:100%;padding:6px 8px;background:rgba(255,255,255,.06);border:1px solid #243d28;border-radius:7px;color:#fff;font-family:Inter;font-size:.73rem;outline:none;margin-bottom:8px;">';
+  dists.forEach(function(name){ content += '<option value="' + name + '">' + name + '</option>'; });
+  content += '</select>';
+  content += '<button onclick="GeoHubFeatures.exportDistrictReport(document.getElementById(\'pdfDistSel\').value)" style="width:100%;padding:8px;background:linear-gradient(135deg,#1a6b35,#2d9e5f);border:none;border-radius:8px;color:#fff;font-family:Inter;font-size:.78rem;font-weight:700;cursor:pointer;"><i class="fas fa-file-pdf"></i> Generate PDF Report</button>';
+  content += '</div>';
+  GeoHubFeatures.createFloatingPanel('pdfPanel', 'Export District Report', 'fas fa-file-export', content, { position: 'top:calc(var(--nb,62px)+10px);right:12px;', width: '320px' });
+}
+
+// ── Weather Panel ──────────────────────────────────────────────────────
+function openWeatherPanel() {
+  var content = GeoHubFeatures.renderWeatherPanel();
+  GeoHubFeatures.createFloatingPanel('wxPanel', 'Zambia Weather Alerts', 'fas fa-cloud-sun', content, { position: 'top:calc(var(--nb,62px)+10px);right:12px;', width: '340px' });
+}
+
+// ── Language Selector ──────────────────────────────────────────────────
+function showLanguageSelector() {
+  var content = '<div style="padding:10px 14px;">';
+  var langs = GeoHubFeatures.LANGS;
+  Object.keys(langs).forEach(function(k){
+    var active = GeoHubFeatures.getLanguage() === k;
+    content += '<div onclick="GeoHubFeatures.setLanguage(\'' + k + '\');document.querySelector(\'.ghz-floating-panel\')?.remove();showToast(\'Language: ' + langs[k].name + '\',\'success\')" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;cursor:pointer;' + (active ? 'background:rgba(76,175,80,.15);border:1px solid rgba(76,175,80,.3);' : 'border:1px solid rgba(255,255,255,.06);') + 'margin-bottom:4px;transition:all .15s;">';
+    content += '<span style="font-size:1.3rem;width:28px;text-align:center;">' + (k==='en'?'🇬🇧':k==='ny'?'🇿🇲':'🇿🇲') + '</span>';
+    content += '<div style="flex:1;"><div style="font-size:.78rem;font-weight:700;color:#fff;">' + langs[k].name + '</div><div style="font-size:.65rem;color:var(--muted);">' + langs[k].native + '</div></div>';
+    content += active ? '<span style="font-size:.6rem;font-weight:800;color:var(--g5);background:rgba(76,175,80,.15);padding:2px 8px;border-radius:10px;">ACTIVE</span>' : '';
+    content += '</div>';
+  });
+  content += '<div style="margin-top:8px;font-size:.62rem;color:var(--muted);text-align:center;">Press Shift+L to toggle languages</div>';
+  content += '</div>';
+  GeoHubFeatures.createFloatingPanel('langPanel', 'Choose Language', 'fas fa-language', content, { position: 'top:calc(var(--nb,62px)+10px);right:12px;', width: '280px' });
+}
+
+// ── Shortcuts Panel ────────────────────────────────────────────────────
+function showShortcuts() {
+  var content = GeoHubFeatures.renderShortcutsHTML();
+  GeoHubFeatures.createFloatingPanel('shortPanel', 'Keyboard Shortcuts', 'fas fa-keyboard', content, { position: 'top:calc(var(--nb,62px)+10px);right:12px;', width: '380px', maxHeight: '80vh' });
+}
+
+// ── Data Story ─────────────────────────────────────────────────────────
+function openDataStory() {
+  var panel = GeoHubFeatures.createFloatingPanel('storyPanel', 'Zambia Data Story', 'fas fa-play-circle', '<div id="storyContainer"></div>', { position: 'top:calc(var(--nb,62px)+10px);left:50%;transform:translateX(-50%);', width: '500px', maxHeight: '360px', pin: false });
+  GeoHubFeatures.startDataStory('storyContainer');
+  // Stop on close
+  panel.querySelector('.fp-close').addEventListener('click', function(){ GeoHubFeatures.stopDataStory(); });
+}
+
+// ── Geocode Panel ──────────────────────────────────────────────────────
+function openGeocodePanel() {
+  var content = '<div style="padding:10px 14px;">';
+  content += '<div style="display:flex;gap:6px;margin-bottom:8px;">';
+  content += '<input id="geoInput" placeholder="Search district, province…" style="flex:1;padding:6px 10px;background:rgba(255,255,255,.07);border:1px solid #243d28;border-radius:7px;color:#fff;font-family:Inter;font-size:.75rem;outline:none;" onkeydown="if(event.key===\'Enter\'){var v=this.value;GeoHubFeatures.createFloatingPanel(\'geoResPanel\',\'Search Results\',\'fas fa-map-marker-alt\',GeoHubFeatures.renderGeocodeResults(GeoHubFeatures.geocode(v)),{position:\'top:calc(var(--nb,62px)+60px);right:12px;\',width:\'340px\',maxHeight:\'360px\'});}"/>';
+  content += '<button onclick="var v=document.getElementById(\'geoInput\').value;GeoHubFeatures.createFloatingPanel(\'geoResPanel\',\'Search Results\',\'fas fa-map-marker-alt\',GeoHubFeatures.renderGeocodeResults(GeoHubFeatures.geocode(v)),{position:\'top:calc(var(--nb,62px)+60px);right:12px;\',width:\'340px\',maxHeight:\'360px\'});" style="padding:6px 12px;background:linear-gradient(135deg,#1a6b35,#2d9e5f);border:none;border-radius:7px;color:#fff;font-weight:700;cursor:pointer;font-size:.72rem;"><i class="fas fa-search"></i></button>';
+  content += '</div>';
+  content += '<div style="font-size:.62rem;color:var(--muted);text-align:center;">Type a district or province name to find it on the map</div>';
+  content += '</div>';
+  GeoHubFeatures.createFloatingPanel('geoPanel', 'Find Place (Geocode)', 'fas fa-map-marker-alt', content, { position: 'top:calc(var(--nb,62px)+10px);right:12px;', width: '340px' });
+}
+
+// ── Water Bodies Panel ─────────────────────────────────────────────────
+function openWaterBodiesPanel() {
+  var content = GeoHubFeatures.renderWaterBodiesHTML();
+  GeoHubFeatures.createFloatingPanel('wbPanel', 'Zambia Water Bodies', 'fas fa-water', content, { position: 'top:calc(var(--nb,62px)+10px);right:12px;', width: '340px', maxHeight: '360px' });
+}
+
+// ── Wire up keyboard shortcuts events ───────────────────────────────────
+document.addEventListener('ghz:shortcuts', function(){ showShortcuts(); });
+document.addEventListener('ghz:chat', function(){ if(GeoHubFeatures) GeoHubFeatures.openChatAssistant(); });
+document.addEventListener('ghz:compare', function(){ openComparePanel(); });
+document.addEventListener('ghz:weather', function(){ openWeatherPanel(); });
+document.addEventListener('ghz:language', function(){ showLanguageSelector(); });
+document.addEventListener('ghz:story', function(){ openDataStory(); });
+document.addEventListener('ghz:flyto', function(e){
+  var d = e.detail;
+  if(d.lat && d.lng){
+    showToast('📍 ' + (d.name || 'Location') + ': ' + d.lat.toFixed(4) + ', ' + d.lng.toFixed(4), 'info');
+    // If we're on the dashboard we can't fly — but we can show a breadcrumb
+  }
+});
+</script>
+
 </body>
 </html>

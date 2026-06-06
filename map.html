@@ -9,15 +9,12 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
   <!-- Auth -->
-  <!-- Firebase SDKs Compat -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/zambia-data.js"></script>
   <script src="js/worldcover.js"></script>
   <script src="js/climate-data.js"></script>
   <script src="js/places-data.js"></script>
+  <script src="js/features.js"></script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
@@ -3585,12 +3582,20 @@ async function buildDistrictLayer() {
     const response = await fetch('districts-polygons.geojson');
     if (!response.ok) throw new Error(`HTTP error ${response.status}`);
     const geojson = await response.json();
+    
+    // Helper: find district by name (try name+province first, then just name)
+    function findDistrict(name, province) {
+      let d = ZAMBIA_DISTRICTS.find(x => x.district === name && x.province === province);
+      if (!d) d = ZAMBIA_DISTRICTS.find(x => x.district === name);
+      return d;
+    }
+    
     L.geoJSON(geojson, {
       style: function(feature) {
         const props = feature.properties;
         const districtName = normalizeDistrictName(props.ADM2_NAME);
         const provinceName = props.ADM1_NAME;
-        const distData = ZAMBIA_DISTRICTS.find(d => d.district === districtName && d.province === provinceName);
+        const distData = findDistrict(districtName, provinceName);
         const color = distData ? getDistrictColor(distData) : '#4CAF50';
         return { color: '#fff', weight: 1, fillColor: color, fillOpacity: districtOpacity };
       },
@@ -3598,7 +3603,7 @@ async function buildDistrictLayer() {
         const props = feature.properties;
         const districtName = normalizeDistrictName(props.ADM2_NAME);
         const provinceName = props.ADM1_NAME;
-        const distData = ZAMBIA_DISTRICTS.find(d => d.district === districtName && d.province === provinceName);
+        const distData = findDistrict(districtName, provinceName);
         if (distData) {
           layer.districtData = distData;
           districtMarkers.push({ marker: layer, data: distData });
@@ -9026,7 +9031,11 @@ function showGEEScale(data) {
   scaleEl.style.display = 'block';
   scaleEl.querySelector('h4').innerHTML = '<i class="fas fa-ruler-combined"></i>' + escHtml(label);
   gradEl.style.background = cssGrad;
-  scaleEl.querySelector('.gee-scale-ticks').innerHTML = escHtml(minStr) + escHtml(maxStr);
+  var tickEls = scaleEl.querySelectorAll('.gee-scale-ticks span');
+  if (tickEls.length >= 2) {
+    tickEls[0].textContent = minStr;
+    tickEls[1].textContent = maxStr;
+  }
 }
 
 function strVal(v) {

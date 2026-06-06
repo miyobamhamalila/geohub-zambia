@@ -6,562 +6,443 @@
   <title>GeoHub Zambia – Admin Panel</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css"/>
-<!-- Auth -->
-  <!-- Firebase SDKs Compat -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <script src="js/auth.js"></script>
+  <script src="js/zambia-data.js"></script>
+  <script src="js/climate-data.js"></script>
+  <script src="js/features.js"></script>
+  <script src="js/agriculture.js"></script>
+  <script src="js/tutorial.js"></script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
-      --g1:#040e07;--g2:#0a2e1a;--g3:#1a6b35;--g4:#2d9e5f;--g5:#4CAF50;
-      --white:#fff;--bg:#f1f5f1;--text:#111827;--muted:#6b7280;
+      --g1:#040e07;--g2:#0a2e1a;--g3:#1a6b35;--g4:#2d9e5f;--g5:#4CAF50;--g6:#81c784;
+      --white:#fff;--bg:#f0f4f1;--text:#111827;--muted:#6b7280;
       --border:#e5e7eb;--card:#fff;
       --sh:0 1px 3px rgba(0,0,0,.06),0 2px 8px rgba(0,0,0,.04);
-      --sh2:0 4px 20px rgba(0,0,0,.08);--r:14px;--nb:62px;
+      --sh2:0 4px 20px rgba(0,0,0,.1);--r:14px;--nb:62px;
     }
     body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
-
-    /* ── NAVBAR ── */
     .nb{position:fixed;top:0;left:0;right:0;height:var(--nb);
       background:#fff;border-bottom:1px solid var(--border);
-      display:flex;align-items:center;padding:0 24px;z-index:200;box-shadow:var(--sh);}
-    .nb-brand{display:flex;align-items:center;gap:10px;text-decoration:none;}
-    .nb-brand .ico{width:36px;height:36px;background:linear-gradient(135deg,var(--g3),var(--g4));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;}
-    .nb-brand h1{font-size:1.15rem;font-weight:900;color:var(--text);}
-    .nb-brand h1 em{color:var(--g3);font-style:normal;}
-    .nb-links{display:flex;align-items:center;gap:1px;margin-left:28px;flex:1;}
-    .nb-lnk{padding:6px 11px;border-radius:7px;font-size:.83rem;font-weight:500;color:var(--muted);text-decoration:none;display:flex;align-items:center;gap:5px;transition:background .15s,color .15s;}
+      display:flex;align-items:center;padding:0 22px;z-index:200;box-shadow:var(--sh);}
+    .nb-brand{display:flex;align-items:center;gap:10px;text-decoration:none;flex-shrink:0;}
+    .nb-brand .ico{width:36px;height:36px;background:linear-gradient(135deg,var(--g3),var(--g4));
+      border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 2px 8px rgba(26,107,53,.3);}
+    .nb-brand h1{font-size:1.1rem;font-weight:900;color:var(--text);}
+    .nb-brand h1 em{font-style:normal;color:var(--g3);}
+    .nb-links{display:flex;align-items:center;gap:1px;margin-left:20px;flex:1;}
+    .nb-lnk{padding:6px 10px;border-radius:7px;font-size:.8rem;font-weight:500;
+      color:var(--muted);text-decoration:none;display:flex;align-items:center;gap:5px;transition:all .15s;}
     .nb-lnk:hover{background:#f3f4f6;color:var(--text);}
     .nb-lnk.on{background:#f0fdf4;color:var(--g3);font-weight:700;position:relative;}
     .nb-lnk.on::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:2.5px;background:var(--g5);border-radius:2px 2px 0 0;}
-    .admin-badge{font-size:.68rem;font-weight:800;background:#fef2f2;color:#dc2626;padding:2px 8px;border-radius:20px;border:1px solid #fecaca;margin-left:8px;}
-    .nb-right{display:flex;align-items:center;gap:8px;margin-left:auto;}
+    .nb-right{display:flex;align-items:center;gap:7px;margin-left:auto;flex-shrink:0;}
     .nb-av{width:30px;height:30px;background:linear-gradient(135deg,var(--g3),var(--g4));border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:.72rem;}
-    .nb-uname{font-size:.82rem;font-weight:600;color:var(--text);}
-    .btn-out{padding:6px 12px;background:none;border:1.5px solid var(--border);border-radius:7px;font-family:'Inter',sans-serif;font-size:.78rem;font-weight:600;color:var(--muted);cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s;}
+    .nb-uname{font-size:.8rem;font-weight:600;color:var(--text);}
+    .btn-out{padding:5px 11px;background:none;border:1.5px solid var(--border);border-radius:7px;font-family:'Inter',sans-serif;font-size:.76rem;font-weight:600;color:var(--muted);cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s;}
     .btn-out:hover{background:#fef2f2;border-color:#fca5a5;color:#dc2626;}
-
-    .main{margin-top:var(--nb);padding:24px 28px 60px;max-width:1380px;margin-left:auto;margin-right:auto;}
-
-    /* Tabs */
-    .tabs{display:flex;gap:3px;border-bottom:2px solid var(--border);margin-bottom:24px;}
-    .tab{padding:10px 18px;font-size:.84rem;font-weight:600;color:var(--muted);cursor:pointer;border-radius:8px 8px 0 0;border-bottom:2.5px solid transparent;margin-bottom:-2px;transition:all .15s;}
-    .tab:hover{color:var(--text);background:#f9fafb;}
-    .tab.active{color:var(--g3);border-bottom-color:var(--g5);background:#f0fdf4;}
-
-    /* Page section */
-    .pg-sect{display:none;}
-    .pg-sect.active{display:block;}
-
-    /* Cards */
-    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px 24px;box-shadow:var(--sh);}
-    .card-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
-    .card-hd h3{font-size:.97rem;font-weight:800;}
-    .card-hd p{font-size:.75rem;color:var(--muted);margin-top:2px;}
-
-    /* Stats */
-    .stats4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
-    .stat-c{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;box-shadow:var(--sh);display:flex;align-items:flex-start;gap:14px;}
-    .stat-ico{width:44px;height:44px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;}
-    .stat-v{font-size:1.65rem;font-weight:900;line-height:1;}
-    .stat-l{font-size:.74rem;color:var(--muted);margin-top:2px;}
-
-    /* Buttons */
-    .btn-sm{padding:8px 14px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;border:1.5px solid transparent;font-family:'Inter',sans-serif;display:inline-flex;align-items:center;gap:6px;transition:all .15s;}
+    .main{padding:16px 26px 60px;max-width:1400px;margin:0 auto;margin-top:var(--nb);}
+    .pg-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;}
+    .pg-hd-l h2{font-size:1.35rem;font-weight:900;}
+    .pg-hd-l p{font-size:.8rem;color:var(--muted);margin-top:2px;}
+    .card{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;box-shadow:var(--sh);margin-bottom:16px;}
+    .card-hd{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;}
+    .card-hd h3{font-size:.92rem;font-weight:800;color:var(--text);}
+    .card-hd p{font-size:.71rem;color:var(--muted);margin-top:2px;}
+    .card-tag{font-size:.67rem;font-weight:700;padding:3px 9px;border-radius:20px;background:#f0fdf4;color:var(--g3);border:1px solid #bbf7d0;white-space:nowrap;}
+    .stats4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
+    .stat-c{background:#fff;border:1px solid var(--border);border-radius:13px;padding:14px 15px;box-shadow:var(--sh);}
+    .stat-ico{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:.95rem;margin-bottom:6px;}
+    .stat-v{font-size:1.3rem;font-weight:900;line-height:1;color:var(--text);}
+    .stat-l{font-size:.67rem;color:var(--muted);margin-top:3px;}
+    .tbl{width:100%;border-collapse:collapse;font-size:.77rem;}
+    .tbl th{padding:7px 9px;background:#f9fafb;border-bottom:2px solid var(--border);font-size:.68rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;text-align:left;}
+    .tbl td{padding:6px 9px;border-bottom:1px solid #f3f4f6;vertical-align:middle;}
+    .tbl tr:hover td{background:#f0fdf4;}
+    .badge{font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:10px;display:inline-block;}
+    .badge-g{background:#f0fdf4;color:#16a34a;}
+    .badge-r{background:#fef2f2;color:#dc2626;}
+    .badge-y{background:#fffbeb;color:#d97706;}
+    .badge-b{background:#eff6ff;color:#2563eb;}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:15px;}
+    .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-bottom:15px;}
+    .btn-sm{padding:7px 12px;border-radius:8px;font-size:.78rem;font-weight:600;cursor:pointer;border:1.5px solid transparent;font-family:'Inter',sans-serif;display:inline-flex;align-items:center;gap:5px;transition:all .15s;}
     .btn-primary{background:var(--g3);color:#fff;border-color:var(--g3);}
     .btn-primary:hover{background:var(--g2);}
-    .btn-danger{background:#dc2626;color:#fff;border-color:#dc2626;}
-    .btn-danger:hover{background:#b91c1c;}
     .btn-outline{background:#fff;color:var(--text);border-color:var(--border);}
     .btn-outline:hover{background:#f9fafb;}
-    .btn-amber{background:#d97706;color:#fff;border-color:#d97706;}
-    .btn-amber:hover{background:#b45309;}
-
-    /* User table */
-    .user-table{width:100%;border-collapse:collapse;font-size:.83rem;}
-    .user-table th{padding:9px 12px;background:#f9fafb;border-bottom:2px solid var(--border);font-size:.74rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;text-align:left;}
-    .user-table td{padding:10px 12px;border-bottom:1px solid #f3f4f6;vertical-align:middle;}
-    .user-table tr:hover td{background:#f9fafb;}
-    .user-table tr:last-child td{border-bottom:none;}
-    .av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:800;color:#fff;flex-shrink:0;}
-    .role-pill{font-size:.7rem;font-weight:700;padding:2px 9px;border-radius:20px;}
-    .role-admin{background:#fef2f2;color:#dc2626;border:1px solid #fecaca;}
-    .role-standard{background:#f0fdf4;color:var(--g3);border:1px solid #bbf7d0;}
-    .status-pill{font-size:.7rem;font-weight:700;padding:2px 9px;border-radius:20px;}
-    .status-active{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;}
-    .status-inactive{background:#f3f4f6;color:#6b7280;border:1px solid #e5e7eb;}
-    .action-row{display:flex;gap:4px;}
-
-    /* Form */
-    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-    .fld{margin-bottom:14px;}
-    .fld label{display:block;font-size:.75rem;font-weight:700;color:#374151;margin-bottom:5px;text-transform:uppercase;letter-spacing:.3px;}
-    .inp{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:'Inter',sans-serif;font-size:.86rem;color:var(--text);outline:none;transition:border .2s;}
-    .inp:focus{border-color:var(--g3);box-shadow:0 0 0 3px rgba(26,107,53,.1);}
-    .inp-sel{background:#fff;cursor:pointer;}
-    .form-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;padding-top:16px;border-top:1px solid var(--border);}
-
-    /* Audit log */
-    .audit-row{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid #f3f4f6;}
-    .audit-row:last-child{border-bottom:none;}
-    .audit-dot{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.75rem;flex-shrink:0;}
-    .audit-content strong{font-size:.82rem;font-weight:700;color:var(--text);}
-    .audit-content span{font-size:.73rem;color:var(--muted);display:block;}
-    .audit-time{font-size:.7rem;color:var(--muted);margin-left:auto;white-space:nowrap;margin-top:2px;}
-
-    /* Modal overlay */
-    .modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px);}
-    .modal-ov.open{display:flex;}
-    .modal{background:#fff;border-radius:16px;padding:28px;max-width:500px;width:95%;box-shadow:0 20px 60px rgba(0,0,0,.25);}
-    .modal h3{font-size:1.1rem;font-weight:800;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
-    .modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border);}
-
-    /* Toggle switch (inline) */
-    .tog{position:relative;width:40px;height:22px;flex-shrink:0;}
-    .tog input{opacity:0;width:0;height:0;}
-    .tog-sl{position:absolute;inset:0;background:#d1d5db;border-radius:22px;cursor:pointer;transition:background .2s;}
-    .tog-sl::before{content:'';position:absolute;width:16px;height:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform .2s;}
-    .tog input:checked + .tog-sl{background:var(--g4);}
-    .tog input:checked + .tog-sl::before{transform:translateX(18px);}
-
-    /* Toast */
-    #toast{position:fixed;bottom:24px;right:24px;z-index:9999;background:var(--g3);color:#fff;padding:11px 17px;border-radius:10px;font-size:.82rem;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.2);display:none;align-items:center;gap:8px;}
-    #toast.err{background:#dc2626;}
+    .btn-danger{background:#dc2626;color:#fff;border-color:#dc2626;}
+    .btn-danger:hover{background:#b91c1c;}
+    .inp{width:100%;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:'Inter',sans-serif;font-size:.78rem;outline:none;transition:border .2s;}
+    .inp:focus{border-color:var(--g3);box-shadow:0 0 0 2px rgba(26,107,53,.1);}
+    .row-flex{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+    .audit-item{padding:6px 0;border-bottom:1px solid #f3f4f6;display:flex;gap:8px;align-items:flex-start;}
+    .audit-item:last-child{border-bottom:none;}
+    .audit-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+    #toast{position:fixed;bottom:22px;right:22px;z-index:9999;background:var(--g3);color:#fff;padding:10px 16px;border-radius:10px;font-size:.81rem;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.18);display:none;align-items:center;gap:7px;}
+    .sys-bar{background:linear-gradient(90deg,var(--g1),var(--g2));padding:5px 26px;display:flex;align-items:center;gap:18px;font-size:.69rem;color:rgba(255,255,255,.6);margin-top:var(--nb);flex-wrap:wrap;}
+    .sys-dot{width:6px;height:6px;border-radius:50%;background:#4CAF50;animation:blink 2s ease infinite;flex-shrink:0;}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+    .sys-seg{display:flex;align-items:center;gap:5px;white-space:nowrap;}
+    .sys-seg strong{color:#fff;font-weight:700;}
+    .empty-state{text-align:center;padding:30px;color:var(--muted);}
+    .empty-state i{font-size:2rem;margin-bottom:8px;opacity:.3;}
+    select.inp{-webkit-appearance:none;padding-right:28px;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236b7280' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+      background-repeat:no-repeat;background-position:right 8px center;}
+    @media(max-width:900px){
+      .stats4,.grid2,.grid3{grid-template-columns:1fr;}
+    }
+    .ghz-features-btn {
+      position:fixed;bottom:80px;right:20px;z-index:9800;
+      width:56px;height:56px;border-radius:50%;
+      background:linear-gradient(135deg,#1a6b35,#2d9e5f);
+      border:none;color:#fff;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;
+      font-size:24px;box-shadow:0 6px 24px rgba(26,107,53,.45);
+      transition:all .25s ease;overflow:hidden;
+    }
+    .ghz-features-btn:hover{transform:scale(1.1);box-shadow:0 8px 32px rgba(26,107,53,.55);}
+    .ghz-features-btn .badge{
+      position:absolute;top:-4px;right:-4px;width:22px;height:22px;border-radius:50%;
+      background:#ef4444;color:#fff;font-size:11px;font-weight:900;
+      display:flex;align-items:center;justify-content:center;
+      border:2px solid #fff;animation:pulse 2s infinite;
+    }
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
   </style>
 </head>
 <body>
 
-<!-- ── NAVBAR ── -->
 <nav class="nb">
-  <a class="nb-brand" href="dashboard.html">
-    <div class="ico">🌍</div>
-    <h1>Geo<em>Hub</em></h1>
-  </a>
+  <a class="nb-brand" href="dashboard.html"><div class="ico">🌍</div><h1>Geo<em>Hub</em></h1></a>
   <div class="nb-links">
     <a class="nb-lnk" href="dashboard.html"><i class="fas fa-th-large"></i>Dashboard</a>
     <a class="nb-lnk" href="map.html"><i class="fas fa-map-marked-alt"></i>Map Viewer</a>
     <a class="nb-lnk" href="analytics.html"><i class="fas fa-chart-bar"></i>Analytics</a>
-    <a class="nb-lnk" href="data.html"><i class="fas fa-cloud-upload-alt"></i>Data Upload</a>
-    <a class="nb-lnk" href="settings.html"><i class="fas fa-cog"></i>Settings</a>
     <a class="nb-lnk on" href="admin.html"><i class="fas fa-user-shield"></i>Admin</a>
-    <span class="admin-badge">Admin Only</span>
+    <a class="nb-lnk" href="settings.html"><i class="fas fa-cog"></i>Settings</a>
   </div>
   <div class="nb-right">
-    <div class="nb-av" id="nbAv">SA</div>
-    <span class="nb-uname" id="nbName">Administrator</span>
+    <div class="nb-av" id="nbAv">?</div>
+    <span class="nb-uname" id="nbName">—</span>
     <button class="btn-out" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i>Sign Out</button>
   </div>
 </nav>
 
-<!-- ── MAIN ── -->
+<div class="sys-bar">
+  <div class="sys-seg"><div class="sys-dot"></div><strong>Admin Panel Active</strong></div>
+  <div class="sys-seg"><i class="fas fa-shield-alt" style="color:var(--g5);font-size:.65rem;"></i><strong id="sysRole">Administrator</strong></div>
+  <div class="sys-seg"><i class="fas fa-users" style="color:#38bdf8;font-size:.65rem;"></i><span id="userCount">—</span> users</div>
+  <div class="sys-seg" style="margin-left:auto;"><i class="fas fa-clock" style="font-size:.62rem;"></i><strong id="sysTime">—</strong></div>
+</div>
+
 <main class="main">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-    <div>
-      <h2 style="font-size:1.45rem;font-weight:900;">⚙️ Admin Panel</h2>
-      <p style="font-size:.83rem;color:var(--muted);margin-top:3px;">System administration · GeoHub Zambia</p>
+  <div class="pg-hd">
+    <div class="pg-hd-l">
+      <h2><i class="fas fa-user-shield" style="color:var(--g3);margin-right:8px;"></i>Admin Panel</h2>
+      <p>User management · Audit logs · System settings</p>
     </div>
-    <button class="btn-sm btn-primary" onclick="openAddUserModal()">
-      <i class="fas fa-user-plus"></i>Add New User
-    </button>
+    <div class="pg-hd-r">
+      <button class="btn-sm btn-primary" onclick="showAddUserModal()"><i class="fas fa-user-plus"></i>Add User</button>
+      <button class="btn-sm btn-outline" onclick="refreshData()"><i class="fas fa-sync-alt"></i>Refresh</button>
+    </div>
   </div>
 
-  <!-- Summary stats -->
-  <div class="stats4" id="adminStats"></div>
-
-  <!-- Tabs -->
-  <div class="tabs">
-    <div class="tab active" onclick="switchTab('users',this)"><i class="fas fa-users" style="margin-right:5px;"></i>User Management</div>
-    <div class="tab" onclick="switchTab('audit',this)"><i class="fas fa-history" style="margin-right:5px;"></i>Audit Log</div>
-    <div class="tab" onclick="switchTab('data',this)"><i class="fas fa-database" style="margin-right:5px;"></i>System Data</div>
+  <!-- Stats -->
+  <div class="stats4" id="adminStats">
+    <div class="stat-c"><div class="stat-ico" style="background:#f0fdf4;"><i class="fas fa-users" style="color:var(--g3);"></i></div><div class="stat-v" id="statTotal">0</div><div class="stat-l">Total Users</div></div>
+    <div class="stat-c"><div class="stat-ico" style="background:#f0fdf4;"><i class="fas fa-user-check" style="color:#16a34a;"></i></div><div class="stat-v" id="statActive">0</div><div class="stat-l">Active</div></div>
+    <div class="stat-c"><div class="stat-ico" style="background:#fef2f2;"><i class="fas fa-user-slash" style="color:#dc2626;"></i></div><div class="stat-v" id="statInactive">0</div><div class="stat-l">Inactive</div></div>
+    <div class="stat-c"><div class="stat-ico" style="background:#eff6ff;"><i class="fas fa-user-tie" style="color:#2563eb;"></i></div><div class="stat-v" id="statAdmin">0</div><div class="stat-l">Administrators</div></div>
   </div>
 
-  <!-- ── USER MANAGEMENT ── -->
-  <div class="pg-sect active" id="sect-users">
+  <!-- Users Table -->
+  <div class="card">
+    <div class="card-hd">
+      <div><h3>User Management</h3><p>View, edit, activate/deactivate all platform users</p></div>
+      <div class="row-flex">
+        <input class="inp" id="userSearch" placeholder="Search users…" style="width:200px;" oninput="renderUsers()"/>
+        <select class="inp" id="roleFilter" onchange="renderUsers()" style="width:140px;">
+          <option value="">All Roles</option>
+          <option value="admin">Admin</option>
+          <option value="standard">Standard</option>
+        </select>
+        <select class="inp" id="statusFilter" onchange="renderUsers()" style="width:140px;">
+          <option value="">All Status</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="tbl" id="userTable">
+        <thead>
+          <tr>
+            <th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Permissions</th><th>Last Login</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="userTbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Audit Log & Quick Actions -->
+  <div class="grid2">
+    <div class="card" style="max-height:400px;overflow-y:auto;">
+      <div class="card-hd"><div><h3>Audit Log</h3><p>Recent platform activity</p></div><span class="card-tag" id="auditCount">0</span></div>
+      <div id="auditLog"></div>
+    </div>
     <div class="card">
-      <div class="card-hd">
-        <div>
-          <h3>All Users</h3>
-          <p>Manage platform user accounts and permissions</p>
-        </div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <input class="inp" id="userSearch" placeholder="Search users…" oninput="filterUsers()" style="width:220px;padding:7px 10px;"/>
-          <button class="btn-sm btn-outline" onclick="renderUsers()"><i class="fas fa-sync-alt"></i>Refresh</button>
-        </div>
+      <div class="card-hd"><div><h3>Quick Admin Actions</h3><p>System management tools</p></div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+        <button class="btn-sm btn-outline" onclick="seedUsers()"><i class="fas fa-database"></i>Seed Users</button>
+        <button class="btn-sm btn-outline" onclick="clearAudit()"><i class="fas fa-trash-alt"></i>Clear Audit</button>
+        <button class="btn-sm btn-outline" onclick="exportUsers()"><i class="fas fa-download"></i>Export CSV</button>
+        <button class="btn-sm btn-outline" onclick="GeoHubTutorial.startTour('dashboard')"><i class="fas fa-play"></i>Run Tour</button>
+        <button class="btn-sm btn-outline" onclick="GeoHubFeatures.openChatAssistant()"><i class="fas fa-robot"></i>AI Assistant</button>
+        <button class="btn-sm btn-outline" onclick="window.location.href='dashboard.html'"><i class="fas fa-chart-bar"></i>Dashboard</button>
       </div>
-      <div style="overflow-x:auto;">
-        <table class="user-table">
-          <thead>
-            <tr>
-              <th>User</th><th>Email</th><th>Organisation</th><th>Role</th>
-              <th>Status</th><th>Last Login</th><th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="userTableBody"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── AUDIT LOG ── -->
-  <div class="pg-sect" id="sect-audit">
-    <div class="card">
-      <div class="card-hd">
-        <div>
-          <h3>Audit Log</h3>
-          <p>Recent system events (last 200 entries)</p>
-        </div>
-        <div style="display:flex;gap:8px;">
-          <button class="btn-sm btn-outline" onclick="renderAudit()"><i class="fas fa-sync-alt"></i>Refresh</button>
-          <button class="btn-sm btn-outline" onclick="exportAuditCSV()"><i class="fas fa-download"></i>Export CSV</button>
-        </div>
-      </div>
-      <div id="auditFeed" style="max-height:600px;overflow-y:auto;"></div>
-    </div>
-  </div>
-
-  <!-- ── SYSTEM DATA ── -->
-  <div class="pg-sect" id="sect-data">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
-      <div class="card">
-        <div class="card-hd"><h3>NSDI Dataset Status</h3></div>
-        <table class="user-table">
-          <thead><tr><th>Dataset</th><th>Records</th><th>Status</th><th>Updated</th></tr></thead>
-          <tbody>
-            <tr><td>Districts (NSDI GRID3 2022)</td><td>116</td><td><span class="status-pill status-active">Active</span></td><td>2022-10-26</td></tr>
-            <tr><td>Provinces</td><td>10</td><td><span class="status-pill status-active">Active</span></td><td>2022-10-26</td></tr>
-            <tr><td>Water Bodies (Zambia Atlas)</td><td>6</td><td><span class="status-pill status-active">Active</span></td><td>2023-01-01</td></tr>
-            <tr><td>Mining Sites (ZDA 2023)</td><td>6</td><td><span class="status-pill status-active">Active</span></td><td>2023-06-01</td></tr>
-            <tr><td>Forest Cover (FAO 2024)</td><td>7 years</td><td><span class="status-pill status-active">Active</span></td><td>2024-01-01</td></tr>
-            <tr><td>Rainfall (CHIRPS 2023)</td><td>4 stations</td><td><span class="status-pill status-active">Active</span></td><td>2023-12-31</td></tr>
-            <tr><td>Land Cover (LCCS 2024)</td><td>7 classes</td><td><span class="status-pill status-active">Active</span></td><td>2024-03-01</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="card">
-        <div class="card-hd"><h3>System Information</h3></div>
-        <table class="user-table">
-          <thead><tr><th>Property</th><th>Value</th></tr></thead>
-          <tbody>
-            <tr><td>Platform</td><td>GeoHub Zambia v2.0</td></tr>
-            <tr><td>Data Source</td><td>NSDI Zambia / GRID3</td></tr>
-            <tr><td>Coordinate System</td><td>WGS 84 (EPSG:4326)</td></tr>
-            <tr><td>Districts</td><td>116</td></tr>
-            <tr><td>Provinces</td><td>10</td></tr>
-            <tr><td>Country Area</td><td>752,612 km²</td></tr>
-            <tr><td>Map Library</td><td>Leaflet 1.9.4</td></tr>
-            <tr><td>Chart Library</td><td>Chart.js 4.4.0</td></tr>
-            <tr><td>Storage</td><td>localStorage (browser)</td></tr>
-          </tbody>
-        </table>
-        <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
-          <button class="btn-sm btn-danger" onclick="resetSystem()" style="width:100%;">
-            <i class="fas fa-trash-alt"></i>Reset User Data (preserve seed users)
-          </button>
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">
+        <div style="font-size:.68rem;color:var(--muted);margin-bottom:4px;"><strong>Permission Sets</strong></div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;">
+          <span class="badge badge-g">view_map</span>
+          <span class="badge badge-g">upload_data</span>
+          <span class="badge badge-g">view_analytics</span>
+          <span class="badge badge-g">export_data</span>
+          <span class="badge badge-b">manage_users</span>
+          <span class="badge badge-b">manage_layers</span>
+          <span class="badge badge-b">view_audit</span>
         </div>
       </div>
     </div>
   </div>
 </main>
 
-<!-- ── ADD USER MODAL ── -->
-<div class="modal-ov" id="addUserModal">
-  <div class="modal">
-    <h3><i class="fas fa-user-plus" style="color:var(--g3);"></i>Add New User</h3>
-    <div class="form-grid">
-      <div class="fld"><label>Full Name *</label><input class="inp" id="nu-name" placeholder="e.g. Grace Mwale" autocomplete="name"/></div>
-      <div class="fld"><label>Email *</label><input class="inp" id="nu-email" type="email" placeholder="user@org.zm" autocomplete="email"/></div>
-      <div class="fld"><label>Organisation</label><input class="inp" id="nu-org" placeholder="e.g. Zambia Forestry Dept" autocomplete="organization"/></div>
-      <div class="fld"><label>Job Title</label><input class="inp" id="nu-title" placeholder="e.g. GIS Analyst" autocomplete="organization-title"/></div>
-      <div class="fld"><label>Role *</label>
-        <select class="inp inp-sel" id="nu-role">
-          <option value="standard">Standard User</option>
-          <option value="admin">Administrator</option>
-        </select>
-      </div>
-      <div class="fld"><label>Password *</label><input class="inp" id="nu-pass" type="password" placeholder="Min 8 characters" autocomplete="new-password"/></div>
+<!-- Add/Edit User Modal -->
+<div id="userModal" style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px);">
+  <div style="background:#fff;border-radius:18px;padding:24px;max-width:440px;width:96%;box-shadow:0 20px 60px rgba(0,0,0,.25);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <h3 id="modalTitle" style="font-size:1.05rem;font-weight:900;">Add New User</h3>
+      <button onclick="closeUserModal()" style="background:none;border:none;font-size:1.1rem;color:var(--muted);cursor:pointer;">&times;</button>
     </div>
-    <div id="addUserErr" style="display:none;color:#dc2626;font-size:.8rem;margin-top:4px;padding:8px 12px;background:#fef2f2;border-radius:8px;border:1px solid #fecaca;"></div>
-    <div class="modal-footer">
-      <button class="btn-sm btn-outline" onclick="closeModal('addUserModal')">Cancel</button>
-      <button class="btn-sm btn-primary" onclick="submitAddUser()"><i class="fas fa-plus"></i>Create User</button>
+    <div style="display:grid;gap:10px;">
+      <div><label style="font-size:.75rem;font-weight:700;color:#374151;margin-bottom:4px;display:block;">Full Name</label><input class="inp" id="modalName" placeholder="e.g. Jane Banda"/></div>
+      <div><label style="font-size:.75rem;font-weight:700;color:#374151;margin-bottom:4px;display:block;">Email</label><input class="inp" id="modalEmail" placeholder="e.g. jane@example.com" type="email"/></div>
+      <div><label style="font-size:.75rem;font-weight:700;color:#374151;margin-bottom:4px;display:block;">Role</label>
+        <select class="inp" id="modalRole"><option value="standard">Standard User</option><option value="admin">Administrator</option></select>
+      </div>
+      <div id="modalPassRow"><label style="font-size:.75rem;font-weight:700;color:#374151;margin-bottom:4px;display:block;">Password</label><input class="inp" id="modalPass" type="text" value="TempPass@2025!"/></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      <button class="btn-sm btn-primary" style="flex:1;justify-content:center;" onclick="saveUser()"><i class="fas fa-save"></i> Save User</button>
+      <button class="btn-sm btn-outline" onclick="closeUserModal()" style="flex:1;justify-content:center;">Cancel</button>
     </div>
   </div>
 </div>
 
-<!-- ── EDIT USER MODAL ── -->
-<div class="modal-ov" id="editUserModal">
-  <div class="modal">
-    <h3><i class="fas fa-user-edit" style="color:var(--g3);"></i>Edit User</h3>
-    <input type="hidden" id="eu-id"/>
-    <div class="form-grid">
-      <div class="fld"><label>Full Name</label><input class="inp" id="eu-name" autocomplete="name"/></div>
-      <div class="fld"><label>Email</label><input class="inp" id="eu-email" type="email" autocomplete="email"/></div>
-      <div class="fld"><label>Organisation</label><input class="inp" id="eu-org" autocomplete="organization"/></div>
-      <div class="fld"><label>Job Title</label><input class="inp" id="eu-title" autocomplete="organization-title"/></div>
-      <div class="fld"><label>Role</label>
-        <select class="inp inp-sel" id="eu-role">
-          <option value="standard">Standard User</option>
-          <option value="admin">Administrator</option>
-        </select>
-      </div>
-      <div class="fld"><label>Status</label>
-        <select class="inp inp-sel" id="eu-status">
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-        </select>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn-sm btn-outline" onclick="closeModal('editUserModal')">Cancel</button>
-      <button class="btn-sm btn-primary" onclick="submitEditUser()"><i class="fas fa-save"></i>Save Changes</button>
-    </div>
-  </div>
-</div>
-
-<!-- Toast -->
 <div id="toast"></div>
 
+<button class="ghz-features-btn" onclick="GeoHubAgriculture?.openAgricultureHub()" title="Agriculture Hub" style="bottom:80px;right:86px;width:40px;height:40px;font-size:18px;"><span>🚜</span></button>
+
 <script>
-// ── Auth (admin only) ────────────────────────────────────────────────────
-const session = GeoHubAuth.requireAdmin();
-if (!session) throw new Error('Admin only');
-document.getElementById('nbAv').textContent   = session.avatar;
-document.getElementById('nbName').textContent = session.name;
-function doLogout(){ GeoHubAuth.logout(); window.location.href = 'index.html'; }
+// ── AUTH ──────────────────────────────────────────────────────────
+const session = (() => {
+  try { return GeoHubAuth.requireAuth('index.html'); } catch(e) { return null; }
+})();
+if (!session) throw new Error('Not authenticated');
+if (session.role !== 'admin') { window.location.href = 'dashboard.html'; throw new Error('Not admin'); }
 
-// ── Tab switching ────────────────────────────────────────────────────────
-function switchTab(id, el) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.pg-sect').forEach(s => s.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('sect-' + id).classList.add('active');
-  if (id === 'audit') renderAudit();
+document.getElementById('nbAv').textContent = (session.avatar || session.name || 'A').slice(0,2).toUpperCase();
+document.getElementById('nbName').textContent = session.name || 'Admin';
+document.getElementById('sysTime').textContent = new Date().toLocaleTimeString();
+setInterval(()=>{ document.getElementById('sysTime').textContent = new Date().toLocaleTimeString(); }, 1000);
+
+function doLogout() { GeoHubAuth.logout(); window.location.href = 'index.html'; }
+
+// ── TOAST ─────────────────────────────────────────────────────────
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.innerHTML = `<i class="fas fa-${type === 'err' ? 'times-circle' : 'check-circle'}"></i>${msg}`;
+  t.style.display = 'flex'; clearTimeout(t._t);
+  t._t = setTimeout(()=>t.style.display='none', 3000);
 }
 
-// ── Admin stats ───────────────────────────────────────────────────────────
-async function renderStats() {
-  const users = await GeoHubAuth.getUsers();
-  const active = users.filter(u => u.status === 'active').length;
-  const admins = users.filter(u => u.role === 'admin').length;
-  const logs   = GeoHubAuth.getAuditLogs();
-  const today  = new Date().toDateString();
-  const todayLogins = logs.filter(l => l.action === 'LOGIN' && new Date(l.timestamp).toDateString() === today).length;
-  document.getElementById('adminStats').innerHTML = `
-    <div class="stat-c">
-      <div class="stat-ico" style="background:#f0fdf4;"><i class="fas fa-users" style="color:var(--g3);font-size:1.2rem;"></i></div>
-      <div><div class="stat-v">${users.length}</div><div class="stat-l">Total Users</div></div>
-    </div>
-    <div class="stat-c">
-      <div class="stat-ico" style="background:#eff6ff;"><i class="fas fa-user-check" style="color:#2563eb;font-size:1.2rem;"></i></div>
-      <div><div class="stat-v">${active}</div><div class="stat-l">Active Users</div></div>
-    </div>
-    <div class="stat-c">
-      <div class="stat-ico" style="background:#fef2f2;"><i class="fas fa-user-shield" style="color:#dc2626;font-size:1.2rem;"></i></div>
-      <div><div class="stat-v">${admins}</div><div class="stat-l">Administrators</div></div>
-    </div>
-    <div class="stat-c">
-      <div class="stat-ico" style="background:#fffbeb;"><i class="fas fa-sign-in-alt" style="color:#d97706;font-size:1.2rem;"></i></div>
-      <div><div class="stat-v">${todayLogins}</div><div class="stat-l">Logins Today</div></div>
-    </div>`;
-}
+// ── REFRESH ───────────────────────────────────────────────────────
+function refreshData() { renderUsers(); renderAudit(); showToast('Data refreshed', 'ok'); }
 
-// ── User table ─────────────────────────────────────────────────────────────
-let allUsers = [];
-function renderUsers(filter = '') {
-  allUsers = GeoHubAuth.getUsers();
-  const q = filter.toLowerCase();
-  const users = q ? allUsers.filter(u =>
-    u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || u.org.toLowerCase().includes(q)
-  ) : allUsers;
+// ── RENDER USERS ──────────────────────────────────────────────────
+function renderUsers() {
+  const users = GeoHubAuth.getUsers() || [];
+  const search = (document.getElementById('userSearch')?.value || '').toLowerCase();
+  const roleF = document.getElementById('roleFilter')?.value || '';
+  const statusF = document.getElementById('statusFilter')?.value || '';
 
-  const tbody = document.getElementById('userTableBody');
-  tbody.innerHTML = users.map(u => `
-    <tr>
+  const filtered = users.filter(u => {
+    if (search && !u.name?.toLowerCase().includes(search) && !u.email?.toLowerCase().includes(search)) return false;
+    if (roleF && u.role !== roleF) return false;
+    if (statusF && u.status !== statusF) return false;
+    return true;
+  });
+
+  // Stats
+  document.getElementById('statTotal').textContent = users.length;
+  document.getElementById('statActive').textContent = users.filter(u => u.status === 'active').length;
+  document.getElementById('statInactive').textContent = users.filter(u => u.status === 'inactive').length;
+  document.getElementById('statAdmin').textContent = users.filter(u => u.role === 'admin').length;
+  document.getElementById('userCount').textContent = users.length;
+
+  // Table
+  const tbody = document.getElementById('userTbody');
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--muted);"><i class="fas fa-users" style="font-size:1.5rem;opacity:.3;"></i><br>No users found</td></tr>';
+    return;
+  }
+  tbody.innerHTML = filtered.map(u => {
+    const roleClass = u.role === 'admin' ? 'badge-b' : 'badge-g';
+    const statusClass = u.status === 'active' ? 'badge-g' : 'badge-r';
+    const perms = (u.permissions || []).slice(0, 3).join(', ') + ((u.permissions || []).length > 3 ? '…' : '') || '—';
+    const lastLogin = u.lastLogin ? new Date(u.lastLogin).toLocaleDateString() : 'Never';
+    return `<tr>
+      <td><strong>${u.name || '—'}</strong></td>
+      <td style="color:var(--muted);font-size:.73rem;">${u.email}</td>
+      <td><span class="badge ${roleClass}">${u.role}</span></td>
+      <td><span class="badge ${statusClass}">${u.status}</span></td>
+      <td style="font-size:.67rem;color:var(--muted);">${perms}</td>
+      <td style="font-size:.7rem;">${lastLogin}</td>
       <td>
-        <div style="display:flex;align-items:center;gap:10px;">
-          <div class="av" style="background:${strToColor(u.name)};">${u.avatar}</div>
-          <div>
-            <div style="font-weight:700;">${u.name}</div>
-            <div style="font-size:.71rem;color:var(--muted);">${u.title}</div>
-          </div>
+        <div class="row-flex" style="gap:3px;">
+          <button class="btn-sm" style="padding:3px 7px;font-size:.65rem;" onclick="toggleUserStatus('${u.id}')"><i class="fas ${u.status === 'active' ? 'fa-ban' : 'fa-check'}"></i></button>
+          <button class="btn-sm" style="padding:3px 7px;font-size:.65rem;" onclick="editUser('${u.id}')"><i class="fas fa-edit"></i></button>
+          <button class="btn-sm btn-danger" style="padding:3px 7px;font-size:.65rem;" onclick="deleteUser('${u.id}')"><i class="fas fa-trash-alt"></i></button>
         </div>
       </td>
-      <td>${u.email}</td>
-      <td style="font-size:.79rem;">${u.org}</td>
-      <td><span class="role-pill ${u.role === 'admin' ? 'role-admin' : 'role-standard'}">${u.role}</span></td>
-      <td><span class="status-pill ${u.status === 'active' ? 'status-active' : 'status-inactive'}">${u.status}</span></td>
-      <td style="font-size:.75rem;color:var(--muted);">${u.lastLogin ? new Date(u.lastLogin).toLocaleString() : 'Never'}</td>
-      <td>
-        <div class="action-row">
-          <button class="btn-sm btn-outline" style="padding:5px 9px;" onclick="openEditModal('${u.id}')" title="Edit"><i class="fas fa-edit"></i></button>
-          <button class="btn-sm btn-amber" style="padding:5px 9px;" onclick="toggleStatus('${u.id}')" title="Toggle Status"><i class="fas fa-toggle-on"></i></button>
-          ${u.id !== session.id ? `<button class="btn-sm btn-danger" style="padding:5px 9px;" onclick="confirmDelete('${u.id}','${u.name}')" title="Delete"><i class="fas fa-trash"></i></button>` : '<span style="width:32px;display:inline-block;"></span>'}
-        </div>
-      </td>
-    </tr>`).join('');
-  if (!users.length) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--muted);">No users found</td></tr>';
-}
-function filterUsers() { renderUsers(document.getElementById('userSearch').value); }
-
-// ── Add user modal ────────────────────────────────────────────────────────
-function openAddUserModal() {
-  ['nu-name','nu-email','nu-org','nu-title','nu-pass'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('nu-role').value = 'standard';
-  document.getElementById('addUserErr').style.display = 'none';
-  document.getElementById('addUserModal').classList.add('open');
-}
-function submitAddUser() {
-  const name = document.getElementById('nu-name').value.trim();
-  const email= document.getElementById('nu-email').value.trim();
-  const org  = document.getElementById('nu-org').value.trim();
-  const title= document.getElementById('nu-title').value.trim();
-  const role = document.getElementById('nu-role').value;
-  const pass = document.getElementById('nu-pass').value;
-  const err  = document.getElementById('addUserErr');
-
-  if (!name || !email || !pass) { err.textContent = 'Name, email and password are required.'; err.style.display = 'block'; return; }
-  if (pass.length < 6) { err.textContent = 'Password must be at least 6 characters.'; err.style.display = 'block'; return; }
-
-  const result = GeoHubAuth.addUser({ name, email, org, title, role, password: pass });
-  if (!result.success) { err.textContent = result.error; err.style.display = 'block'; return; }
-  closeModal('addUserModal');
-  renderUsers(); renderStats();
-  showToast(`User "${name}" created successfully`);
-}
-
-// ── Edit user modal ────────────────────────────────────────────────────────
-function openEditModal(userId) {
-  const user = GeoHubAuth.getUsers().find(u => u.id === userId);
-  if (!user) return;
-  document.getElementById('eu-id').value    = user.id;
-  document.getElementById('eu-name').value  = user.name;
-  document.getElementById('eu-email').value = user.email;
-  document.getElementById('eu-org').value   = user.org;
-  document.getElementById('eu-title').value = user.title;
-  document.getElementById('eu-role').value  = user.role;
-  document.getElementById('eu-status').value= user.status;
-  document.getElementById('editUserModal').classList.add('open');
-}
-function submitEditUser() {
-  const id = document.getElementById('eu-id').value;
-  const updates = {
-    name:   document.getElementById('eu-name').value.trim(),
-    email:  document.getElementById('eu-email').value.trim(),
-    org:    document.getElementById('eu-org').value.trim(),
-    title:  document.getElementById('eu-title').value.trim(),
-    role:   document.getElementById('eu-role').value,
-    status: document.getElementById('eu-status').value,
-    avatar: document.getElementById('eu-name').value.trim().split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2)
-  };
-  const result = GeoHubAuth.updateUser(id, updates);
-  if (!result.success) { showToast('Update failed: ' + result.error, true); return; }
-  closeModal('editUserModal');
-  renderUsers(); renderStats();
-  showToast('User updated successfully');
-}
-
-// ── Toggle status ──────────────────────────────────────────────────────────
-function toggleStatus(userId) {
-  if (userId === session.id) { showToast('Cannot deactivate your own account', true); return; }
-  const result = GeoHubAuth.toggleUserStatus(userId);
-  renderUsers(); renderStats();
-  showToast(`User ${result.status === 'active' ? 'activated' : 'deactivated'}`);
-}
-
-// ── Delete user ────────────────────────────────────────────────────────────
-function confirmDelete(userId, name) {
-  if (!confirm(`Delete user "${name}"? This cannot be undone.`)) return;
-  const result = GeoHubAuth.deleteUser(userId);
-  if (!result.success) { showToast('Delete failed: ' + result.error, true); return; }
-  renderUsers(); renderStats();
-  showToast(`User "${name}" deleted`);
-}
-
-// ── Audit log ─────────────────────────────────────────────────────────────
-function renderAudit() {
-  const logs = GeoHubAuth.getAuditLogs();
-  const icons = {
-    LOGIN:'fas fa-sign-in-alt', LOGOUT:'fas fa-sign-out-alt',
-    USER_CREATE:'fas fa-user-plus', USER_UPDATE:'fas fa-user-edit',
-    USER_DELETE:'fas fa-user-minus', USER_STATUS:'fas fa-toggle-on',
-    MAP_VIEW:'fas fa-map', MAP_CLICK:'fas fa-map-pin', EXPORT:'fas fa-download',
-    EXPORT_CSV:'fas fa-file-csv', ANALYTICS_VIEW:'fas fa-chart-bar'
-  };
-  const colors = {
-    LOGIN:'#f0fdf4,var(--g3)', LOGOUT:'#f3f4f6,#6b7280',
-    USER_CREATE:'#eff6ff,#2563eb', USER_DELETE:'#fef2f2,#dc2626',
-    USER_UPDATE:'#fffbeb,#d97706', USER_STATUS:'#faf5ff,#7c3aed',
-    MAP_VIEW:'#f0fdf4,var(--g3)', MAP_CLICK:'#f0fdf4,var(--g3)',
-    EXPORT:'#fffbeb,#d97706', EXPORT_CSV:'#fffbeb,#d97706',
-    ANALYTICS_VIEW:'#eff6ff,#2563eb'
-  };
-  const feed = document.getElementById('auditFeed');
-  if (!logs.length) { feed.innerHTML = '<p style="padding:20px;color:var(--muted);text-align:center;">No audit events yet.</p>'; return; }
-  feed.innerHTML = logs.map(l => {
-    const [bg, color] = (colors[l.action] || '#f3f4f6,#6b7280').split(',');
-    const ico = icons[l.action] || 'fas fa-circle';
-    const users = GeoHubAuth.getUsers();
-    const user = users.find(u => u.id === l.userId);
-    return `<div class="audit-row">
-      <div class="audit-dot" style="background:${bg};color:${color};"><i class="${ico}"></i></div>
-      <div class="audit-content">
-        <strong>${l.detail}</strong>
-        <span>${user ? user.name : l.userId} · ${new Date(l.timestamp).toLocaleString()}</span>
-      </div>
-      <span class="audit-time">${l.action}</span>
-    </div>`;
+    </tr>`;
   }).join('');
 }
 
-// ── Export audit CSV ──────────────────────────────────────────────────────
-function exportAuditCSV() {
-  const logs = GeoHubAuth.getAuditLogs();
-  const rows = [['ID','Action','Detail','UserID','Timestamp'],...logs.map(l=>[l.id,l.action,`"${l.detail}"`,l.userId,l.timestamp])];
-  const csv = rows.map(r => r.join(',')).join('\n');
-  const a = document.createElement('a'); a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-  a.download = 'geohub_audit_log.csv'; a.click();
-  showToast('Audit log exported');
+// ── USER ACTIONS ──────────────────────────────────────────────────
+function toggleUserStatus(id) {
+  const result = GeoHubAuth.toggleUserStatus(id);
+  if (result.success) showToast(`User ${result.status === 'active' ? 'activated' : 'deactivated'}`, 'ok');
+  renderUsers();
 }
 
-// ── Reset system ──────────────────────────────────────────────────────────
-function resetSystem() {
-  if (!confirm('Reset all data? User accounts will be reset to seed defaults. This cannot be undone.')) return;
-  localStorage.removeItem('ghz_users');
+function deleteUser(id) {
+  if (!confirm('Delete this user?')) return;
+  GeoHubAuth.deleteUser(id);
+  showToast('User deactivated', 'ok');
+  renderUsers();
+}
+
+let _editingUserId = null;
+
+function showAddUserModal() {
+  _editingUserId = null;
+  document.getElementById('modalTitle').textContent = 'Add New User';
+  document.getElementById('modalName').value = '';
+  document.getElementById('modalEmail').value = '';
+  document.getElementById('modalRole').value = 'standard';
+  document.getElementById('modalPass').value = 'TempPass@2025!';
+  document.getElementById('modalPassRow').style.display = 'block';
+  document.getElementById('userModal').style.display = 'flex';
+}
+
+function editUser(id) {
+  _editingUserId = id;
+  const users = GeoHubAuth.getUsers();
+  const u = users.find(x => x.id === id);
+  if (!u) return;
+  document.getElementById('modalTitle').textContent = 'Edit User';
+  document.getElementById('modalName').value = u.name || '';
+  document.getElementById('modalEmail').value = u.email || '';
+  document.getElementById('modalEmail').disabled = true;
+  document.getElementById('modalRole').value = u.role || 'standard';
+  document.getElementById('modalPassRow').style.display = 'none';
+  document.getElementById('userModal').style.display = 'flex';
+}
+
+function closeUserModal() {
+  document.getElementById('userModal').style.display = 'none';
+  document.getElementById('modalEmail').disabled = false;
+}
+
+function saveUser() {
+  const name = document.getElementById('modalName').value.trim();
+  const email = document.getElementById('modalEmail').value.trim();
+  const role = document.getElementById('modalRole').value;
+  const pass = document.getElementById('modalPass').value;
+
+  if (!name || !email) { showToast('Name and email required', 'err'); return; }
+
+  if (_editingUserId) {
+    GeoHubAuth.updateUser(_editingUserId, { name, role, title: role === 'admin' ? 'Administrator' : 'Standard User' });
+    showToast('User updated', 'ok');
+  } else {
+    const result = GeoHubAuth.addUser({ name, email, password: pass, role });
+    if (!result.success) { showToast(result.error || 'Failed to add user', 'err'); return; }
+    showToast(`User ${name} created`, 'ok');
+  }
+  closeUserModal();
+  renderUsers();
+}
+
+// ── AUDIT LOG ─────────────────────────────────────────────────────
+function renderAudit() {
+  const logs = GeoHubAuth.getAuditLogs() || [];
+  document.getElementById('auditCount').textContent = logs.length;
+  const el = document.getElementById('auditLog');
+  if (!logs.length) {
+    el.innerHTML = '<div class="empty-state"><i class="fas fa-history"></i><br>No audit log entries yet.</div>';
+    return;
+  }
+  el.innerHTML = logs.slice(0, 30).map(l => {
+    const colors = { LOGIN: '#16a34a', LOGOUT: '#6b7280', SIGNUP: '#2563eb', EXPORT: '#d97706', PROVINCE_VIEW: '#0d9488', MAP_CLICK: '#7c3aed', DASHBOARD_VIEW: '#4CAF50', USER_CREATE: '#2563eb', USER_UPDATE: '#f59e0b', USER_DELETE: '#dc2626', PASSWORD_CHANGE: '#f97316' };
+    const c = Object.keys(colors).find(k => l.action?.includes(k)) ? colors[Object.keys(colors).find(k => l.action.includes(k))] : '#6b7280';
+    return `<div class="audit-item"><span class="audit-dot" style="background:${c};"></span>
+      <div style="flex:1;font-size:.73rem;"><strong style="color:#111827;">${l.action || '—'}</strong><br><span style="color:var(--muted);font-size:.68rem;">${l.detail || ''}</span></div>
+      <div style="font-size:.64rem;color:var(--muted);white-space:nowrap;">${l.timestamp ? new Date(l.timestamp).toLocaleString() : '—'}</div></div>`;
+  }).join('');
+}
+
+function clearAudit() {
+  if (!confirm('Clear all audit logs?')) return;
   localStorage.removeItem('ghz_audit');
-  GeoHubAuth.init();
-  renderUsers(); renderStats(); renderAudit();
-  showToast('System reset to defaults');
+  renderAudit();
+  showToast('Audit log cleared', 'ok');
 }
 
-// ── Modal helper ──────────────────────────────────────────────────────────
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-document.querySelectorAll('.modal-ov').forEach(m => m.addEventListener('click', function(e) {
-  if (e.target === this) this.classList.remove('open');
-}));
-
-// ── Colour helper ─────────────────────────────────────────────────────────
-function strToColor(str) {
-  const colors = ['#1a6b35','#2563eb','#7c3aed','#d97706','#dc2626','#0d9488','#db2777'];
-  let hash = 0;
-  for (const c of str) hash = c.charCodeAt(0) + ((hash << 5) - hash);
-  return colors[Math.abs(hash) % colors.length];
+// ── SEED USERS ────────────────────────────────────────────────────
+function seedUsers() {
+  GeoHubAuth.seedDefaultUsers();
+  renderUsers();
+  showToast('Default users seeded', 'ok');
 }
 
-// ── Toast ─────────────────────────────────────────────────────────────────
-function showToast(msg, isErr = false) {
-  const t = document.getElementById('toast');
-  t.className = isErr ? 'err' : '';
-  t.innerHTML = `<i class="fas fa-${isErr ? 'exclamation-circle' : 'check-circle'}"></i>${msg}`;
-  t.style.display = 'flex'; clearTimeout(t._t);
-  t._t = setTimeout(() => t.style.display = 'none', 2800);
+// ── EXPORT USERS ──────────────────────────────────────────────────
+function exportUsers() {
+  const users = GeoHubAuth.getUsers() || [];
+  const rows = [['Name','Email','Role','Status','Permissions','Created','Last Login']];
+  users.forEach(u => {
+    rows.push([u.name||'', u.email||'', u.role||'', u.status||'', (u.permissions||[]).join('; '), u.created||'', u.lastLogin||'']);
+  });
+  const csv = rows.map(r => r.map(c => `"${c.replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv);
+  a.download = 'geohub_users_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  showToast(`Exported ${users.length} users`, 'ok');
 }
 
-// ── Init ──────────────────────────────────────────────────────────────────
-renderStats();
+// ── INIT ──────────────────────────────────────────────────────────
 renderUsers();
-GeoHubAuth.addAuditLog('ADMIN_VIEW', 'Viewed Admin Panel', session.id);
+renderAudit();
+GeoHubAuth.addAuditLog('ADMIN_VIEW', 'Admin panel opened', session.id);
+
+// Handle keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'F1') { e.preventDefault(); GeoHubTutorial.openHelpHub(); }
+});
 </script>
 </body>
 </html>

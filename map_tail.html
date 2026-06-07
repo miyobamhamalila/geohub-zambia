@@ -1881,66 +1881,8 @@ try {
   };
 
   window.loadGEELayer = async function(dataset) {
-    // Prevent running from file:// protocol
-    if (window.location.protocol === 'file:') {
-      showToast('âš ï¸ Please run the Flask server and access the map at http://localhost:5000/map', 'warn');
-      return;
-    }
-
-    const year  = document.getElementById('geeYear').value;
-    const btn   = document.getElementById('gee-' + dataset);
-
-    // Toggle off if same dataset
-    if (activeDataset === dataset) {
-      window.removeGEELayer();
-      return;
-    }
-
-    // Reset all buttons
-    document.querySelectorAll('[id^="gee-"]').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Loadingâ€¦</span>';
-
-    try {
-      const res  = await fetch(`/api/map?dataset=${dataset}&year=${year}`);
-
-      // Parse JSON response
-      const data = await res.json();
-
-      if (data.error) throw new Error(data.error);
-
-      // Remove previous GEE layer
-      if (geeLayer) { map.removeLayer(geeLayer); geeLayer = null; }
-
-      if (!data.tile_url) throw new Error('No tile URL returned from server');
-      const tileUrl = data.tile_url;
-
-      // Create tile layer
-      geeLayer = L.tileLayer(tileUrl, {
-        attribution: 'Google Earth Engine',
-        opacity: 0.8,
-        maxZoom: 14,
-        bounds: L.latLngBounds([-18.08, 21.96], [-8.18, 33.70])
-      });
-
-      geeLayer.addTo(map);
-      activeDataset = dataset;
-
-      // â”€â”€ Show GEE colour/value scale bar â”€â”€
-      showGEEScale(data);
-
-      // Update button label
-      const info = DATASET_LABELS[dataset];
-      btn.innerHTML = `<i class="${info.icon}"></i><span>${info.label.split(' ')[0]}</span>`;
-      showToast(`âœ… ${info.label} (${year}) loaded`, 'success');
-
-    } catch(err) {
-      btn.classList.remove('active');
-      const info = DATASET_LABELS[dataset];
-      btn.innerHTML = `<i class="${info.icon}"></i><span>${dataset.toUpperCase()}</span>`;
-      showToast(`GEE error: ${err.message}`, 'err');
-      console.error('GEE layer error:', err);
-    }
+    const info = DATASET_LABELS[dataset];
+    showToast(`🚧 ${info ? info.label : dataset} — Coming soon`, 'info');
   };
 
   window.removeGEELayer = function() {

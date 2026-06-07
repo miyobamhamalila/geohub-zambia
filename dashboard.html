@@ -14,6 +14,7 @@
   <script src="js/climate-data.js"></script>
   <script src="js/features.js"></script>
   <script src="js/agriculture.js"></script>
+  <script src="js/health-data.js"></script>
   <script src="js/tutorial.js"></script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -80,17 +81,17 @@
     .btn-outline:hover{background:#f9fafb;}
 
     /* ── STATS GRID ── */
-    .stats8{display:grid;grid-template-columns:repeat(8,1fr);gap:12px;margin-bottom:18px;}
-    .stat-c{background:#fff;border:1px solid var(--border);border-radius:13px;padding:14px 15px;box-shadow:var(--sh);transition:all .2s;cursor:default;overflow:hidden;position:relative;}
+    .stats8{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:10px;margin-bottom:16px;}
+    .stat-c{background:#fff;border:1px solid var(--border);border-radius:13px;padding:12px 14px;box-shadow:var(--sh);transition:all .2s;cursor:default;overflow:hidden;position:relative;min-height:120px;max-height:148px;}
     .stat-c:hover{box-shadow:var(--sh2);transform:translateY(-2px);}
-    .stat-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:7px;}
-    .stat-ico{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:.95rem;}
+    .stat-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:5px;}
+    .stat-ico{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:.85rem;}
     .stat-trend{font-size:.62rem;font-weight:700;padding:2px 6px;border-radius:20px;}
     .up{background:#f0fdf4;color:#16a34a;}.dn{background:#fef2f2;color:#dc2626;}
     .neutral{background:#f3f4f6;color:var(--muted);}
-    .stat-v{font-size:1.3rem;font-weight:900;line-height:1;color:var(--text);}
-    .stat-l{font-size:.67rem;color:var(--muted);margin-top:3px;}
-    .stat-spark{height:24px;margin-top:7px;}
+    .stat-v{font-size:1.06rem;font-weight:800;line-height:1.1;color:var(--text);margin-bottom:6px;}
+    .stat-l{font-size:.63rem;color:var(--muted);margin-top:0;}
+    .stat-spark{height:14px;margin-top:8px;}
 
     /* ── CARD ── */
     .card{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;box-shadow:var(--sh);}
@@ -352,6 +353,39 @@
       .map-body{height:auto;}
       #miniMapWrap{height:320px;}
       .prov-stats{grid-template-columns:repeat(2,1fr);}
+      .stat-c{min-height:auto;max-height:none;}
+      .stat-spark{height:12px;}
+    }
+    @media(max-width:640px){
+      .nb{height:auto;padding:10px 14px;align-items:flex-start;gap:10px;}
+      .nb-links{flex-wrap:wrap;justify-content:center;margin-left:0;gap:6px;width:100%;}
+      .nb-right{width:100%;justify-content:flex-end;gap:6px;}
+      .nb-lnk{font-size:.73rem;padding:6px 9px;}
+      .sys-bar{padding:10px 14px;gap:10px;font-size:.68rem;}
+      .main{padding:14px 14px 70px;}
+      .pg-hd{align-items:flex-start;}
+      .hero-banner{min-height:180px;border-radius:14px;}
+      .hero-banner-content{padding:18px;}
+      .hero-banner h1{font-size:1.55rem;}
+      .hero-banner p{font-size:.88rem;max-width:100%;}
+      .hero-banner-actions{gap:8px;}
+      .hero-banner-actions .btn-sm{width:100%;justify-content:center;}
+      .stats8{grid-template-columns:1fr;}
+      .qa-grid{grid-template-columns:repeat(2,1fr);}
+      .row3,.row2,.row2-eq,.row4,.row-map,.row-temp{grid-template-columns:1fr;}
+      .card,.ds-card{padding:16px;}
+      .ds-grid{grid-template-columns:1fr;}
+      .ds-thumb{height:100px;}
+      .ds-card h4{font-size:.88rem;}
+      .ds-card p{font-size:.75rem;}
+      .ds-meta{font-size:.66rem;gap:6px;}
+      .qa-btn{padding:10px 9px;}
+      .btn-sm{padding:8px 10px;font-size:.74rem;}
+      .prov-tbl th,.prov-tbl td{font-size:.68rem;padding:7px 7px;}
+      .prov-tbl th{white-space:normal;}
+      .prov-stats{grid-template-columns:1fr;}
+      .map-body{height:auto;}
+      #miniMapWrap{height:300px;}
     }
   </style>
 </head>
@@ -905,7 +939,7 @@
   </div>
   <div class="ds-grid">
     <div class="ds-card" onclick="window.location.href='map.html'">
-      <div class="ds-thumb"><img src="https://images.unsplash.com/photo-1512100356355-7f0a6e2871a2?auto=format&fit=crop&w=1200&q=80" alt="District boundaries"/></div>
+      <div class="ds-thumb"><img src="https://images.unsplash.com/photo-1499346030926-9a72daac6c63?auto=format&fit=crop&w=1200&q=80" alt="District boundaries"/></div>
       <div class="ds-top"><div class="ds-ico" style="background:#f0fdf4;"><i class="fas fa-border-all" style="color:var(--g3);"></i></div><span class="ds-tag" style="background:#f0fdf4;color:var(--g3);border:1px solid #bbf7d0;">GRID3 2022</span></div>
       <h4>NSDI District Boundaries</h4><p>116-district dataset — full population, area &amp; multi-format coordinates (DD/DMS/UTM/MGRS).</p>
       <div class="ds-meta"><span><i class="fas fa-border-all"></i> 116 districts</span><span><i class="fas fa-globe"></i> WGS 84</span><span><i class="fas fa-download"></i> CSV · GeoJSON · KML</span></div>
@@ -917,7 +951,7 @@
       <div class="ds-meta"><span><i class="fas fa-calendar"></i> 2022–2025</span><span><i class="fas fa-globe-africa"></i> 10 provinces</span><span><i class="fas fa-chart-area"></i> 480 records</span></div>
     </div>
     <div class="ds-card" onclick="window.location.href='analytics.html'">
-      <div class="ds-thumb"><img src="https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1200&q=80" alt="Forest cover"/></div>
+      <div class="ds-thumb"><img src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1200&q=80" alt="Forest cover"/></div>
       <div class="ds-top"><div class="ds-ico" style="background:#fffbeb;"><i class="fas fa-tree" style="color:#d97706;"></i></div><span class="ds-tag" style="background:#fffbeb;color:#d97706;border:1px solid #fde68a;">FAO 2024</span></div>
       <h4>Forest Cover &amp; Change</h4><p>Annual forest cover 2018–2024. Loss/gain tracking with cumulative deforestation rates.</p>
       <div class="ds-meta"><span><i class="fas fa-calendar"></i> 2018–2024</span><span><i class="fas fa-chart-line"></i> 7yr trend</span></div>
@@ -927,6 +961,18 @@
       <div class="ds-top"><div class="ds-ico" style="background:#eff6ff;"><i class="fas fa-cloud-rain" style="color:#2563eb;"></i></div><span class="ds-tag" style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;">CHIRPS 2023</span></div>
       <h4>Monthly Rainfall</h4><p>Satellite rainfall estimates — Lusaka, Ndola, Livingstone &amp; Chipata, Jan–Dec 2023.</p>
       <div class="ds-meta"><span><i class="fas fa-map-pin"></i> 4 stations</span><span><i class="fas fa-calendar"></i> Jan–Dec</span></div>
+    </div>
+    <div class="ds-card" onclick="window.location.href='data.html'">
+      <div class="ds-thumb"><img src="https://images.unsplash.com/photo-1520962911573-3fa9cf51f6d1?auto=format&fit=crop&w=1200&q=80" alt="Population dataset"/></div>
+      <div class="ds-top"><div class="ds-ico" style="background:#eef2ff;"><i class="fas fa-users" style="color:#2563eb;"></i></div><span class="ds-tag" style="background:#eef2ff;color:#2563eb;border:1px solid #bfdbfe;">Census 2022</span></div>
+      <h4>Population &amp; Education</h4><p>Demographic density, school access and district-level population estimates across Zambia.</p>
+      <div class="ds-meta"><span><i class="fas fa-school"></i> Education access</span><span><i class="fas fa-user-friends"></i> 20M population</span></div>
+    </div>
+    <div class="ds-card" onclick="window.location.href='data.html'">
+      <div class="ds-thumb"><img src="https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=1200&q=80" alt="Health prevalence map"/></div>
+      <div class="ds-top"><div class="ds-ico" style="background:#f8fafc;"><i class="fas fa-heartbeat" style="color:#ef4444;"></i></div><span class="ds-tag" style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;">Health Metrics</span></div>
+      <h4>Health &amp; Prevalence</h4><p>Province-level health prevalence, morbidity and mapping indicators for national planning.</p>
+      <div class="ds-meta"><span><i class="fas fa-map"></i> 10 provinces</span><span><i class="fas fa-heart"></i> HIV &amp; health metrics</span></div>
     </div>
   </div>
 
@@ -2322,10 +2368,13 @@ function toggleFeaturesHub() {
     panel.style.display = 'block';
     panel.style.opacity = '0';
     panel.style.transform = 'translateY(10px)';
+    panel.style.left = 'auto';
+    panel.style.top = 'auto';
+    panel.style.right = '80px';
+    panel.style.bottom = '80px';
     setTimeout(function(){ panel.style.opacity = '1'; panel.style.transform = 'translateY(0)'; }, 10);
     btn.style.transform = 'rotate(45deg)';
     buildFeaturesHub();
-    makeFeaturesPanelDraggable();
   }
 }
 

@@ -171,6 +171,58 @@ const GeoHubTutorial = (() => {
         return _overlay;
     }
 
+    function makeElementDraggable(el, handleSelector) {
+        if (!el) return;
+        let handle = handleSelector ? el.querySelector(handleSelector) : el;
+        if (!handle) {
+            handle = el;
+        }
+        if (!handle) return;
+        handle.style.cursor = 'grab';
+        handle.style.userSelect = 'none';
+
+        let rect = null;
+        let startX = 0;
+        let startY = 0;
+        let startLeft = 0;
+        let startTop = 0;
+
+        handle.addEventListener('pointerdown', function(e) {
+            if (e.button !== 0) return;
+            e.preventDefault();
+            rect = el.getBoundingClientRect();
+            startX = e.clientX;
+            startY = e.clientY;
+            startLeft = rect.left;
+            startTop = rect.top;
+            el.style.transition = 'none';
+            el.setPointerCapture?.(e.pointerId);
+
+            function onPointerMove(evt) {
+                const dx = evt.clientX - startX;
+                const dy = evt.clientY - startY;
+                const width = rect.width;
+                const height = rect.height;
+                let nextLeft = startLeft + dx;
+                let nextTop = startTop + dy;
+                nextLeft = Math.min(Math.max(nextLeft, 10), window.innerWidth - width - 10);
+                nextTop = Math.min(Math.max(nextTop, 10), window.innerHeight - height - 10);
+                el.style.left = nextLeft + 'px';
+                el.style.top = nextTop + 'px';
+                el.style.right = 'auto';
+            }
+
+            function onPointerUp() {
+                el.style.transition = '';
+                document.removeEventListener('pointermove', onPointerMove);
+                document.removeEventListener('pointerup', onPointerUp);
+            }
+
+            document.addEventListener('pointermove', onPointerMove);
+            document.addEventListener('pointerup', onPointerUp);
+        });
+    }
+
     function createTooltip() {
         if (!_tooltip) {
             _tooltip = document.createElement('div');
@@ -190,8 +242,11 @@ const GeoHubTutorial = (() => {
                 transition: opacity .25s ease, transform .25s cubic-bezier(.16,1,.3,1);
                 transform: translateY(10px);
                 opacity: 0;
+                cursor: grab;
+                user-select: none;
             `;
             document.body.appendChild(_tooltip);
+            makeElementDraggable(_tooltip, '.ghz-tour-tooltip-head');
         }
         return _tooltip;
     }
@@ -218,9 +273,9 @@ const GeoHubTutorial = (() => {
         const isLast = step.final || index === total - 1;
         return `
             <div style="padding: 0;">
-                <div style="background: linear-gradient(135deg, rgba(26,107,53,.2), rgba(45,158,95,.08));
+                <div class="ghz-tour-tooltip-head" style="background: linear-gradient(135deg, rgba(26,107,53,.2), rgba(45,158,95,.08));
                     padding: 14px 18px; border-bottom: 1px solid rgba(255,255,255,.06);
-                    display: flex; align-items: center; gap: 10px;">
+                    display: flex; align-items: center; gap: 10px; cursor: grab; user-select: none;">
                     <span style="font-size: 1.3rem; flex-shrink: 0;">${step.icon || '🌍'}</span>
                     <div style="flex: 1;">
                         <div style="font-weight: 800; font-size: .85rem; color: #fff;">${step.title}</div>
@@ -677,13 +732,14 @@ const GeoHubTutorial = (() => {
             font-family: 'Inter', sans-serif;
         `;
         panel.innerHTML = `
-            <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: linear-gradient(90deg,rgba(26,107,53,.2),rgba(45,158,95,.08)); border-bottom: 1px solid rgba(255,255,255,.06);">
+            <div class="ghz-tutorial-video-head" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: linear-gradient(90deg,rgba(26,107,53,.2),rgba(45,158,95,.08)); border-bottom: 1px solid rgba(255,255,255,.06); cursor: grab; user-select: none;">
                 <span style="font-size: .8rem; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 7px;">${guide.title}</span>
                 <button onclick="this.closest('#ghz-tutorial-video').remove()" style="background: none; border: none; color: var(--muted); cursor: pointer; font-size: .9rem; padding: 3px;">&times;</button>
             </div>
             <div id="ghz-video-content">${buildSlideContent(0)}</div>
         `;
         document.body.appendChild(panel);
+        makeElementDraggable(panel, '.ghz-tutorial-video-head');
 
         // Store nav function
         GeoHubTutorial._navSlide = function(t, idx) {

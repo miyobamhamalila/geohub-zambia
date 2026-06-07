@@ -75,6 +75,10 @@ const GeoHubAuth = (() => {
         return user;
     }
 
+    function validatePassword(email, password) {
+        return !!_verifyUser(email, password);
+    }
+
     function _buildSession(user) {
         return {
             id: user.id, name: user.name, email: user.email, role: user.role,
@@ -209,14 +213,19 @@ const GeoHubAuth = (() => {
         const email = Object.keys(users).find(e => users[e].id === userId);
         if (!email) return { success: false, error: 'User not found' };
         const { password, ...safeUpdates } = updates;
+        if (password) {
+            users[email].password = _hashPassword(password);
+        }
         Object.assign(users[email], safeUpdates);
         _setUsers(users);
         const s = getSession();
         if (s && s.id === userId) {
-            localStorage.setItem(SESSION_KEY, JSON.stringify({ ...s, ...safeUpdates }));
+            const updatedSession = { ...s, ...safeUpdates };
+            if (users[email].avatar) updatedSession.avatar = users[email].avatar;
+            localStorage.setItem(SESSION_KEY, JSON.stringify(updatedSession));
         }
         addAuditLog('USER_UPDATE', `User updated: ${safeUpdates.name || userId}`, getSession()?.id);
-        return { success: true };
+        return { success: true, user: users[email] };
     }
 
     function deleteUser(userId) {
@@ -253,7 +262,7 @@ const GeoHubAuth = (() => {
     return {
         init, onReady, signup, login, loginWithGoogle, resetPassword, changePassword, logout,
         getSession, requireAuth, requireAdmin, hasPermission, getUsers, addUser, updateUser,
-        deleteUser, toggleUserStatus, seedDefaultUsers, addAuditLog, getAuditLogs
+        deleteUser, toggleUserStatus, seedDefaultUsers, validatePassword, addAuditLog, getAuditLogs
     };
 })();
 

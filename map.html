@@ -14,6 +14,7 @@
   <script src="js/worldcover.js"></script>
   <script src="js/climate-data.js"></script>
   <script src="js/places-data.js"></script>
+  <script src="js/health-data.js"></script>
   <script src="js/features.js"></script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -1979,8 +1980,8 @@
         <button class="tool-btn" onclick="toggleDrawClipPanel()" style="border-color:rgba(251,191,36,.25);"><i class="fas fa-cut" style="color:#fbbf24;"></i><span>Draw &amp; Clip</span></button>
         <button class="tool-btn" onclick="toggleFileLoaderPanel()" style="border-color:rgba(96,165,250,.25);"><i class="fas fa-folder-open" style="color:#60a5fa;"></i><span>Load File</span></button>
         <button class="tool-btn" onclick="toggleAttrTable()" style="border-color:rgba(167,139,250,.25);"><i class="fas fa-table" style="color:#a78bfa;"></i><span>Attr Table</span></button>
-        <button class="tool-btn" onclick="toggleFloodPredictionPanel()" id="floodPredictBtn" style="border-color:rgba(6,182,212,.25);background:rgba(6,182,212,.06);"><i class="fas fa-water" style="color:#06b6d4;"></i><span>Flood Predict</span></button>
         <button class="tool-btn" onclick="toggleConstructionPanel()" id="constructionBtn" style="border-color:rgba(251,146,60,.25);background:rgba(251,146,60,.06);"><i class="fas fa-hard-hat" style="color:#fb923c;"></i><span>Climate Const.</span></button>
+        <button class="tool-btn" onclick="toggleHealthAccessPanel()" id="healthAccessBtn" style="border-color:rgba(239,68,68,.25);background:rgba(239,68,68,.06);"><i class="fas fa-heartbeat" style="color:#ef4444;"></i><span>Health Access</span></button>
       </div>
 
       <!-- Measurement result -->
@@ -1993,6 +1994,9 @@
       <!-- Legend -->
       <div class="sb-sec"><i class="fas fa-map-signs"></i>Legend</div>
       <div id="sidebarLegend"></div>
+
+      <!-- Flood Prediction Tool -->
+      <button class="exp-btn" onclick="toggleFloodPredictionPanel()" id="floodPredictBtn" style="margin-bottom:4px;border-color:rgba(6,182,212,.25);background:rgba(6,182,212,.06);"><i class="fas fa-water" style="color:#06b6d4;"></i> Flood Prediction & Mapping</button>
 
       <!-- Google Earth Engine Layers -->
       <div class="sb-sec"><i class="fas fa-satellite"></i>Earth Engine Layers</div>
@@ -2145,6 +2149,8 @@
   <div class="mtb-btn" onclick="toggleBookmarks()" title="Saved Locations"><i class="fas fa-bookmark"></i></div>
   <div class="mtb-btn" onclick="locateUser()" title="My Location"><i class="fas fa-location-arrow"></i></div>
   <div class="mtb-btn" onclick="takeScreenshot()" title="Screenshot / Print"><i class="fas fa-camera"></i></div>
+  <div class="mtb-btn" id="chatBtn" onclick="if(window.GeoHubFeatures) GeoHubFeatures.openChatAssistant(); else alert('Features not loaded')" title="AI Assistant"><i class="fas fa-robot" style="color:#f59e0b;"></i></div>
+  <div class="mtb-btn" id="weatherBtn" onclick="(function(){ if(window.GeoHubFeatures) GeoHubFeatures.createFloatingPanel('wxPanel','Zambia Weather Alerts','fas fa-cloud-sun',GeoHubFeatures.renderWeatherPanel(),{ position: 'top:calc(var(--nb,62px)+10px);right:12px;', width: '340px' }); else alert('Features not loaded') })()" title="Weather Alerts"><i class="fas fa-cloud-sun" style="color:#60a5fa;"></i></div>
   <div class="mtb-btn" onclick="toggleSpatialPanel()" title="Spatial Analysis" id="spatialToggleBtn" style="background:rgba(29,78,216,.15);border-color:rgba(96,165,250,.25);"><i class="fas fa-drafting-compass" style="color:#60a5fa;"></i></div>
   <div class="mtb-btn" onclick="toggleTimePanel()" title="Temporal Analysis" id="timeToggleBtn" style="background:rgba(124,58,237,.15);border-color:rgba(167,139,250,.25);"><i class="fas fa-history" style="color:#a78bfa;"></i></div>
   <div class="mtb-btn" onclick="toggleSuitabilityPanel()" title="Suitability Analysis" id="suitabilityToggleBtn" style="background:rgba(234,179,8,.15);border-color:rgba(251,191,36,.25);"><i class="fas fa-star" style="color:#fbbf24;"></i></div>
@@ -2907,6 +2913,9 @@
     <div style="font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:rgba(6,182,212,.7);margin-bottom:6px;">Flood Risk Model — Multi-Factor Analysis</div>
     <div id="floodPredictContent"></div>
     <div style="display:flex;gap:6px;margin-top:8px;">
+      <button onclick="routeFloodToNearestHealth()" style="padding:5px 8px;background:rgba(244,63,94,.12);border:1px solid rgba(244,63,94,.25);border-radius:6px;color:#fb7185;font-family:'Inter',sans-serif;font-size:.68rem;font-weight:700;cursor:pointer;" title="Route flooded areas to nearest health centers"><i class="fas fa-ambulance"></i> Route to Health</button>
+    </div>
+    <div style="display:flex;gap:6px;margin-top:6px;">
       <button onclick="runFloodPrediction()" style="flex:1;padding:7px;background:linear-gradient(135deg,#0e7490,#0891b2);border:none;border-radius:7px;color:#fff;font-family:'Inter',sans-serif;font-size:.75rem;font-weight:700;cursor:pointer;"><i class="fas fa-play"></i> Run Prediction</button>
       <button onclick="toggleFloodLayer()" style="padding:7px 10px;background:rgba(6,182,212,.12);border:1px solid rgba(6,182,212,.25);border-radius:7px;color:#06b6d4;font-family:'Inter',sans-serif;font-size:.75rem;font-weight:700;cursor:pointer;" id="floodLayerBtn"><i class="fas fa-layer-group"></i></button>
     </div>
@@ -2916,6 +2925,22 @@
       <button onclick="showFloodPlaces('all')" style="padding:5px 8px;background:rgba(6,182,212,.12);border:1px solid rgba(6,182,212,.25);border-radius:6px;color:#06b6d4;font-family:'Inter',sans-serif;font-size:.68rem;font-weight:700;cursor:pointer;"><i class="fas fa-globe"></i> All</button>
     </div>
     <div id="floodResults" style="display:none;margin-top:8px;"></div>
+  </div>
+</div>
+
+<!-- ── HEALTH ACCESS PANEL ── -->
+<div id="healthAccessPanel" style="position:fixed;top:calc(var(--nb)+10px);right:12px;width:340px;background:var(--card-bg);border:1px solid rgba(239,68,68,.25);border-radius:14px;z-index:596;display:none;overflow:hidden;backdrop-filter:blur(14px);box-shadow:0 10px 40px rgba(0,0,0,.6);">
+  <div style="background:linear-gradient(90deg,rgba(239,68,68,.15),rgba(220,38,38,.05));padding:11px 14px;border-bottom:1px solid rgba(239,68,68,.15);display:flex;align-items:center;justify-content:space-between;">
+    <h3 style="font-size:.86rem;font-weight:800;color:#fff;display:flex;align-items:center;gap:7px;"><i class="fas fa-heartbeat" style="color:#ef4444;"></i>Access to Healthcare</h3>
+    <button onclick="closeHealthAccessPanel()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.85rem;"><i class="fas fa-times"></i></button>
+  </div>
+  <div style="padding:12px 14px;">
+    <div id="healthAccessContent"></div>
+    <div style="display:flex;gap:6px;margin-top:8px;">
+      <button onclick="runHealthAccessAnalysis()" style="flex:1;padding:7px;background:linear-gradient(135deg,#dc2626,#ef4444);border:none;border-radius:7px;color:#fff;font-family:'Inter',sans-serif;font-size:.75rem;font-weight:700;cursor:pointer;"><i class="fas fa-play"></i> Run Analysis</button>
+      <button onclick="toggleHealthAccessLayer()" style="padding:7px 10px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.25);border-radius:7px;color:#ef4444;font-family:'Inter',sans-serif;font-size:.75rem;font-weight:700;cursor:pointer;" id="healthAccessLayerBtn"><i class="fas fa-layer-group"></i></button>
+    </div>
+    <div id="healthAccessResults" style="display:none;margin-top:8px;"></div>
   </div>
 </div>
 
@@ -3494,14 +3519,16 @@ const drawControl = new L.Control.Draw({
 
 // ── Layer groups ───────────────────────────────────────────────────────────
 const LAYERS = {
-  districts:   { group: L.layerGroup(), label: 'Districts (NSDI 2022)', color: '#4CAF50', count: '116', active: true  },
-  provinces:   { group: L.layerGroup(), label: 'Province Labels',        color: '#ffffff', count: '10',  active: true  },
-  water:       { group: L.layerGroup(), label: 'Water Bodies',            color: '#3b82f6', count: '6',   active: true  },
-  mining:      { group: L.layerGroup(), label: 'Mining Sites',            color: '#f97316', count: '6',   active: true  },
-  cities:      { group: L.layerGroup(), label: 'District Capitals',       color: '#ef4444', count: '20',  active: true  },
-  borders:     { group: L.layerGroup(), label: 'Province Borders',        color: '#6b7280', count: '10',  active: false },
-  heatoverlay: { group: L.layerGroup(), label: 'Pop. Heat Overlay',       color: '#ef4444', count: '116', active: false },
-  grid:        { group: L.layerGroup(), label: 'Coordinate Grid',         color: '#6b7280', count: '',    active: false },
+  districts:   { group: L.layerGroup(), label: 'Districts (NSDI 2022)',    color: '#4CAF50', count: '116', active: true  },
+  provinces:   { group: L.layerGroup(), label: 'Province Labels',           color: '#ffffff', count: '10',  active: false },
+  water:       { group: L.layerGroup(), label: 'Water Bodies',              color: '#3b82f6', count: '6',   active: true  },
+  mining:      { group: L.layerGroup(), label: 'Mining Sites',              color: '#f97316', count: '6',   active: true  },
+  cities:      { group: L.layerGroup(), label: 'District Capitals',         color: '#ef4444', count: '20',  active: false },
+  borders:     { group: L.layerGroup(), label: 'Province Borders',          color: '#6b7280', count: '10',  active: false },
+  heatoverlay: { group: L.layerGroup(), label: 'Pop. Heat Overlay',         color: '#ef4444', count: '116', active: false },
+  grid:        { group: L.layerGroup(), label: 'Coordinate Grid',           color: '#6b7280', count: '',    active: false },
+  health:      { group: L.layerGroup(), label: 'Health Facilities',         color: '#f87171', count: '2,798', active: true },
+  flood:       { group: L.layerGroup(), label: 'Flood Risk Zones',          color: '#06b6d4', count: '',    active: false },
 };
 Object.entries(LAYERS).forEach(([k,l]) => { if (l.active) l.group.addTo(map); });
 
@@ -3696,65 +3723,120 @@ function copyDistCoords(lat, lng) {
 // ── Province labels ────────────────────────────────────────────────────────
 function buildProvinceLayer() {
   LAYERS.provinces.group.clearLayers();
-  ZAMBIA_PROVINCES.forEach(p => {
-    const dist = ZAMBIA_DISTRICTS.find(d => d.province === p.name);
-    if (!dist) return;
-    const icon = L.divIcon({
-      html: `<div style="background:rgba(0,0,0,.7);color:#fff;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:800;white-space:nowrap;font-family:'Inter',sans-serif;border:1px solid ${p.color}55;">${p.name.toUpperCase()}</div>`,
-      className: '', iconAnchor: [0, 0]
-    });
-    L.marker([dist.lat - 0.6, dist.lng], { icon }).addTo(LAYERS.provinces.group);
-  });
+  // Province labels are intentionally disabled for a cleaner district-only view.
 }
 
 // ── Water layer ────────────────────────────────────────────────────────────
 function buildWaterLayer() {
   LAYERS.water.group.clearLayers();
-  WATER_BODIES.forEach(w => {
-    L.circleMarker([w.lat, w.lng], {
-      radius: w.area_km2 > 5000 ? 14 : 9,
-      fillColor: '#3b82f6', color: '#93c5fd', weight: 2, fillOpacity: 0.75
-    }).bindPopup(`<div style="font-family:'Inter',sans-serif;min-width:190px;">
-      <strong style="font-size:.9rem;">${w.name}</strong><br>
-      <small style="color:#6b7280;">${w.type}</small>
-      <table style="width:100%;font-size:.76rem;margin-top:7px;border-collapse:collapse;">
-        <tr><td style="color:#6b7280;">Area</td><td style="font-weight:700;text-align:right;">${w.area_km2.toLocaleString()} km²</td></tr>
-        <tr><td style="color:#6b7280;">Max Depth</td><td style="font-weight:700;text-align:right;">${w.depth_m ? w.depth_m + ' m' : 'Shallow'}</td></tr>
-        <tr><td style="color:#6b7280;">Shared with</td><td style="font-weight:700;text-align:right;">${w.shared_with}</td></tr>
-      </table></div>`).addTo(LAYERS.water.group);
-  });
+  // Placemark markers removed - only polygon shapes visible
 }
 
 // ── Mining layer ───────────────────────────────────────────────────────────
 function buildMiningLayer() {
   LAYERS.mining.group.clearLayers();
-  MINING_SITES.forEach(m => {
-    const icon = L.divIcon({
-      html: `<div title="${m.name}" style="background:#f97316;color:#fff;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4);">⛏</div>`,
-      className: '', iconAnchor: [11,11]
-    });
-    L.marker([m.lat, m.lng], { icon }).bindPopup(`<div style="font-family:'Inter',sans-serif;min-width:210px;">
-      <strong style="font-size:.92rem;">${m.name}</strong><br>
-      <small style="color:#6b7280;">${m.company}</small>
-      <table style="width:100%;font-size:.76rem;margin-top:7px;border-collapse:collapse;">
-        <tr><td style="color:#6b7280;">Type</td><td style="font-weight:700;text-align:right;">${m.type}</td></tr>
-        <tr><td style="color:#6b7280;">Production</td><td style="font-weight:700;text-align:right;color:#ea580c;">${m.production_t.toLocaleString()} t/yr</td></tr>
-        <tr><td style="color:#6b7280;">Coordinates</td><td style="font-weight:700;text-align:right;font-size:.7rem;">${m.lat.toFixed(4)}, ${m.lng.toFixed(4)}</td></tr>
-      </table></div>`).addTo(LAYERS.mining.group);
-  });
+  // Placemark markers removed - only polygon shapes visible
 }
 
 // ── City capitals ──────────────────────────────────────────────────────────
 function buildCitiesLayer() {
   LAYERS.cities.group.clearLayers();
-  const top20 = [...ZAMBIA_DISTRICTS].sort((a,b) => b.pop - a.pop).slice(0, 20);
-  top20.forEach(c => {
-    const icon = L.divIcon({
-      html: `<div style="width:7px;height:7px;background:#ef4444;border-radius:50%;border:1.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.5);"></div>`,
-      className: '', iconAnchor: [3.5,3.5]
+  // Placemark markers removed - only polygon shapes visible
+}
+
+// ── HEALTH FACILITIES LAYER ─────────────────────────────────────────────
+async function buildHealthLayer() {
+  LAYERS.health.group.clearLayers();
+  try {
+    // Load health facilities from GeoHubPlaces or directly from GeoJSON
+    let facilities = [];
+    if (window.GeoHubPlaces && GeoHubPlaces.data && GeoHubPlaces.data.healthFacilities && GeoHubPlaces.data.healthFacilities.length) {
+      facilities = GeoHubPlaces.data.healthFacilities;
+    } else {
+      // Try loading directly
+      try {
+        const resp = await fetch('GRID3_ZMB_HealthFac_v01beta_-2329207463181782115.geojson');
+        const gj = await resp.json();
+        facilities = (gj.features || []).map((f, i) => {
+          const p = f.properties || {};
+          return {
+            id: `hfac_${i + 1}`,
+            name: (p.Name || p.Label || 'Health Facility').replace(/_/g, ' ').replace(/\\s+/g, ' ').trim().replace(/\\w\\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()),
+            type: p.Type || 'Health Facility',
+            subType: p.SubType || '',
+            category: 'health',
+            province: p.Province || '',
+            district: p.District || '',
+            lat: parseFloat(p.LAT) || (f.geometry?.coordinates?.[1]) || 0,
+            lng: parseFloat(p.LONG) || (f.geometry?.coordinates?.[0]) || 0,
+            source: p.Source || 'MOH',
+            year: p.Data_year || ''
+          };
+        }).filter(f => f.lat && f.lng);
+      } catch(e) {
+        console.warn('Could not load health facilities GeoJSON directly');
+        return;
+      }
+    }
+    
+    if (!facilities.length) return;
+    
+    // Get facility type info from ZAMBIA_HEALTH if available
+    function getFacInfo(type) {
+      if (window.ZAMBIA_HEALTH) {
+        return ZAMBIA_HEALTH.getFacilityTypeInfo(type);
+      }
+      return { icon: '🏥', color: '#f87171', priority: 5 };
+    }
+    
+    // Add markers for each facility (clustered at lower zoom levels)
+    facilities.forEach(f => {
+      const finfo = getFacInfo(f.type || f.subType);
+      const size = finfo.priority <= 0 ? 10 : finfo.priority <= 1 ? 8 : finfo.priority <= 2 ? 6 : 4;
+      
+      // Use circle markers scaled by facility type importance
+      const marker = L.circleMarker([f.lat, f.lng], {
+        radius: size,
+        fillColor: finfo.color,
+        color: '#ffffff',
+        weight: 1.5,
+        fillOpacity: 0.75
+      });
+      
+      const provColor = PROV_COLORS[f.province] || '#4CAF50';
+      marker.bindPopup(`
+        <div style="font-family:'Inter',sans-serif;min-width:200px;max-width:260px;">
+          <div style="background:${finfo.color};padding:8px 10px;margin:-10px -12px 8px;border-radius:5px 5px 0 0;">
+            <strong style="color:#fff;font-size:.85rem;">${finfo.icon} ${f.name}</strong>
+            <div style="color:rgba(255,255,255,.85);font-size:.68rem;margin-top:1px;">${f.type}${f.subType ? ' · ' + f.subType : ''}</div>
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-size:.74rem;">
+            <tr><td style="color:#6b7280;padding:2px 0;">District</td><td style="font-weight:700;text-align:right;">${f.district || '—'}</td></tr>
+            <tr><td style="color:#6b7280;padding:2px 0;">Province</td><td style="font-weight:700;text-align:right;color:${provColor};">${f.province}</td></tr>
+            <tr><td style="color:#6b7280;padding:2px 0;">Facility Type</td><td style="font-weight:700;text-align:right;">${f.type}</td></tr>
+            <tr><td style="color:#6b7280;padding:2px 0;">Coordinates</td><td style="font-weight:700;text-align:right;font-family:'Courier New',monospace;font-size:.7rem;">${f.lat.toFixed(4)}, ${f.lng.toFixed(4)}</td></tr>
+            <tr><td style="color:#6b7280;padding:2px 0;">Source</td><td style="font-weight:700;text-align:right;font-size:.65rem;">${f.source || 'MOH/GRID3'}</td></tr>
+          </table>
+          <div style="font-size:.6rem;color:var(--muted);margin-top:5px;text-align:center;">
+            GRID3 Zambia · Ministry of Health ${f.year ? '· ' + f.year : ''}
+          </div>
+        </div>
+      `, { maxWidth: 280 });
+      
+      marker.on('mouseover', function() {
+        this.setStyle({ radius: size + 3, fillOpacity: 0.9 });
+      });
+      marker.on('mouseout', function() {
+        this.setStyle({ radius: size, fillOpacity: 0.75 });
+      });
+      
+      LAYERS.health.group.addLayer(marker);
     });
-    L.marker([c.lat, c.lng], { icon }).bindTooltip(c.district, { direction:'top' }).addTo(LAYERS.cities.group);
-  });
+    
+    console.log(`Health layer built with ${facilities.length} facilities`);
+  } catch(err) {
+    console.warn('Failed to build health layer:', err);
+  }
 }
 
 // ── Coordinate grid ────────────────────────────────────────────────────────
@@ -3762,11 +3844,9 @@ function buildGridLayer() {
   LAYERS.grid.group.clearLayers();
   for (let lat = -18; lat <= -8; lat += 2) {
     L.polyline([[lat,22],[lat,34]], { color:'rgba(255,255,255,.15)', weight:.8, dashArray:'4,6' }).addTo(LAYERS.grid.group);
-    L.marker([lat,22.2], { icon:L.divIcon({ html:`<span style="font-size:9px;color:rgba(255,255,255,.5);background:rgba(0,0,0,.4);padding:1px 3px;border-radius:2px;">${lat}°</span>`, className:'', iconAnchor:[0,0] })}).addTo(LAYERS.grid.group);
   }
   for (let lng = 22; lng <= 34; lng += 2) {
     L.polyline([[-8,lng],[-18,lng]], { color:'rgba(255,255,255,.15)', weight:.8, dashArray:'4,6' }).addTo(LAYERS.grid.group);
-    L.marker([-8.3,lng], { icon:L.divIcon({ html:`<span style="font-size:9px;color:rgba(255,255,255,.5);background:rgba(0,0,0,.4);padding:1px 3px;border-radius:2px;">${lng}°</span>`, className:'', iconAnchor:[0,0] })}).addTo(LAYERS.grid.group);
   }
 }
 
@@ -3819,11 +3899,100 @@ function toggleLayer(key, on) {
     if (key === 'grid')        buildGridLayer();
     if (key === 'borders')     buildBordersLayer();
     if (key === 'heatoverlay') buildHeatOverlayLayer();
+    if (key === 'health')      buildHealthLayer();
+    if (key === 'flood')       buildFloodRiskLayer();
   } else { map.removeLayer(LAYERS[key].group); }
   LAYERS[key].active = on;
   updateLegend();
   updateLayerActiveCount();
   showToast(`${LAYERS[key].label} ${on ? 'shown' : 'hidden'}`, 'info');
+}
+
+/**
+ * Build the Flood Risk Zones layer — polygon districts colored by flood risk
+ * Uses district polygons from GeoJSON + flood risk classification
+ */
+async function buildFloodRiskLayer() {
+  LAYERS.flood.group.clearLayers();
+  const riskColor = { 'High':'#dc2626', 'Medium':'#f97316', 'Low':'#fbbf24', 'Minimal':'#86efac' };
+  
+  function normalizeDistrictName(name) {
+    if (!name) return name;
+    let normalized = name;
+    normalized = normalized.replace(/-/g, ' ');
+    normalized = normalized.replace(/'/g, '');
+    if (normalized.includes('Itezhi') && normalized.includes('tezhi')) normalized = 'Itezhi-Tezhi';
+    if (normalized.includes('Kapiri') && normalized.includes('Mposhi')) normalized = 'Kapiri Mposhi';
+    if (normalized.includes('Mpulungu')) normalized = 'Mafinga';
+    if (normalized.includes('Chipili')) normalized = 'Chembe';
+    return normalized;
+  }
+  
+  function findDistrict(name, province) {
+    let d = ZAMBIA_DISTRICTS.find(x => x.district === name && x.province === province);
+    if (!d) d = ZAMBIA_DISTRICTS.find(x => x.district === name);
+    return d;
+  }
+
+  try {
+    const response = await fetch('districts-polygons.geojson');
+    if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+    const geojson = await response.json();
+    
+    L.geoJSON(geojson, {
+      style: function(feature) {
+        const props = feature.properties;
+        const districtName = normalizeDistrictName(props.ADM2_NAME);
+        const provinceName = props.ADM1_NAME;
+        const distData = findDistrict(districtName, provinceName);
+        const risk = distData ? simFloodRisk(distData) : 'Low';
+        const col = riskColor[risk] || '#6b7280';
+        return {
+          color: '#ffffff',
+          weight: 1.5,
+          fillColor: col,
+          fillOpacity: risk === 'High' ? 0.7 : risk === 'Medium' ? 0.55 : risk === 'Low' ? 0.4 : 0.3,
+          dashArray: risk === 'High' ? '' : risk === 'Medium' ? '4,4' : '6,6'
+        };
+      },
+      onEachFeature: function(feature, layer) {
+        const props = feature.properties;
+        const districtName = normalizeDistrictName(props.ADM2_NAME);
+        const provinceName = props.ADM1_NAME;
+        const distData = findDistrict(districtName, provinceName);
+        const risk = distData ? simFloodRisk(distData) : 'Low';
+        const col = riskColor[risk] || '#6b7280';
+        const label = districtName + (provinceName ? ', ' + provinceName : '');
+        
+        layer.bindTooltip(`<b>${label}</b><br><span style="color:${col};">Flood Risk: ${risk}</span>`,
+          { className: 'ghz-tooltip', sticky: true });
+        
+        layer.on('click', function() {
+          if (distData) {
+            const pop = distData.pop ? distData.pop.toLocaleString() : '—';
+            layer.bindPopup(`
+              <div style="font-family:'Inter',sans-serif;min-width:200px;">
+                <div style="background:${col};padding:8px 10px;margin:-10px -12px 8px;border-radius:5px 5px 0 0;">
+                  <strong style="color:#fff;font-size:.85rem;">🌊 ${districtName}</strong>
+                  <div style="color:rgba(255,255,255,.85);font-size:.68rem;">${provinceName} · Flood Risk: ${risk}</div>
+                </div>
+                <div style="font-size:.74rem;">
+                  <div style="padding:3px 0;"><span style="color:#6b7280;">Population</span> <strong style="float:right;">${pop}</strong></div>
+                  ${distData.area_km2 ? `<div style="padding:3px 0;"><span style="color:#6b7280;">Area</span> <strong style="float:right;">${distData.area_km2.toLocaleString()} km²</strong></div>` : ''}
+                  <div style="padding:3px 0;"><span style="color:#6b7280;">Flood Risk</span> <strong style="float:right;color:${col};">${risk}</strong></div>
+                </div>
+              </div>
+            `).openPopup();
+          }
+        });
+        
+        LAYERS.flood.group.addLayer(layer);
+      }
+    });
+  } catch (err) {
+    console.warn('Could not load district polygons for flood layer', err);
+    showToast('Could not load district polygons for flood risk layer', 'warn');
+  }
 }
 
 function toggleWMSLayer(key, on) {
@@ -4383,11 +4552,7 @@ function flyToConverted() {
   if (!lastConvertedPoint) return;
   const { lat, lng } = lastConvertedPoint;
   map.flyTo([lat, lng], Math.max(map.getZoom(), 10), { duration: 1.3 });
-  const tmpMarker = L.circleMarker([lat, lng], {
-    radius:12, fillColor:'#4CAF50', color:'#fff', weight:2.5, fillOpacity:0.92
-  }).addTo(map);
-  tmpMarker.bindPopup(`<b>Converted Point</b><br>${lat.toFixed(6)}°, ${lng.toFixed(6)}°`).openPopup();
-  setTimeout(() => map.removeLayer(tmpMarker), 8000);
+  // Placemark markers removed - only polygon shapes visible
   document.getElementById('coordConverter').style.display = 'none';
 }
 
@@ -4794,6 +4959,10 @@ document.addEventListener('click', function(ev) {
 // Prevent native context menu on map container
 document.getElementById('map').addEventListener('contextmenu', function(e) { e.preventDefault(); });
 
+// Wire GeoHub feature events to map viewer (AI chat, weather)
+document.addEventListener('ghz:chat', function(){ if(window.GeoHubFeatures) GeoHubFeatures.openChatAssistant(); });
+document.addEventListener('ghz:weather', function(){ if(window.GeoHubFeatures) GeoHubFeatures.createFloatingPanel('wxPanel','Zambia Weather Alerts','fas fa-cloud-sun',GeoHubFeatures.renderWeatherPanel(),{ position: 'top:calc(var(--nb,62px)+10px);right:12px;', width: '340px' }); });
+
 map.on('click', function(e) {
   if (activeTool === 'info') {
     const nearby = districtMarkers.reduce((best,{marker,data}) => {
@@ -4858,20 +5027,7 @@ function flyToPlace(lat, lng, name, type) {
   // Clear previous place markers
   placeMarkerLayer.clearLayers();
   
-  // Choose icon based on type
-  let icon = '📍';
-  if (type === 'district') icon = '🏛️';
-  else icon = '🏫';
-  
-  const marker = L.marker([lat, lng]).addTo(placeMarkerLayer);
-  marker.bindPopup(`<div style="font-family:'Inter',sans-serif;min-width:200px;">
-    <strong>${icon} ${name}</strong><br>
-    <small style="color:#6b7280;">${type === 'district' ? 'District (NSDI GRID3 2022)' : 'Point of Interest'}</small>
-    <br><br>
-    <span style="font-size:.72rem;">${lat.toFixed(5)}°, ${lng.toFixed(5)}°</span>
-    <div style="margin-top:6px;">${GeoHubClimate ? `<span style="font-size:.68rem;color:#6b7280;">Climate data available for this area</span>` : ''}</div>
-  </div>`).openPopup();
-  
+  // Placemark markers removed - only polygon shapes visible
   showToast(`📍 ${name}`, 'info');
 }
 
@@ -7038,36 +7194,46 @@ function renderRealRainfallChart(ctx, mode) {
   }
 }
 
-// ── INIT ───────────────────────────────────────────────────────────────────
-// Progressive loading with progress bar
-const loaderBar = document.getElementById('loaderBar');
-const loaderStep = document.getElementById('loaderStep');
-function setLoad(pct, msg) {
-  if (loaderBar) loaderBar.style.width = pct + '%';
-  if (loaderStep) loaderStep.textContent = msg;
-  document.getElementById('loaderMsg').textContent = msg;
-}
+  // ── INIT ───────────────────────────────────────────────────────────────────
+  // Progressive loading with progress bar
+  const loaderBar = document.getElementById('loaderBar');
+  const loaderStep = document.getElementById('loaderStep');
+  function setLoad(pct, msg) {
+    if (loaderBar) loaderBar.style.width = pct + '%';
+    if (loaderStep) loaderStep.textContent = msg;
+    document.getElementById('loaderMsg').textContent = msg;
+  }
 
-async function initMap() {
-  setLoad(10, 'Loading 116 districts…');
-  await buildDistrictLayer();
-  setLoad(30, 'Building province layers…');
-  buildProvinceLayer();
-  setLoad(45, 'Loading water bodies…');
-  buildWaterLayer();
-  setLoad(55, 'Loading mining sites…');
-  buildMiningLayer();
-  setLoad(65, 'Building city markers…');
-  buildCitiesLayer();
-  setLoad(75, 'Generating layer controls…');
-  buildLayerList();
-  buildThematicLayerList();
-  buildProvFilter();
-  setLoad(85, 'Updating legend & tools…');
-  updateLegend();
-  renderCCInputs();
-  renderSpatialConfig();
-  setLoad(95, 'Finalising…');
+  async function initMap() {
+    setLoad(10, 'Loading 116 districts…');
+    await buildDistrictLayer();
+    setLoad(25, 'Building province layers…');
+    buildProvinceLayer();
+    setLoad(35, 'Loading water bodies…');
+    buildWaterLayer();
+    setLoad(45, 'Loading mining sites…');
+    buildMiningLayer();
+    setLoad(55, 'Building city markers…');
+    buildCitiesLayer();
+    setLoad(65, 'Loading health facilities…');
+    // Load health facilities in background
+    if (window.GeoHubPlaces) {
+      GeoHubPlaces.loadAll().catch(() => {});
+    }
+    setLoad(75, 'Generating layer controls…');
+    buildLayerList();
+    buildThematicLayerList();
+    buildProvFilter();
+    setLoad(85, 'Building health facilities…');
+    // Build health layer if active
+    if (LAYERS.health.active) {
+      await buildHealthLayer();
+    }
+    setLoad(90, 'Updating legend & tools…');
+    updateLegend();
+    renderCCInputs();
+    renderSpatialConfig();
+    setLoad(95, 'Finalising…');
 
   // Initialise coordinate mode labels
   setCoordMode('dd', document.querySelector('#coordTabsMain [data-mode="dd"]'));
@@ -8732,6 +8898,260 @@ function toggleFloodLayer() {
   }
 }
 
+// ── FLOOD TO NEAREST HEALTH CENTER ROUTING ────────────────────────────
+let floodHealthRouteLayer = L.layerGroup();
+let floodHealthRouteLines = []; // Keep reference for cleanup
+
+/**
+ * Find the nearest health facility to a given point using Haversine distance
+ */
+function findNearestHealthFacility(lat, lng) {
+  // Get health facilities from either GeoHubPlaces or ZAMBIA_HEALTH facilities
+  let facilities = [];
+  if (window.GeoHubPlaces && GeoHubPlaces.data && GeoHubPlaces.data.healthFacilities && GeoHubPlaces.data.healthFacilities.length) {
+    facilities = GeoHubPlaces.data.healthFacilities;
+  } else {
+    // Fallback: try to get from the layer built in buildHealthLayer
+    const healthGroup = LAYERS.health && LAYERS.health.group;
+    if (!facilities.length) return null;
+  }
+  
+  if (!facilities.length) {
+    // If still no facilities, try loading from GeoJSON directly
+    showToast('Health facility data not loaded yet. Try enabling Health layer first.', 'warn');
+    return null;
+  }
+
+  let nearest = null;
+  let minDist = Infinity;
+
+  for (const f of facilities) {
+    const dLat = (lat - f.lat) * Math.PI / 180;
+    const dLng = (lng - f.lng) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) ** 2 +
+              Math.cos(lat * Math.PI / 180) * Math.cos(f.lat * Math.PI / 180) *
+              Math.sin(dLng / 2) ** 2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const dist = 6371 * c; // Earth radius in km
+
+    if (dist < minDist) {
+      minDist = dist;
+      nearest = f;
+    }
+  }
+
+  return { facility: nearest, distance: minDist };
+}
+
+/**
+ * Route all flood-affected areas to their nearest health centers
+ */
+function routeFloodToNearestHealth() {
+  floodHealthRouteLayer.clearLayers();
+  floodHealthRouteLines = [];
+  
+  // Ensure health facilities are loaded
+  if (!(window.GeoHubPlaces && GeoHubPlaces.data && GeoHubPlaces.data.healthFacilities && GeoHubPlaces.data.healthFacilities.length)) {
+    showToast('Loading health facility data, please wait…', 'info');
+    GeoHubPlaces.loadAll().then(() => {
+      // Also ensure health layer is active
+      if (!LAYERS.health.active) {
+        toggleLayer('health', true);
+      }
+      _doRouteFloodToHealth();
+    }).catch(() => {
+      // Try loading directly
+      if (!LAYERS.health.active) {
+        toggleLayer('health', true);
+      }
+      // Wait a bit for loading
+      setTimeout(_doRouteFloodToHealth, 2000);
+    });
+  } else {
+    if (!LAYERS.health.active) {
+      toggleLayer('health', true);
+    }
+    _doRouteFloodToHealth();
+  }
+}
+
+function _doRouteFloodToHealth() {
+  // Collect all flood locations
+  const allFloodPlaces = [
+    ...FLOOD_PLACES.affected.map(p => ({ ...p, source: 'affected' })),
+    ...FLOOD_PLACES.potential.map(p => ({ ...p, source: 'potential' }))
+  ];
+
+  if (!allFloodPlaces.length) {
+    showToast('No flood locations to route', 'warn');
+    return;
+  }
+
+  let facilities = [];
+  if (window.GeoHubPlaces && GeoHubPlaces.data && GeoHubPlaces.data.healthFacilities && GeoHubPlaces.data.healthFacilities.length) {
+    facilities = GeoHubPlaces.data.healthFacilities;
+  } else {
+    showToast('Health facility data unavailable', 'err');
+    return;
+  }
+
+  if (!map.hasLayer(floodHealthRouteLayer)) {
+    floodHealthRouteLayer.addTo(map);
+  }
+
+  let routedCount = 0;
+  let totalDist = 0;
+  const routeDetails = [];
+
+  allFloodPlaces.forEach((place, idx) => {
+    const result = findNearestHealthFacility(place.lat, place.lng);
+    if (!result || !result.facility) return;
+
+    const { facility, distance } = result;
+    totalDist += distance;
+    routedCount++;
+
+    // Store route info
+    routeDetails.push({
+      floodName: place.name,
+      floodLat: place.lat,
+      floodLng: place.lng,
+      healthName: facility.name,
+      healthType: facility.type || facility.subType || 'Health Facility',
+      healthLat: facility.lat,
+      healthLng: facility.lng,
+      distance: distance
+    });
+
+    // Color based on distance
+    const routeColor = distance < 10 ? '#22c55e' : distance < 30 ? '#eab308' : distance < 60 ? '#f97316' : '#ef4444';
+    
+    // Draw route line from flood place to health center
+    const line = L.polyline([[place.lat, place.lng], [facility.lat, facility.lng]], {
+      color: routeColor,
+      weight: 2.5,
+      opacity: 0.7,
+      dashArray: '8,6'
+    });
+
+    // Add arrow markers along the line to show direction
+    const midLat = (place.lat + facility.lat) / 2;
+    const midLng = (place.lng + facility.lng) / 2;
+    
+    // Arrow directions toward health center
+    const angle = Math.atan2(facility.lng - place.lng, facility.lat - place.lat) * 180 / Math.PI;
+
+    // Popup on the line
+    line.bindPopup(`
+      <div style="font-family:'Inter',sans-serif;min-width:220px;">
+        <div style="background:${routeColor};padding:7px 10px;margin:-8px -10px 8px;border-radius:5px 5px 0 0;">
+          <strong style="color:#fff;font-size:.8rem;">🚑 Emergency Route</strong>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:.73rem;">
+          <tr><td style="color:#6b7280;padding:2px 0;">🌊 Flood Area</td><td style="font-weight:700;text-align:right;">${place.name}</td></tr>
+          <tr><td style="color:#6b7280;padding:2px 0;">🏥 Nearest Health Center</td><td style="font-weight:700;text-align:right;">${facility.name}</td></tr>
+          <tr><td style="color:#6b7280;padding:2px 0;">Facility Type</td><td style="font-weight:700;text-align:right;">${facility.type || facility.subType || 'Health Facility'}</td></tr>
+          <tr><td style="color:#6b7280;padding:2px 0;">📏 Distance</td><td style="font-weight:700;text-align:right;color:${routeColor};">${distance.toFixed(1)} km</td></tr>
+          <tr><td style="color:#6b7280;padding:2px 0;">📍 Flood Coords</td><td style="font-weight:700;text-align:right;font-size:.66rem;">${place.lat.toFixed(4)}, ${place.lng.toFixed(4)}</td></tr>
+          <tr><td style="color:#6b7280;padding:2px 0;">📍 Health Coords</td><td style="font-weight:700;text-align:right;font-size:.66rem;">${facility.lat.toFixed(4)}, ${facility.lng.toFixed(4)}</td></tr>
+        </table>
+        <div style="font-size:.6rem;color:var(--muted);margin-top:5px;text-align:center;">
+          ${place.source === 'affected' ? '🔥 Known flood-affected area' : '⚠️ Potential flood zone'}
+        </div>
+      </div>
+    `);
+
+    line.addTo(floodHealthRouteLayer);
+    floodHealthRouteLines.push(line);
+
+    // Add start marker (flood area)
+    const riskColors = { Extreme: '#dc2626', High: '#f97316', Moderate: '#fbbf24', Increasing: '#f59e0b', Low: '#86efac' };
+    const startColor = riskColors[place.risk] || '#f97316';
+    L.circleMarker([place.lat, place.lng], {
+      radius: 8,
+      fillColor: startColor,
+      color: '#fff',
+      weight: 2,
+      fillOpacity: 0.85
+    }).bindTooltip(`🌊 ${place.name}`, { className: 'ghz-tooltip', sticky: true })
+    .addTo(floodHealthRouteLayer);
+
+    // Add end marker (health center)
+    L.circleMarker([facility.lat, facility.lng], {
+      radius: 8,
+      fillColor: '#f43f5e',
+      color: '#fff',
+      weight: 2,
+      fillOpacity: 0.9
+    }).bindTooltip(`🏥 ${facility.name}`, { className: 'ghz-tooltip', sticky: true })
+    .addTo(floodHealthRouteLayer);
+  });
+
+  // Fit the map to show all routes
+  const allBounds = floodHealthRouteLines.reduce((bounds, line) => {
+    line.getLatLngs().forEach(ll => bounds.extend(ll));
+    return bounds;
+  }, L.latLngBounds([]));
+  
+  if (allBounds.isValid()) {
+    map.fitBounds(allBounds, { padding: [30, 30], maxZoom: 9, duration: 1.2 });
+  }
+
+  // Group by distance categories
+  const close = routeDetails.filter(r => r.distance < 10).length;
+  const medium = routeDetails.filter(r => r.distance >= 10 && r.distance < 30).length;
+  const far = routeDetails.filter(r => r.distance >= 30 && r.distance < 60).length;
+  const veryFar = routeDetails.filter(r => r.distance >= 60).length;
+  const avgDist = routedCount > 0 ? (totalDist / routedCount).toFixed(1) : '—';
+
+  // Show results
+  const resultsHtml = `
+    <div style="background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.2);border-radius:8px;padding:10px;">
+      <div style="font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#06b6d4;margin-bottom:6px;">🚑 Flood → Health Routes</div>
+      <div class="qp-stat"><span class="qp-k">Flood Areas Routed</span><span class="qp-v" style="color:#fff;">${routedCount}</span></div>
+      <div class="qp-stat"><span class="qp-k">Avg Distance to Health</span><span class="qp-v" style="color:#f97316;">${avgDist} km</span></div>
+      <div style="margin:5px 0;">
+        <div style="display:flex;gap:4px;font-size:.6rem;">
+          <span style="background:#22c55e22;color:#22c55e;padding:2px 6px;border-radius:4px;"><10km: ${close}</span>
+          <span style="background:#eab30822;color:#eab308;padding:2px 6px;border-radius:4px;">10-30km: ${medium}</span>
+          <span style="background:#f9731622;color:#f97316;padding:2px 6px;border-radius:4px;">30-60km: ${far}</span>
+          <span style="background:#ef444422;color:#ef4444;padding:2px 6px;border-radius:4px;">>60km: ${veryFar}</span>
+        </div>
+      </div>
+      <div style="font-size:.6rem;color:var(--muted);margin-top:4px;">
+        <div style="display:flex;gap:3px;flex-wrap:wrap;">
+          ${routeDetails.slice(0, 10).map(r =>
+            `<span style="background:rgba(255,255,255,.05);padding:2px 5px;border-radius:3px;"
+                   onclick="map.flyTo([${(r.floodLat + r.healthLat) / 2}, ${(r.floodLng + r.healthLng) / 2}], 10);
+                            showToast('${r.floodName} → ${r.healthName}: ${r.distance.toFixed(1)} km','info')"
+                   style="cursor:pointer;background:rgba(255,255,255,.05);padding:2px 5px;border-radius:3px;font-size:.6rem;">
+              ${r.floodName.length > 15 ? r.floodName.slice(0, 12) + '…' : r.floodName} → ${r.distance.toFixed(0)}km
+            </span>`
+          ).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Show results in flood panel if open, otherwise create a floating results panel
+  const floodResults = document.getElementById('floodResults');
+  if (floodResults) {
+    floodResults.innerHTML = resultsHtml;
+    floodResults.style.display = 'block';
+  }
+
+  showToast(`Routed ${routedCount} flood areas to nearest health centers`, 'success');
+}
+
+function clearFloodHealthRoutes() {
+  floodHealthRouteLayer.clearLayers();
+  floodHealthRouteLines = [];
+  if (map.hasLayer(floodHealthRouteLayer)) {
+    map.removeLayer(floodHealthRouteLayer);
+  }
+  showToast('Flood health routes cleared', 'info');
+}
+
 // ── FLOOD PLACES MAP VISUALIZATION ────────────────────────────────────────
 let floodPlaceLayer = L.layerGroup();
 
@@ -8801,50 +9221,8 @@ function showConstructionPlaces(mode) {
   constructionPlaceLayer.clearLayers();
   if (!map.hasLayer(constructionPlaceLayer)) constructionPlaceLayer.addTo(map);
   
-  const scenario = document.getElementById('constructionScenario')?.value || 'ssp245';
-  const scores = ZAMBIA_DISTRICTS.map(d => {
-    const prov = ZAMBIA_PROVINCES.find(p=>p.name===d.province)||{};
-    const elev = simElevation(d);
-    const risk = simFloodRisk(d);
-    const floodRisk = {'Minimal':0.1,'Low':0.3,'Medium':0.6,'High':0.9}[risk]||0.5;
-    const tempScore = d.lat > -13 ? 0.8 : 0.5;
-    const terrainScore = elev > 600 && elev < 1400 ? 0.8 : 0.4;
-    const popScore = Math.min(1, d.pop/500000);
-    const climatePenalty = scenario === 'ssp585' ? 0.25 : 0.15;
-    const total = (tempScore*0.25 + terrainScore*0.25 + (1-floodRisk)*0.25 + popScore*0.15) * (1 - climatePenalty) + 0.1;
-    return { d, score: Math.min(0.95, total), risk };
-  }).sort((a,b)=>b.score-a.score);
-  
-  let places = [];
-  if (mode === 'best' || mode === 'all') places = places.concat(scores.slice(0, 15).map(s => ({ district: s.d.district, province: s.d.province, lat: s.d.lat, lng: s.d.lng, score: s.score, risk: 'Best', type: 'Best Construction Zone' })));
-  if (mode === 'at-risk' || mode === 'all') {
-    const atRisk = scores.filter(s => s.score < 0.35).slice(0, 15);
-    places = places.concat(atRisk.map(s => ({ district: s.d.district, province: s.d.province, lat: s.d.lat, lng: s.d.lng, score: s.score, risk: 'High Climate Risk', type: 'Climate-Vulnerable Zone' })));
-  }
-  
-  const colors = { 'Best':'#22c55e', 'High Climate Risk':'#dc2626', 'Moderate':'#fb923c' };
-  
-  places.forEach(p => {
-    const col = colors[p.risk] || '#fb923c';
-    const size = p.risk === 'Best' ? 10 : p.risk === 'High Climate Risk' ? 8 : 6;
-    
-    L.circleMarker([p.lat, p.lng], {
-      radius: size, fillColor: col, color: '#fff', weight: 1.5, fillOpacity: 0.7
-    })
-    .bindPopup(`
-      <div style="font-family:'Inter',sans-serif;min-width:200px;">
-        <strong>${p.district}</strong><br>
-        <span style="display:inline-block;padding:1px 6px;border-radius:10px;font-size:.68rem;font-weight:700;background:${col}22;color:${col};border:1px solid ${col}44;">${p.risk}</span>
-        <span style="font-size:.65rem;color:#6b7280;margin-left:4px;">${p.province}</span>
-        <p style="font-size:.72rem;margin-top:4px;color:#374151;">Suitability Score: ${(p.score*100).toFixed(0)}%<br>${p.type}</p>
-        <div style="font-size:.65rem;color:#6b7280;margin-top:4px;">📍 ${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}</div>
-      </div>
-    `)
-    .bindTooltip(`${p.district} — ${p.risk}`, { className:'ghz-tooltip', sticky:true })
-    .addTo(constructionPlaceLayer);
-  });
-  
-  const bounds = places.reduce((b, p) => b.extend([p.lat, p.lng]), L.latLngBounds([-8, 22], [-18, 34]));
+  // Placemark markers removed - only polygon shapes visible
+
   map.fitBounds(bounds, { padding: [30, 30], maxZoom: 7, duration: 1.2 });
   
   const countHtml = mode === 'best' ? `${Math.min(15, scores.filter(s => s.score >= 0.65).length)} best construction zones` :
@@ -9009,6 +9387,228 @@ function toggleConstructionLayer() {
 function clearConstructionPlaces() {
   if (map.hasLayer(constructionPlaceLayer)) map.removeLayer(constructionPlaceLayer);
   constructionPlaceLayer.clearLayers();
+}
+
+// ── HEALTH ACCESS PANEL FUNCTIONS ──────────────────────────────────────
+let healthAccessLayerGroup = L.layerGroup();
+let healthAccessLayerVisible = false;
+
+function toggleHealthAccessPanel() {
+  const p = document.getElementById('healthAccessPanel');
+  const open = p.style.display === 'block';
+  p.style.display = open ? 'none' : 'block';
+  if (!open) renderHealthAccessContent();
+}
+
+function closeHealthAccessPanel() {
+  document.getElementById('healthAccessPanel').style.display = 'none';
+}
+
+function renderHealthAccessContent() {
+  let healthStats = '';
+  if (window.ZAMBIA_HEALTH) {
+    const nat = ZAMBIA_HEALTH.getNationalHealth();
+    healthStats = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:8px;">
+        <div style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.12);border-radius:7px;padding:7px;text-align:center;">
+          <div style="font-size:.7rem;color:rgba(255,255,255,.5);">Health Facilities</div>
+          <div style="font-size:.82rem;font-weight:800;color:#ef4444;">${nat.total_health_facilities.toLocaleString()}</div>
+        </div>
+        <div style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.12);border-radius:7px;padding:7px;text-align:center;">
+          <div style="font-size:.7rem;color:rgba(255,255,255,.5);">Hospitals</div>
+          <div style="font-size:.82rem;font-weight:800;color:#ef4444;">${nat.total_hospitals}</div>
+        </div>
+        <div style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.12);border-radius:7px;padding:7px;text-align:center;">
+          <div style="font-size:.7rem;color:rgba(255,255,255,.5);">Doctors</div>
+          <div style="font-size:.82rem;font-weight:800;color:#ef4444;">${nat.total_doctors.toLocaleString()}</div>
+        </div>
+        <div style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.12);border-radius:7px;padding:7px;text-align:center;">
+          <div style="font-size:.7rem;color:rgba(255,255,255,.5);">Nurses</div>
+          <div style="font-size:.82rem;font-weight:800;color:#ef4444;">${nat.total_nurses.toLocaleString()}</div>
+        </div>
+      </div>
+      <div style="background:rgba(239,68,68,.04);border:1px solid rgba(239,68,68,.1);border-radius:7px;padding:8px;font-size:.68rem;color:rgba(255,255,255,.6);line-height:1.5;margin-bottom:8px;">
+        <strong style="color:#ef4444;">🏥 Key Health Indicators:</strong><br>
+        • HIV Prevalence: <strong>${nat.national_hiv_prevalence_pct}%</strong><br>
+        • Malaria Incidence: <strong>${nat.national_malaria_incidence_per_1000}/1000</strong><br>
+        • Maternal Mortality: <strong>${nat.national_maternal_mortality_per_100k}/100k</strong><br>
+        • Life Expectancy: <strong>${nat.life_expectancy_years} yrs</strong><br>
+        • Hospital Beds: <strong>${nat.total_beds.toLocaleString()}</strong><br>
+        • Physicians/1000: <strong>${nat.physicians_per_1000}</strong>
+      </div>`;
+  } else {
+    healthStats = `<div style="background:rgba(239,68,68,.04);border:1px solid rgba(239,68,68,.1);border-radius:7px;padding:8px;font-size:.68rem;color:rgba(255,255,255,.6);margin-bottom:8px;">
+      Health data module loaded with province-level indicators for all 10 provinces.</div>`;
+  }
+  
+  const html = `
+    <div style="margin-bottom:4px;">
+      <div style="font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:rgba(239,68,68,.7);margin-bottom:4px;">National Health Overview</div>
+      ${healthStats}
+    </div>
+    <div style="margin-bottom:8px;">
+      <div style="font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:rgba(239,68,68,.7);margin-bottom:4px;">Analysis Options</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;">
+        <div onclick="runHealthAccessAnalysis('coverage')" style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);border-radius:7px;padding:8px;text-align:center;cursor:pointer;">
+          <div style="font-size:1.1rem;">🏥</div>
+          <div style="font-size:.65rem;font-weight:700;color:#ef4444;margin-top:3px;">Coverage Map</div>
+        </div>
+        <div onclick="runHealthAccessAnalysis('districts')" style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);border-radius:7px;padding:8px;text-align:center;cursor:pointer;">
+          <div style="font-size:1.1rem;">📊</div>
+          <div style="font-size:.65rem;font-weight:700;color:#ef4444;margin-top:3px;">District Stats</div>
+        </div>
+        <div onclick="runHealthAccessAnalysis('provinces')" style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);border-radius:7px;padding:8px;text-align:center;cursor:pointer;">
+          <div style="font-size:1.1rem;">🗺️</div>
+          <div style="font-size:.65rem;font-weight:700;color:#ef4444;margin-top:3px;">Province Health</div>
+        </div>
+        <div onclick="runHealthAccessAnalysis('routes')" style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);border-radius:7px;padding:8px;text-align:center;cursor:pointer;">
+          <div style="font-size:1.1rem;">🚑</div>
+          <div style="font-size:.65rem;font-weight:700;color:#ef4444;margin-top:3px;">Flood→Health</div>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('healthAccessContent').innerHTML = html;
+}
+
+function runHealthAccessAnalysis(mode) {
+  if (mode === 'routes') {
+    routeFloodToNearestHealth();
+    return;
+  }
+  
+  showToast('Computing healthcare access analysis…', 'info');
+  healthAccessLayerGroup.clearLayers();
+  if (!map.hasLayer(healthAccessLayerGroup)) healthAccessLayerGroup.addTo(map);
+  
+  if (mode === 'coverage') {
+    // Visualize health facility coverage by district density
+    let facilities = [];
+    if (window.GeoHubPlaces && GeoHubPlaces.data && GeoHubPlaces.data.healthFacilities && GeoHubPlaces.data.healthFacilities.length) {
+      facilities = GeoHubPlaces.data.healthFacilities;
+    }
+    
+    if (!facilities.length) {
+      showToast('Health facility data not loaded yet', 'warn');
+      return;
+    }
+    
+    // Count facilities per district
+    const distCount = {};
+    facilities.forEach(f => {
+      const key = f.district || f.province || 'Unknown';
+      distCount[key] = (distCount[key] || 0) + 1;
+    });
+    
+    // Color districts by coverage
+    const maxCount = Math.max(...Object.values(distCount));
+    ZAMBIA_DISTRICTS.forEach(d => {
+      const count = distCount[d.district] || 0;
+      const t = count / maxCount;
+      const color = t > 0.5 ? '#22c55e' : t > 0.25 ? '#eab308' : t > 0.1 ? '#f97316' : '#ef4444';
+      const radius = 6 + t * 12;
+      
+      L.circleMarker([d.lat, d.lng], {
+        radius, fillColor: color, color: '#fff', weight: 1, fillOpacity: 0.75
+      })
+      .bindTooltip(`<b>${d.district}</b><br>Health Facilities: ${count}`, { className: 'ghz-tooltip', sticky: true })
+      .addTo(healthAccessLayerGroup);
+    });
+    
+    const html = `
+      <div style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:10px;">
+        <div style="font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#ef4444;margin-bottom:5px;">📍 Health Coverage Map</div>
+        <div class="qp-stat"><span class="qp-k">Total Facilities</span><span class="qp-v" style="color:#fff;">${facilities.length}</span></div>
+        <div class="qp-stat"><span class="qp-k">Districts Covered</span><span class="qp-v" style="color:#22c55e;">${Object.keys(distCount).length}/116</span></div>
+        <div style="margin-top:5px;">
+          <div style="display:flex;gap:4px;font-size:.6rem;flex-wrap:wrap;">
+            <span style="background:#22c55e22;color:#22c55e;padding:2px 6px;border-radius:4px;">High ≥50%</span>
+            <span style="background:#eab30822;color:#eab308;padding:2px 6px;border-radius:4px;">Med ≥25%</span>
+            <span style="background:#f9731622;color:#f97316;padding:2px 6px;border-radius:4px;">Low ≥10%</span>
+            <span style="background:#ef444422;color:#ef4444;padding:2px 6px;border-radius:4px;">Very Low</span>
+          </div>
+        </div>
+      </div>`;
+    document.getElementById('healthAccessResults').innerHTML = html;
+    document.getElementById('healthAccessResults').style.display = 'block';
+    showToast('Health coverage map generated', 'success');
+    
+  } else if (mode === 'provinces') {
+    // Show province-level health indicators
+    const provHealth = window.ZAMBIA_HEALTH ? ZAMBIA_HEALTH.getAllProvincesHealth() : null;
+    if (!provHealth) { showToast('Health data not available', 'warn'); return; }
+    
+    const entries = Object.entries(provHealth).sort((a,b) => b[1].hiv_prevalence_pct - a[1].hiv_prevalence_pct);
+    
+    let html = `<div style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:10px;">
+      <div style="font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#ef4444;margin-bottom:5px;">🏛️ Province Health Indicators</div>`;
+    
+    entries.slice(0, 5).forEach(([name, data]) => {
+      html += `<div style="background:rgba(255,255,255,.04);border-radius:5px;padding:6px 8px;margin-bottom:4px;">
+        <div style="font-size:.7rem;font-weight:700;color:#fff;">${name}</div>
+        <div style="display:flex;gap:6px;font-size:.6rem;flex-wrap:wrap;margin-top:2px;">
+          <span style="color:#f87171;">HIV: ${data.hiv_prevalence_pct}%</span>
+          <span style="color:#fbbf24;">Malaria: ${data.malaria_incidence_per_1000}/1K</span>
+          <span style="color:#a78bfa;">Doctors: ${data.doctors_count}</span>
+          <span style="color:#4ade80;">Facilities: ${data.health_facilities_count}</span>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+    
+    document.getElementById('healthAccessResults').innerHTML = html;
+    document.getElementById('healthAccessResults').style.display = 'block';
+    
+    // Add province markers
+    Object.entries(provHealth).forEach(([name, data]) => {
+      const prov = ZAMBIA_PROVINCES.find(p => p.name === name);
+      if (!prov) return;
+      L.circleMarker([prov.lat, prov.lng], {
+        radius: 8 + (data.hiv_prevalence_pct / 20) * 12,
+        fillColor: '#ef4444', color: '#fff', weight: 1.5, fillOpacity: 0.7
+      })
+      .bindTooltip(`<b>${name}</b><br>HIV: ${data.hiv_prevalence_pct}% | Facilities: ${data.health_facilities_count}`, { className: 'ghz-tooltip', sticky: true })
+      .addTo(healthAccessLayerGroup);
+    });
+    
+    showToast('Province health indicators shown', 'success');
+    
+  } else if (mode === 'districts') {
+    // Show district-level health estimate
+    let html = `<div style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:10px;">
+      <div style="font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#ef4444;margin-bottom:5px;">📊 District Health Estimates</div>`;
+    
+    if (window.ZAMBIA_HEALTH) {
+      const sorted = [...ZAMBIA_DISTRICTS].sort((a,b) => b.pop - a.pop).slice(0, 10);
+      sorted.forEach(d => {
+        const est = ZAMBIA_HEALTH.estimateDistrictHealth(d.district, d.province);
+        if (!est) return;
+        html += `<div class="qp-stat" onclick="map.flyTo([${d.lat},${d.lng}],10)" style="cursor:pointer;">
+          <span class="qp-k" style="font-size:.65rem;">${d.district}</span>
+          <span class="qp-v" style="font-size:.6rem;">HIV: ${est.estimated_hiv_prevalence_pct}% · Malaria: ${est.estimated_malaria_incidence_per_1000}</span>
+        </div>`;
+      });
+    }
+    html += `</div>`;
+    
+    document.getElementById('healthAccessResults').innerHTML = html;
+    document.getElementById('healthAccessResults').style.display = 'block';
+    showToast('District health estimates generated', 'success');
+  }
+  
+  healthAccessLayerVisible = true;
+  document.getElementById('healthAccessLayerBtn').innerHTML = '<i class="fas fa-eye-slash"></i>';
+}
+
+function toggleHealthAccessLayer() {
+  if (healthAccessLayerVisible) {
+    if (map.hasLayer(healthAccessLayerGroup)) map.removeLayer(healthAccessLayerGroup);
+    healthAccessLayerVisible = false;
+    document.getElementById('healthAccessLayerBtn').innerHTML = '<i class="fas fa-layer-group"></i>';
+  } else {
+    if (!map.hasLayer(healthAccessLayerGroup)) healthAccessLayerGroup.addTo(map);
+    healthAccessLayerVisible = true;
+    document.getElementById('healthAccessLayerBtn').innerHTML = '<i class="fas fa-eye-slash"></i>';
+  }
 }
 
 // ── GEE Colour Scale helper ────────────────────────────────────────────────

@@ -234,6 +234,63 @@ const GeoHubFeatures = (() => {
         };
     }
 
+    function _getForestAnalytics() {
+        if (!FOREST_TREND) return { text: 'Forest analytics are not available in this view.', type: 'info' };
+        const years = FOREST_TREND.years;
+        const total = FOREST_TREND.total_km2[FOREST_TREND.total_km2.length - 1];
+        const loss = FOREST_TREND.loss_km2[FOREST_TREND.loss_km2.length - 1];
+        const gain = FOREST_TREND.gain_km2[FOREST_TREND.gain_km2.length - 1];
+        const trend = total < FOREST_TREND.total_km2[0] ? 'decreasing' : 'stable';
+        return {
+            text: `🌲 Zambia's forest cover is ${trend} over ${years[0]}–${years[years.length - 1]}. Latest total forest area: <strong>${total.toLocaleString()}</strong> km². Last recorded annual loss was <strong>${loss.toLocaleString()}</strong> km² while gain was <strong>${gain.toLocaleString()}</strong> km².`,
+            type: 'data'
+        };
+    }
+
+    function _getRainfallAnalytics() {
+        if (!RAINFALL_MONTHLY) return { text: 'Rainfall analytics are not available in this view.', type: 'info' };
+        const totals = ['lusaka','ndola','livingstone','chipata'].map(station => ({
+            name: station.charAt(0).toUpperCase() + station.slice(1),
+            total: RAINFALL_MONTHLY[station].reduce((sum, v) => sum + v, 0)
+        }));
+        totals.sort((a, b) => b.total - a.total);
+        const highest = totals[0];
+        const lowest = totals[totals.length - 1];
+        const wettestMonthIndex = RAINFALL_MONTHLY.months.reduce((best, month, idx) => {
+            const value = Math.max(
+                RAINFALL_MONTHLY.lusaka[idx],
+                RAINFALL_MONTHLY.ndola[idx],
+                RAINFALL_MONTHLY.livingstone[idx],
+                RAINFALL_MONTHLY.chipata[idx]
+            );
+            return value > best.value ? { idx, value } : best;
+        }, { idx: 0, value: 0 });
+        return {
+            text: `☔ Rainfall summary for CHIRPS 2023: <strong>${highest.name}</strong> station recorded the highest annual total at <strong>${highest.total.toLocaleString()}</strong> mm. The lowest station was <strong>${lowest.name}</strong> with <strong>${lowest.total.toLocaleString()}</strong> mm. The wettest month across the four stations was <strong>${RAINFALL_MONTHLY.months[wettestMonthIndex.idx]}</strong>.`,
+            type: 'data'
+        };
+    }
+
+    function _getLandCoverAnalytics() {
+        if (!LAND_COVER_NATIONAL) return { text: 'Land cover analytics are not available in this view.', type: 'info' };
+        const main = Object.values(LAND_COVER_NATIONAL).sort((a, b) => b.pct - a.pct);
+        const top = main[0];
+        const forest = LAND_COVER_NATIONAL.forest;
+        return {
+            text: `🌍 National land cover summary: <strong>${top.label}</strong> is the largest class at <strong>${top.pct}%</strong>. Forest covers about <strong>${forest.pct}%</strong> of Zambia, while agriculture covers <strong>${LAND_COVER_NATIONAL.agriculture.pct}%</strong>.`,
+            type: 'data'
+        };
+    }
+
+    function _getWaterBodyAnalytics() {
+        if (!WATER_BODIES) return { text: 'Water body data is not available in this view.', type: 'info' };
+        const largest = WATER_BODIES.reduce((best, item) => item.area_km2 > best.area_km2 ? item : best, WATER_BODIES[0]);
+        return {
+            text: `💧 Zambia's largest water body in the dataset is <strong>${largest.name}</strong> with an area of <strong>${largest.area_km2.toLocaleString()}</strong> km². Other major water bodies include Lake Bangweulu and Lake Mweru.`,
+            type: 'data'
+        };
+    }
+
     function chatQuery(query) {
         query = query.trim();
         if (!query) return { text: 'Please ask a question about Zambia districts, climate, or data.', type: 'info' };
@@ -282,6 +339,21 @@ const GeoHubFeatures = (() => {
             return { text: `🌍 Zambia covers a total area of <strong>${ZAMBIA_METADATA.total_area_km2.toLocaleString()}</strong> km² across <strong>116 districts</strong> in <strong>10 provinces</strong>.`, type: 'data' };
         }
 
+        // Forest analytics
+        if (q.includes('forest') || q.includes('deforestation') || q.includes('tree cover') || q.includes('forest loss') || q.includes('forest cover') || q.includes('deforest')) {
+            return _getForestAnalytics();
+        }
+
+        // Land cover analytics
+        if (q.includes('land cover') || q.includes('woodland') || q.includes('vegetation') || q.includes('landcover')) {
+            return _getLandCoverAnalytics();
+        }
+
+        // Water body analytics
+        if (q.includes('water body') || q.includes('lake') || q.includes('wetland') || q.includes('river')) {
+            return _getWaterBodyAnalytics();
+        }
+
         // Climate queries
         if (q.includes('climate') || q.includes('weather') || q.includes('temperature') || q.includes('rainfall') ||
             q.includes('nyengo') || q.includes('ilyo') || q.includes('kutentha') || q.includes('ubushiku') || q.includes('mvula') || q.includes('imfula')) {
@@ -295,6 +367,9 @@ const GeoHubFeatures = (() => {
                     };
                 }
                 return { text: `🌡️ <strong>${district.district}</strong> (${district.province}) — Temperature data available in the Climate Analytics panel.`, type: 'info' };
+            }
+            if (q.includes('rainfall')) {
+                return _getRainfallAnalytics();
             }
             return { text: `🌡️ Zambia's climate varies by region. Current month: <strong>${CLIMATE_CURRENT.current_month || 'N/A'}</strong>. Use the Climate panel or select a specific district.`, type: 'info' };
         }
@@ -356,11 +431,14 @@ const GeoHubFeatures = (() => {
                 • "Population of Lusaka"<br>
                 • "Districts in Copperbelt"<br>
                 • "Climate in Livingstone"<br>
+                • "Forest cover trend"<br>
+                • "Rainfall summary"<br>
+                • "Land cover in Zambia"<br>
                 • "Largest districts"<br>
                 • "Total population"<br>
                 • "Area of Zambia"<br>
                 • "Southern region districts"<br><br>
-                <em>I also help navigate the app — try "open dashboard" or "show map"!</em>`,
+                <em>I also help navigate the app — try "open dashboard" or "show analytics"!</em>`,
                 type: 'help'
             };
         }
@@ -1061,7 +1139,7 @@ const GeoHubFeatures = (() => {
             transition:all .2s ease;
         `;
         panel.innerHTML = `
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:linear-gradient(90deg,rgba(26,107,53,.2),rgba(45,158,95,.08));border-bottom:1px solid var(--border, #1e3a22);">
+            <div class="fp-head" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:linear-gradient(90deg,rgba(26,107,53,.2),rgba(45,158,95,.08));border-bottom:1px solid var(--border, #1e3a22);cursor:grab;user-select:none;">
                 <div style="display:flex;align-items:center;gap:8px;">
                     <i class="${icon}" style="color:var(--g5, #4CAF50);font-size:.85rem;"></i>
                     <span style="font-size:.8rem;font-weight:800;color:#fff;">${title}</span>
@@ -1076,7 +1154,57 @@ const GeoHubFeatures = (() => {
             </div>
         `;
         document.body.appendChild(panel);
+        makeFloatingPanelDraggable(panel);
         return panel;
+    }
+
+    function makeFloatingPanelDraggable(panel) {
+        if (!panel) return;
+        const header = panel.querySelector('.fp-head');
+        if (!header) return;
+
+        let panelRect = null;
+        let startX = 0;
+        let startY = 0;
+        let startLeft = 0;
+        let startTop = 0;
+
+        header.addEventListener('pointerdown', function(e) {
+            if (e.button !== 0) return;
+            e.preventDefault();
+            panelRect = panel.getBoundingClientRect();
+            startX = e.clientX;
+            startY = e.clientY;
+            startLeft = panelRect.left;
+            startTop = panelRect.top;
+            panel.style.transition = 'none';
+            panel.style.transform = 'none';
+            panel.setPointerCapture?.(e.pointerId);
+
+            function onPointerMove(evt) {
+                const dx = evt.clientX - startX;
+                const dy = evt.clientY - startY;
+                const width = panelRect.width;
+                const height = panelRect.height;
+                let nextLeft = startLeft + dx;
+                let nextTop = startTop + dy;
+                nextLeft = Math.min(Math.max(nextLeft, 10), window.innerWidth - width - 10);
+                nextTop = Math.min(Math.max(nextTop, 10), window.innerHeight - height - 10);
+                panel.style.left = nextLeft + 'px';
+                panel.style.top = nextTop + 'px';
+                panel.style.right = 'auto';
+                panel.style.transform = 'none';
+            }
+
+            function onPointerUp() {
+                panel.style.transition = '';
+                document.removeEventListener('pointermove', onPointerMove);
+                document.removeEventListener('pointerup', onPointerUp);
+            }
+
+            document.addEventListener('pointermove', onPointerMove);
+            document.addEventListener('pointerup', onPointerUp);
+        });
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -1120,9 +1248,9 @@ const GeoHubFeatures = (() => {
                 </div>
                 <div class="ghz-chat-suggestions">
                     <span onclick="GeoHubFeatures._suggestClick(this)">Population of Lusaka</span>
-                    <span onclick="GeoHubFeatures._suggestClick(this)">Districts in Copperbelt</span>
-                    <span onclick="GeoHubFeatures._suggestClick(this)">Largest districts</span>
-                    <span onclick="GeoHubFeatures._suggestClick(this)">Open map</span>
+                    <span onclick="GeoHubFeatures._suggestClick(this)">Climate in Livingstone</span>
+                    <span onclick="GeoHubFeatures._suggestClick(this)">Forest cover trend</span>
+                    <span onclick="GeoHubFeatures._suggestClick(this)">Rainfall summary</span>
                 </div>
             </div>
             <style>

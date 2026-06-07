@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GeoHub Zambia – Sign In</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css"/>
+<!-- Auth -->
+  <script src="js/auth.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --g1:#040e07;--g2:#0a2e1a;--g3:#1a6b35;--g4:#2d9e5f;--g5:#4CAF50;--g6:#81c784;
+      --white:#fff;--bg:#f0f5f0;--text:#111827;--muted:#6b7280;
+      --border:#e5e7eb;--r:16px;
+      --sh-card:0 25px 60px rgba(0,0,0,.25),0 4px 20px rgba(0,0,0,.12);
+    }
+    html,body{height:100%;font-family:'Inter',sans-serif;background:var(--g1);overflow:hidden;}
+
+    /* ── LAYOUT ── */
+    .page{display:flex;width:100%;height:100vh;}
+
+    /* ── LEFT PANEL ── */
+    .left{
+      flex:0 0 55%;position:relative;
+      display:flex;flex-direction:column;
+      padding:0;overflow:hidden;
+    }
+    .left-bg{position:absolute;inset:0;
+      background:url('images/login-bg.jpg') center/cover no-repeat;z-index:0;}
+    .left-ov{position:absolute;inset:0;
+      background:linear-gradient(160deg,rgba(4,14,7,.97) 0%,rgba(8,30,14,.90) 35%,rgba(10,46,20,.75) 65%,rgba(15,60,28,.55) 100%);
+      z-index:1;}
+    /* Animated particles canvas */
+    #particleCanvas{position:absolute;inset:0;z-index:2;pointer-events:none;}
+    /* Curved right edge */
+    .left-curve{position:absolute;top:0;right:-2px;bottom:0;width:80px;
+      background:#f0f5f0;clip-path:ellipse(100% 52% at 100% 50%);z-index:3;}
+    .lc{position:relative;z-index:3;height:100%;display:flex;flex-direction:column;padding:36px 48px 32px;}
+
+    /* Logo row */
+    .logo{display:flex;align-items:center;gap:14px;margin-bottom:auto;}
+    .logo-box{width:52px;height:52px;background:linear-gradient(135deg,var(--g3),var(--g4));
+      border-radius:14px;display:flex;align-items:center;justify-content:center;
+      font-size:24px;box-shadow:0 4px 20px rgba(76,175,80,.4);}
+    .logo-txt h1{font-size:1.95rem;font-weight:900;color:#fff;line-height:1;}
+    .logo-txt h1 b{color:var(--g5);}
+    .logo-txt p{font-size:.73rem;color:rgba(255,255,255,.5);margin-top:3px;letter-spacing:.4px;text-transform:uppercase;}
+
+    /* Hero content */
+    .hero{flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 0 20px;}
+    .hero-badge{display:inline-flex;align-items:center;gap:8px;
+      background:rgba(76,175,80,.15);border:1px solid rgba(76,175,80,.35);
+      border-radius:50px;padding:6px 14px;margin-bottom:24px;width:fit-content;}
+    .hero-badge i{color:var(--g5);font-size:.8rem;}
+    .hero-badge span{font-size:.74rem;font-weight:600;color:rgba(255,255,255,.85);text-transform:uppercase;letter-spacing:.6px;}
+    .hero h2{font-size:2.4rem;font-weight:900;color:#fff;line-height:1.2;letter-spacing:-.5px;margin-bottom:14px;}
+    .hero h2 em{font-style:normal;color:var(--g5);}
+    .hero p{font-size:.9rem;color:rgba(255,255,255,.6);line-height:1.7;max-width:380px;margin-bottom:28px;}
+
+    /* Feature pills */
+    .feat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:28px;}
+    .fp{display:flex;align-items:center;gap:10px;
+      background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);
+      border-radius:12px;padding:11px 14px;backdrop-filter:blur(8px);
+      transition:all .2s;}
+    .fp:hover{background:rgba(76,175,80,.18);border-color:rgba(76,175,80,.4);transform:translateY(-2px);}
+    .fp i{color:var(--g5);font-size:1rem;width:20px;text-align:center;}
+    .fp-t strong{display:block;font-size:.78rem;font-weight:700;color:rgba(255,255,255,.9);}
+    .fp-t small{font-size:.68rem;color:rgba(255,255,255,.45);}
+
+    /* Stats row */
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+    .sb{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.13);
+      border-radius:12px;padding:14px 16px;backdrop-filter:blur(8px);text-align:center;
+      transition:background .2s;}
+    .sb:hover{background:rgba(76,175,80,.18);}
+    .sb strong{display:block;font-size:1.4rem;font-weight:900;color:#fff;line-height:1;}
+    .sb small{font-size:.68rem;color:rgba(255,255,255,.50);margin-top:2px;display:block;}
+
+    /* ── RIGHT PANEL ── */
+    .right{
+      flex:1;background:#f0f5f0;
+      display:flex;align-items:center;justify-content:center;
+      padding:40px 48px;overflow-y:auto;
+    }
+    .card{
+      width:100%;max-width:420px;
+      background:#fff;border-radius:24px;
+      padding:40px 40px 36px;
+      box-shadow:var(--sh-card);
+      animation:slideUp .5s cubic-bezier(.16,1,.3,1) both;
+    }
+    @keyframes slideUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+
+    .card-head{text-align:center;margin-bottom:28px;}
+    .card-head .c-ico{width:58px;height:58px;background:linear-gradient(135deg,var(--g3),var(--g4));
+      border-radius:16px;display:flex;align-items:center;justify-content:center;
+      font-size:26px;color:#fff;margin:0 auto 16px;box-shadow:0 6px 20px rgba(26,107,53,.3);}
+    .card-head h2{font-size:1.55rem;font-weight:900;color:var(--text);}
+    .card-head p{font-size:.84rem;color:var(--muted);margin-top:5px;}
+
+    /* Role selector tabs */
+    .role-tabs{display:flex;background:#f3f4f6;border-radius:10px;padding:3px;margin-bottom:24px;}
+    .role-tab{flex:1;padding:8px;text-align:center;font-size:.82rem;font-weight:600;
+      color:var(--muted);cursor:pointer;border-radius:8px;transition:all .2s;}
+    .role-tab.active{background:#fff;color:var(--g3);box-shadow:0 1px 6px rgba(0,0,0,.1);}
+
+    /* Form */
+    .fld{margin-bottom:16px;}
+    .fld label{display:block;font-size:.78rem;font-weight:700;color:#374151;margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px;}
+    .inp-wrap{position:relative;}
+    .inp-ico{position:absolute;left:13px;top:50%;transform:translateY(-50%);
+      color:var(--muted);font-size:.85rem;}
+    .inp{
+      width:100%;padding:11px 12px 11px 38px;
+      border:1.5px solid var(--border);border-radius:10px;
+      font-family:'Inter',sans-serif;font-size:.9rem;color:var(--text);
+      background:#fff;transition:border .2s,box-shadow .2s;
+      outline:none;
+    }
+    .inp:focus{border-color:var(--g3);box-shadow:0 0 0 3px rgba(26,107,53,.12);}
+    .inp.err{border-color:#ef4444;box-shadow:0 0 0 3px rgba(239,68,68,.1);}
+    .eye-btn{position:absolute;right:12px;top:50%;transform:translateY(-50%);
+      background:none;border:none;cursor:pointer;color:var(--muted);font-size:.85rem;padding:2px;}
+    .eye-btn:hover{color:var(--g3);}
+    .fld-err{font-size:.74rem;color:#ef4444;margin-top:4px;display:none;}
+
+    /* Remember / forgot */
+    .fld-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+    .chk-label{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.82rem;color:var(--muted);}
+    .chk-label input{width:15px;height:15px;accent-color:var(--g3);}
+    .forgot{font-size:.82rem;color:var(--g3);font-weight:600;text-decoration:none;}
+    .forgot:hover{text-decoration:underline;}
+
+    /* Submit button */
+    .btn-main{
+      width:100%;padding:13px;
+      background:linear-gradient(135deg,var(--g3),var(--g4));
+      color:#fff;border:none;border-radius:11px;
+      font-family:'Inter',sans-serif;font-size:.95rem;font-weight:700;
+      cursor:pointer;transition:all .2s;
+      display:flex;align-items:center;justify-content:center;gap:8px;
+      box-shadow:0 4px 16px rgba(26,107,53,.3);
+    }
+    .btn-main:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(26,107,53,.4);}
+    .btn-main:active{transform:translateY(0);}
+    .btn-main:disabled{opacity:.6;cursor:not-allowed;transform:none;}
+    .spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,.3);
+      border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:none;}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* Divider */
+    .divider{display:flex;align-items:center;gap:10px;margin:18px 0;}
+    .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
+    .divider span{font-size:.75rem;color:var(--muted);font-weight:500;white-space:nowrap;}
+
+    /* Credentials hint */
+    .creds-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px;margin-bottom:18px;}
+    .creds-box h4{font-size:.74rem;font-weight:800;color:var(--g3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+    .cred-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;}
+    .cred-row span{font-size:.78rem;color:#374151;}
+    .cred-row code{font-size:.78rem;background:#dcfce7;color:var(--g3);padding:2px 7px;border-radius:5px;font-weight:700;cursor:pointer;}
+    .cred-row code:hover{background:#bbf7d0;}
+
+    /* Error banner */
+    .err-banner{background:#fef2f2;border:1px solid #fecaca;border-radius:10px;
+      padding:11px 14px;margin-bottom:16px;
+      display:flex;align-items:center;gap:10px;font-size:.83rem;color:#dc2626;}
+    .err-banner i{flex-shrink:0;}
+
+    /* Footer */
+    .card-foot{text-align:center;margin-top:20px;font-size:.8rem;color:var(--muted);}
+    .card-foot a{color:var(--g3);font-weight:700;text-decoration:none;}
+    .card-foot a:hover{text-decoration:underline;}
+    .secure{display:flex;align-items:center;justify-content:center;gap:6px;
+      margin-top:14px;font-size:.73rem;color:var(--muted);}
+    .secure i{color:var(--g4);}
+
+    .btn-google{
+      width:100%;padding:11px;background:#fff;color:#374151;
+      border:1.5px solid var(--border);border-radius:10px;
+      font-family:'Inter',sans-serif;font-size:.9rem;font-weight:600;
+      cursor:pointer;transition:all .15s;
+      display:inline-flex;align-items:center;justify-content:center;gap:10px;
+      margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.05);
+    }
+    .btn-google:hover{background:#f9fafb;border-color:#d1d5db;}
+    .btn-google:active{transform:translateY(0);}
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ── LEFT PANEL ── -->
+  <div class="left">
+    <div class="left-bg"></div>
+    <div class="left-ov"></div>
+    <canvas id="particleCanvas"></canvas>
+    <div class="left-curve"></div>
+    <div class="lc">
+      <!-- Logo -->
+      <div class="logo">
+        <div class="logo-box">🌍</div>
+        <div class="logo-txt">
+          <h1>Geo<b>Hub</b></h1>
+          <p>Zambia Spatial Platform</p>
+        </div>
+      </div>
+
+      <!-- Hero -->
+      <div class="hero">
+        <div class="hero-badge">
+          <i class="fas fa-satellite"></i>
+          <span>NSDI Zambia — Official GIS Platform</span>
+        </div>
+        <h2>Zambia's <em>National</em><br>Spatial Data Platform</h2>
+        <p>Access, analyse and visualise geospatial datasets for all 116 districts across 10 provinces. Powered by NSDI GRID3 2022 data.</p>
+
+        <!-- Feature grid -->
+        <div class="feat-grid">
+          <div class="fp">
+            <i class="fas fa-map-marked-alt"></i>
+            <div class="fp-t"><strong>Interactive Maps</strong><small>Leaflet + multi-layer</small></div>
+          </div>
+          <div class="fp">
+            <i class="fas fa-chart-bar"></i>
+            <div class="fp-t"><strong>Real Analytics</strong><small>Chart.js dashboards</small></div>
+          </div>
+          <div class="fp">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <div class="fp-t"><strong>Data Upload</strong><small>GeoJSON, CSV, SHP</small></div>
+          </div>
+          <div class="fp">
+            <i class="fas fa-shield-alt"></i>
+            <div class="fp-t"><strong>Role-Based Access</strong><small>Admin &amp; Standard users</small></div>
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats">
+          <div class="sb"><strong>116</strong><small>Districts</small></div>
+          <div class="sb"><strong>10</strong><small>Provinces</small></div>
+          <div class="sb"><strong>752K</strong><small>km² Coverage</small></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── RIGHT PANEL ── -->
+  <div class="right">
+    <div class="card">
+      <!-- Header -->
+      <div class="card-head">
+        <div class="c-ico">🌍</div>
+        <h2>Sign In to GeoHub</h2>
+        <p>Access the Zambia Spatial Data Platform</p>
+      </div>
+
+      <div class="divider"><span>Sign in / create account with email</span></div>
+
+      <!-- Email/Password form -->
+      <form id="loginForm" onsubmit="handleLogin(event)" novalidate>
+
+        <div class="fld">
+          <label>Email Address</label>
+          <div class="inp-wrap">
+            <i class="fas fa-envelope inp-ico"></i>
+            <input class="inp" id="emailInp" type="email" placeholder="your@email.com" autocomplete="email" required/>
+          </div>
+          <div class="fld-err" id="emailErr">Please enter a valid email address.</div>
+        </div>
+
+        <div class="fld">
+          <label>Password</label>
+          <div class="inp-wrap">
+            <i class="fas fa-lock inp-ico"></i>
+            <input class="inp" id="passInp" type="password" placeholder="Enter your password" autocomplete="current-password" required/>
+          </div>
+          <div class="fld-err" id="passErr">Password is required.</div>
+        </div>
+
+        <button type="submit" class="btn-main" id="loginBtn">
+          <div class="spinner" id="loginSpinner"></div>
+          <i class="fas fa-sign-in-alt" id="loginIco"></i>
+          <span id="loginTxt">Sign In</span>
+        </button>
+
+        <div style="margin-top:12px;text-align:center;color:var(--muted);font-size:.76rem;">
+          <span>New here?</span>
+          <a href="#" onclick="toggleAuthMode('signup'); return false;" style="color:var(--g3);font-weight:800;text-decoration:none;">Create an account</a>
+        </div>
+      </form>
+
+
+      <div class="card-foot">
+        Secured · NSDI Zambia · GIS Platform 2025
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── TOAST ── -->
+<div id="toast" style="position:fixed;bottom:28px;right:28px;z-index:9999;display:none;">
+  <div style="background:#1a6b35;color:#fff;padding:12px 20px;border-radius:12px;font-size:.84rem;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.2);display:flex;align-items:center;gap:8px;">
+    <i class="fas fa-check-circle"></i><span id="toastMsg"></span>
+  </div>
+</div>
+
+<script>
+  function toggleAuthMode(mode) {
+    const title = document.querySelector('.card-head h2');
+    const submitBtn = document.getElementById('loginBtn');
+    const txt = document.getElementById('loginTxt');
+    const ico = document.getElementById('loginIco');
+    const emailInp = document.getElementById('emailInp');
+    const passInp = document.getElementById('passInp');
+
+    // Simple UX: change text only; signup uses same fields.
+    if (mode === 'signup') {
+      title.textContent = 'Create Account';
+      submitBtn.title = 'Create account';
+      txt.textContent = 'Sign Up';
+      ico.className = 'fas fa-user-plus';
+      emailInp.placeholder = 'your@email.com';
+      passInp.placeholder = 'Create a password';
+      document.getElementById('loginForm').onsubmit = handleSignup;
+    } else {
+      title.textContent = 'Sign In to GeoHub';
+      submitBtn.title = 'Sign In';
+      txt.textContent = 'Sign In';
+      ico.className = 'fas fa-sign-in-alt';
+      emailInp.placeholder = 'your@email.com';
+      passInp.placeholder = 'Enter your password';
+      document.getElementById('loginForm').onsubmit = handleLogin;
+    }
+  }
+
+  async function handleSignup(e) {
+    e.preventDefault();
+    const email = document.getElementById('emailInp').value.trim();
+    const pass  = document.getElementById('passInp').value;
+    const btn   = document.getElementById('loginBtn');
+    const sp    = document.getElementById('loginSpinner');
+    const ico   = document.getElementById('loginIco');
+    const txt   = document.getElementById('loginTxt');
+
+    document.getElementById('emailInp').classList.remove('err');
+    document.getElementById('passInp').classList.remove('err');
+
+    if (!email) {
+      document.getElementById('emailInp').classList.add('err');
+      document.getElementById('emailErr').style.display = 'block';
+      return;
+    }
+    if (!pass) {
+      document.getElementById('passInp').classList.add('err');
+      document.getElementById('passErr').style.display = 'block';
+      return;
+    }
+
+    btn.disabled = true;
+    sp.style.display = 'block';
+    ico.style.display = 'none';
+    txt.textContent = 'Creating account…';
+
+    try {
+      const result = await GeoHubAuth.signup(email, pass);
+      sp.style.display = 'none';
+      ico.style.display = '';
+      btn.disabled = false;
+      txt.textContent = 'Sign Up';
+
+      if (!result.success) {
+        showToast(result.error || 'Signup failed.');
+        document.getElementById('emailInp').classList.add('err');
+        document.getElementById('passInp').classList.add('err');
+        return;
+      }
+
+      showToast(`Account created. Welcome, ${result.user.name.split(' ')[0]}!`);
+      setTimeout(() => {
+        if (result.user.role === 'admin') window.location.href = 'admin.html';
+        else window.location.href = 'dashboard.html';
+      }, 900);
+    } catch (e) {
+      sp.style.display = 'none';
+      ico.style.display = '';
+      btn.disabled = false;
+      txt.textContent = 'Sign Up';
+      showToast(e.message || 'An unexpected error occurred.');
+    }
+  }
+
+  async function handleLogin(e) {
+    toggleAuthMode('login');
+
+
+    e.preventDefault();
+    const email = document.getElementById('emailInp').value.trim();
+    const pass  = document.getElementById('passInp').value;
+    const btn   = document.getElementById('loginBtn');
+    const sp    = document.getElementById('loginSpinner');
+    const ico   = document.getElementById('loginIco');
+    const txt   = document.getElementById('loginTxt');
+
+    document.getElementById('emailInp').classList.remove('err');
+    document.getElementById('passInp').classList.remove('err');
+
+    if (!email) {
+      document.getElementById('emailInp').classList.add('err');
+      document.getElementById('emailErr').style.display = 'block';
+      return;
+    }
+    if (!pass) {
+      document.getElementById('passInp').classList.add('err');
+      document.getElementById('passErr').style.display = 'block';
+      return;
+    }
+
+    btn.disabled = true;
+    sp.style.display = 'block';
+    ico.style.display = 'none';
+    txt.textContent = 'Signing in…';
+
+    try {
+      const result = await GeoHubAuth.login(email, pass);
+      sp.style.display = 'none';
+      ico.style.display = '';
+      btn.disabled = false;
+      txt.textContent = 'Sign In';
+
+      if (!result.success) {
+        showToast(result.error || 'Login failed.');
+        document.getElementById('emailInp').classList.add('err');
+        document.getElementById('passInp').classList.add('err');
+        return;
+      }
+
+      showToast(`Welcome back, ${result.user.name.split(' ')[0]}!`);
+      setTimeout(() => {
+        if (result.user.role === 'admin') {
+          window.location.href = 'admin.html';
+        } else {
+          window.location.href = 'dashboard.html';
+        }
+      }, 900);
+    } catch (e) {
+      sp.style.display = 'none';
+      ico.style.display = '';
+      btn.disabled = false;
+      txt.textContent = 'Sign In';
+      showToast(e.message || 'An unexpected error occurred.');
+    }
+  }
+
+  async function handleGoogleLogin() {
+    const btn = document.getElementById('googleLoginBtn');
+    const txt = document.getElementById('googleLoginTxt');
+    
+    btn.disabled = true;
+    const oldText = txt.textContent;
+    txt.textContent = 'Signing in with Google...';
+    
+    try {
+      const result = await GeoHubAuth.loginWithGoogle();
+      if (!result.success) {
+        showToast(result.error || 'Google Sign-In failed.');
+        btn.disabled = false;
+        txt.textContent = oldText;
+        return;
+      }
+      
+      showToast(`Welcome back, ${result.user.name.split(' ')[0]}!`);
+      setTimeout(() => {
+        if (result.user.role === 'admin') {
+          window.location.href = 'admin.html';
+        } else {
+          window.location.href = 'dashboard.html';
+        }
+      }, 900);
+    } catch (e) {
+      btn.disabled = false;
+      txt.textContent = oldText;
+      showToast(e.message || 'An unexpected error occurred.');
+    }
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    document.getElementById('toastMsg').textContent = msg;
+    t.style.display = 'block';
+    setTimeout(() => t.style.display = 'none', 3000);
+  }
+</script>
+</body>
+</html>

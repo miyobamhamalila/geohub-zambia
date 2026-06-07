@@ -306,35 +306,50 @@ function saveProfile() {
   const title = document.getElementById('pf-title').value.trim();
   const org   = document.getElementById('pf-org').value.trim();
   if (!name) { showToast('Name is required', true); return; }
-  const result = GeoHubAuth.updateUser(session.id, { name, title, org, avatar: name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2) });
+  const result = GeoHubAuth.updateUser(session.id, { name, title, org, avatar: name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2) });
   if (!result.success) { showToast(result.error, true); return; }
-  // Update local session display
-  document.getElementById('nbAv').textContent   = result.user.avatar;
-  document.getElementById('nbName').textContent = result.user.name;
-  document.getElementById('profAv').textContent = result.user.avatar;
-  document.getElementById('profName').textContent = result.user.name;
-  document.getElementById('profTitle').textContent = result.user.title;
-  document.getElementById('profOrg').textContent   = result.user.org;
+  const updated = result.user || GeoHubAuth.getUsers().find(u => u.id === session.id);
+  if (!updated) { showToast('Unable to update profile', true); return; }
+  document.getElementById('nbAv').textContent   = updated.avatar;
+  document.getElementById('nbName').textContent = updated.name;
+  document.getElementById('profAv').textContent = updated.avatar;
+  document.getElementById('profName').textContent = updated.name;
+  document.getElementById('profTitle').textContent = updated.title || 'Platform User';
+  document.getElementById('profOrg').textContent   = updated.org || '';
   showToast('Profile updated successfully');
-  GeoHubAuth.addAuditLog('PROFILE_UPDATE', `User updated profile`, session.id);
+  GeoHubAuth.addAuditLog('PROFILE_UPDATE', 'User updated profile', session.id);
 }
 
 // ── Change password ────────────────────────────────────────────────────────
-function changePassword() {
+async function changePassword() {
   const curr    = document.getElementById('pw-curr').value;
   const newPass = document.getElementById('pw-new').value;
   const confirm = document.getElementById('pw-confirm').value;
   const errEl   = document.getElementById('pwErr');
   errEl.style.display = 'none';
 
-  const users   = GeoHubAuth.getUsers();
-  const user    = users.find(u => u.id === session.id);
-  if (!user) { errEl.textContent = 'Session error.'; errEl.style.display = 'block'; return; }
-  if (user.password !== curr) { errEl.textContent = 'Current password is incorrect.'; errEl.style.display = 'block'; return; }
-  if (newPass.length < 6) { errEl.textContent = 'New password must be at least 6 characters.'; errEl.style.display = 'block'; return; }
-  if (newPass !== confirm) { errEl.textContent = 'Passwords do not match.'; errEl.style.display = 'block'; return; }
+  if (!GeoHubAuth.validatePassword(session.email, curr)) {
+    errEl.textContent = 'Current password is incorrect.';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (newPass.length < 6) {
+    errEl.textContent = 'New password must be at least 6 characters.';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (newPass !== confirm) {
+    errEl.textContent = 'Passwords do not match.';
+    errEl.style.display = 'block';
+    return;
+  }
 
-  GeoHubAuth.updateUser(session.id, { password: newPass });
+  const result = await GeoHubAuth.changePassword(newPass);
+  if (!result.success) {
+    errEl.textContent = result.error || 'Unable to change password.';
+    errEl.style.display = 'block';
+    return;
+  }
   document.getElementById('pw-curr').value = '';
   document.getElementById('pw-new').value  = '';
   document.getElementById('pw-confirm').value = '';
